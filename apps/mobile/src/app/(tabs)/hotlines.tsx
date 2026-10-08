@@ -1,5 +1,6 @@
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon, icons } from '@/components/Icon';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { HOTLINES, type Hotline } from '@/features/hotlines/hotlines';
 import { colors, radius } from '@/theme';
 
@@ -17,6 +18,10 @@ async function call(hotline: Hotline) {
 export default function HotlinesScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <OfflineBanner
+        message="Don't worry, calling a hotline doesn't need internet."
+        style={styles.offlineBanner}
+      />
       <Text style={styles.intro}>
         Tap a number to call. Calls use your regular phone signal, so they can work even without
         mobile data.
@@ -72,6 +77,9 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  offlineBanner: {
+    marginBottom: 16,
   },
   intro: {
     fontSize: 14,

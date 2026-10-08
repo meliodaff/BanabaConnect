@@ -51,4 +51,6 @@ export const icons = {
   chevron: { ios: 'chevron.right', android: 'chevron_right' },
   info: { ios: 'info.circle.fill', android: 'info' },
   bell: { ios: 'bell.fill', android: 'notifications' },
+  offline: { ios: 'wifi.slash', android: 'wifi_off' },
+  online: { ios: 'wifi', android: 'wifi' },
 } as const satisfies Record<string, IconName>;

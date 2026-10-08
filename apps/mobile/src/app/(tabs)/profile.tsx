@@ -1,12 +1,14 @@
 import Constants from 'expo-constants';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon, icons } from '@/components/Icon';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { colors, radius } from '@/theme';
 
 // TODO: registration, login, and Barangay ID verification (Supabase Auth).
 export default function ProfileScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <OfflineBanner style={styles.offlineBanner} />
       <View style={styles.profileCard}>
         <View style={styles.avatar}>
           <Icon name={icons.profile} size={56} color={colors.primary} />
@@ -44,6 +46,9 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  offlineBanner: {
+    marginBottom: 16,
   },
   profileCard: {
     backgroundColor: colors.surface,

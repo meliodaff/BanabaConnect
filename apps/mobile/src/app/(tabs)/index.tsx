@@ -2,6 +2,7 @@ import { router, type Href } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon, icons, type IconName } from '@/components/Icon';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { colors, radius, shadow } from '@/theme';
 
 interface Service {
@@ -46,6 +47,8 @@ export default function HomeScreen() {
             <Icon name={icons.bell} size={22} color={colors.primary} />
           </Pressable>
         </View>
+
+        <OfflineBanner style={styles.offlineBanner} />
 
         <View style={styles.greetingRow}>
           <View style={styles.avatar}>
@@ -161,6 +164,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  offlineBanner: {
+    marginHorizontal: 20,
+    marginTop: 16,
   },
   greetingRow: {
     flexDirection: 'row',

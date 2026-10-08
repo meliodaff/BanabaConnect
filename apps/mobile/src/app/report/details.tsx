@@ -21,8 +21,10 @@ import {
   type ReportCategory,
 } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { buildSubmission, INCIDENT_TIME_OPTIONS } from '@/features/report/buildSubmission';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
+import { OFFLINE_REPORT_MESSAGE } from '@/features/report/messages';
 import {
   PhotoPermissionError,
   pickReportPhoto,
@@ -98,6 +100,8 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text style={styles.step}>Step 2 of 2</Text>
           <Text style={styles.title}>Add details</Text>
+
+          <OfflineBanner message={OFFLINE_REPORT_MESSAGE} />
 
           <View style={styles.categoryRow}>
             <View style={[styles.categoryIcon, { backgroundColor: look.tint }]}>

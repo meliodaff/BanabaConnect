@@ -2,7 +2,9 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CATEGORY_LABELS, REPORT_CATEGORIES, type ReportCategory } from '@banabaconnect/shared';
 import { Icon } from '@/components/Icon';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
+import { OFFLINE_REPORT_MESSAGE } from '@/features/report/messages';
 import { colors, radius } from '@/theme';
 
 export default function ChooseCategoryScreen() {
@@ -15,6 +17,8 @@ export default function ChooseCategoryScreen() {
       <Text style={styles.step}>Step 1 of 2</Text>
       <Text style={styles.title}>What is happening?</Text>
       <Text style={styles.subtitle}>Ano ang nangyayari? Tap the closest match.</Text>
+
+      <OfflineBanner message={OFFLINE_REPORT_MESSAGE} style={styles.offlineBanner} />
 
       <View style={styles.grid}>
         {REPORT_CATEGORIES.map((category) => {
@@ -63,6 +67,9 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 6,
     marginBottom: 20,
+  },
+  offlineBanner: {
+    marginBottom: 16,
   },
   grid: {
     flexDirection: 'row',
