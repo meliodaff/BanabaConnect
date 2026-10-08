@@ -43,4 +43,11 @@ export const icons = {
   next: { ios: 'chevron.right', android: 'arrow_forward' },
   tap: { ios: 'hand.tap.fill', android: 'touch_app' },
   announce: { ios: 'megaphone.fill', android: 'campaign' },
+  home: { ios: 'house.fill', android: 'home' },
+  reports: { ios: 'list.bullet.rectangle.fill', android: 'receipt_long' },
+  phone: { ios: 'phone.fill', android: 'call' },
+  profile: { ios: 'person.crop.circle.fill', android: 'account_circle' },
+  evacuation: { ios: 'house.lodge.fill', android: 'night_shelter' },
+  chevron: { ios: 'chevron.right', android: 'chevron_right' },
+  info: { ios: 'info.circle.fill', android: 'info' },
 } as const satisfies Record<string, IconName>;

@@ -7,13 +7,14 @@ export default function RootLayout() {
     <>
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: colors.background },
+          headerStyle: { backgroundColor: colors.primary },
+          headerTintColor: colors.onPrimary,
+          headerTitleStyle: { fontWeight: '700' },
           headerShadowVisible: false,
-          headerTintColor: colors.text,
           contentStyle: { backgroundColor: colors.background },
         }}
       >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="report/index" options={{ title: 'New report' }} />
         <Stack.Screen name="report/details" options={{ title: 'New report' }} />
         <Stack.Screen
@@ -21,7 +22,7 @@ export default function RootLayout() {
           options={{ headerShown: false, gestureEnabled: false }}
         />
       </Stack>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
     </>
   );
 }

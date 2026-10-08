@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CATEGORY_LABELS, REPORT_CATEGORIES, type ReportCategory } from '@banabaconnect/shared';
@@ -13,6 +14,7 @@ export default function ReportSentScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar style="dark" />
       <View style={styles.body}>
         <View style={styles.checkCircle}>
           <Icon name={icons.check} size={64} color={colors.success} />

@@ -1,4 +1,7 @@
 export const colors = {
+  primary: '#0038A8',
+  primaryDark: '#002B82',
+  onPrimary: '#FFFFFF',
   background: '#F6F7F9',
   surface: '#FFFFFF',
   border: '#DDE1E6',
@@ -7,7 +10,7 @@ export const colors = {
   emergency: '#C62828',
   emergencySoft: '#FDECEC',
   onEmergency: '#FFFFFF',
-  selected: '#1E4FA3',
+  selected: '#0038A8',
   selectedSoft: '#E8EEF9',
   onSelected: '#FFFFFF',
   success: '#2E7D32',
