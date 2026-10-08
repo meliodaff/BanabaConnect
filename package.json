@@ -9,5 +9,8 @@
   "scripts": {
     "mobile": "npm run start --workspace @banabaconnect/mobile",
     "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "overrides": {
+    "react": "19.2.3"
   }
 }

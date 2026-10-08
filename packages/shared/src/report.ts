@@ -18,6 +18,19 @@ export const REPORT_CATEGORIES = [
 
 export type ReportCategory = (typeof REPORT_CATEGORIES)[number];
 
+export const CATEGORY_LABELS: Record<ReportCategory, string> = {
+  flood: 'Flood',
+  fire: 'Fire',
+  medical: 'Medical emergency',
+  accident: 'Accident',
+  crime: 'Crime',
+  road_blockage: 'Road blocked',
+  power_line: 'Fallen power line',
+  other: 'Other',
+};
+
+export const DESCRIPTION_MAX_LENGTH = 500;
+
 /** What the phone sends to the server. `id` is a UUID generated on the phone. */
 export interface ReportSubmission {
   id: string;
