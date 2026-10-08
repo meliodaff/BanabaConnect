@@ -13,10 +13,10 @@ export default function ChooseCategoryScreen() {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView contentContainerStyle={styles.content}>
       <Text style={styles.step}>Step 1 of 2</Text>
       <Text style={styles.title}>What is happening?</Text>
-      <Text style={styles.subtitle}>Ano ang nangyayari?</Text>
+      <Text style={styles.subtitle}>Ano ang nangyayari? Tap the closest match.</Text>
 
       <OfflineBanner
         title={OFFLINE_REPORT_TITLE}
@@ -35,7 +35,9 @@ export default function ChooseCategoryScreen() {
               accessibilityRole="button"
               accessibilityLabel={`${CATEGORY_LABELS[category]}, ${look.tagalog}`}
             >
-              <Icon name={look.icon} size={30} color={colors.text} />
+              <View style={[styles.tileIcon, { backgroundColor: look.tint }]}>
+                <Icon name={look.icon} size={32} color={look.color} />
+              </View>
               <Text style={styles.tileLabel}>{CATEGORY_LABELS[category]}</Text>
               <Text style={styles.tileTagalog}>{look.tagalog}</Text>
             </Pressable>
@@ -47,28 +49,27 @@ export default function ChooseCategoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.surface,
-  },
   content: {
     padding: 20,
     paddingBottom: 40,
   },
   step: {
-    fontSize: 14,
-    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.selected,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   title: {
     fontSize: 26,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.text,
     marginTop: 4,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textMuted,
-    marginTop: 2,
+    marginTop: 6,
     marginBottom: 20,
   },
   offlineBanner: {
@@ -78,29 +79,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: 10,
+    rowGap: 12,
   },
   tile: {
     width: '48.5%',
-    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingVertical: 16,
-    paddingHorizontal: 14,
-    minHeight: 116,
+    padding: 16,
+    minHeight: 140,
   },
   tilePressed: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySoft,
+    borderColor: colors.selected,
+    backgroundColor: colors.selectedSoft,
+  },
+  tileIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   tileLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.text,
-    marginTop: 12,
   },
   tileTagalog: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textMuted,
     marginTop: 2,
   },

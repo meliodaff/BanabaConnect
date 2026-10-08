@@ -58,7 +58,7 @@ function WaitingSummary({ count }: { count: number }) {
           {count === 1 ? '1 report waiting for signal' : `${count} reports waiting for signal`}
         </Text>
         <Text style={styles.summaryText}>
-          Saved on your phone. Sends automatically when you get signal.
+          Saved on your phone. They will be sent automatically when you get signal.
         </Text>
       </View>
       <Pressable
@@ -124,8 +124,8 @@ function ReportCard({ report, sending }: { report: QueuedReport; sending: boolea
       {photo ? (
         <Image source={{ uri: photo.uri }} style={styles.thumbnail} />
       ) : (
-        <View style={[styles.thumbnail, styles.iconThumbnail]}>
-          <Icon name={look.icon} size={28} color={colors.text} />
+        <View style={[styles.thumbnail, styles.iconThumbnail, { backgroundColor: look.tint }]}>
+          <Icon name={look.icon} size={28} color={look.color} />
         </View>
       )}
       <View style={styles.flex}>
@@ -155,7 +155,9 @@ function ReportCard({ report, sending }: { report: QueuedReport; sending: boolea
 function EmptyState() {
   return (
     <View style={styles.empty}>
-      <Icon name={icons.reports} size={44} color={colors.textMuted} />
+      <View style={styles.emptyIcon}>
+        <Icon name={icons.reports} size={44} color={colors.primary} />
+      </View>
       <Text style={styles.emptyTitle}>No reports yet</Text>
       <Text style={styles.emptyMessage}>
         Reports you send will appear here, even ones still waiting for signal.
@@ -289,10 +291,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
   },
+  emptyIcon: {
+    width: 96,
+    height: 96,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
   emptyTitle: {
-    marginTop: 16,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.text,
   },
   emptyMessage: {
