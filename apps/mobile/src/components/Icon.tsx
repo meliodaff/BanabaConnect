@@ -30,7 +30,7 @@ export function Icon({
 }
 
 export const icons = {
-  emergency: { ios: 'exclamationmark.triangle.fill', android: 'emergency' },
+  emergency: { ios: 'light.beacon.max.fill', android: 'e911_emergency' },
   camera: { ios: 'camera.fill', android: 'photo_camera' },
   gallery: { ios: 'photo.on.rectangle', android: 'image' },
   location: { ios: 'location.fill', android: 'location_on' },
@@ -50,4 +50,5 @@ export const icons = {
   evacuation: { ios: 'house.lodge.fill', android: 'night_shelter' },
   chevron: { ios: 'chevron.right', android: 'chevron_right' },
   info: { ios: 'info.circle.fill', android: 'info' },
+  bell: { ios: 'bell.fill', android: 'notifications' },
 } as const satisfies Record<string, IconName>;

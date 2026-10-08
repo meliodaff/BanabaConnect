@@ -7,9 +7,9 @@ export default function RootLayout() {
     <>
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: colors.primary },
-          headerTintColor: colors.onPrimary,
-          headerTitleStyle: { fontWeight: '700' },
+          headerStyle: { backgroundColor: colors.surface },
+          headerTintColor: colors.primary,
+          headerTitleStyle: { fontWeight: '700', color: colors.text },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: colors.background },
         }}
@@ -22,7 +22,7 @@ export default function RootLayout() {
           options={{ headerShown: false, gestureEnabled: false }}
         />
       </Stack>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
     </>
   );
 }
