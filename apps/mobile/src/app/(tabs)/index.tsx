@@ -3,6 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
 import { colors, radius, shadow } from '@/theme';
 
 interface Service {
@@ -23,6 +24,11 @@ const STEPS: { icon: IconName; title: string; detail: string }[] = [
   { icon: icons.tap, title: 'Choose what is happening', detail: 'Flood, fire, accident, and more.' },
   { icon: icons.location, title: 'We add your location', detail: 'So responders know where to go.' },
   { icon: icons.camera, title: 'Add a photo', detail: 'Optional, but it helps a lot.' },
+  {
+    icon: icons.queued,
+    title: 'No signal? No problem',
+    detail: 'Saved on your phone and sent as soon as you get signal.',
+  },
 ];
 
 function comingSoon(label: string) {
@@ -30,6 +36,9 @@ function comingSoon(label: string) {
 }
 
 export default function HomeScreen() {
+  const { reports } = useQueuedReports();
+  const waiting = countWaiting(reports);
+
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -59,6 +68,27 @@ export default function HomeScreen() {
             <Text style={styles.greetingSub}>Barangay Banaba, San Mateo, Rizal</Text>
           </View>
         </View>
+
+        {waiting > 0 && (
+          <Pressable
+            onPress={() => router.push('/reports')}
+            style={({ pressed }) => [styles.waitingCard, pressed && styles.pressed]}
+            accessibilityRole="button"
+          >
+            <Icon name={icons.queued} size={24} color={colors.warning} />
+            <View style={styles.flex}>
+              <Text style={styles.waitingTitle}>
+                {waiting === 1
+                  ? '1 report waiting for signal'
+                  : `${waiting} reports waiting for signal`}
+              </Text>
+              <Text style={styles.waitingText}>
+                Saved on your phone. Sends automatically when you get signal.
+              </Text>
+            </View>
+            <Icon name={icons.chevron} size={22} color={colors.textMuted} />
+          </Pressable>
+        )}
 
         <View style={styles.grid}>
           {SERVICES.map((service) => (
@@ -95,6 +125,7 @@ export default function HomeScreen() {
           <View style={styles.flex}>
             <Text style={styles.bannerEyebrow}>May emergency?</Text>
             <Text style={styles.bannerTitle}>Report it to the barangay in under a minute</Text>
+            <Text style={styles.bannerNote}>Works even with no signal</Text>
             <View style={styles.bannerButton}>
               <Text style={styles.bannerButtonText}>Report now</Text>
             </View>
@@ -260,6 +291,32 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginTop: 4,
     lineHeight: 23,
+  },
+  bannerNote: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
+    marginTop: 4,
+  },
+  waitingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: 20,
+    marginTop: 16,
+    padding: 14,
+    borderRadius: radius.lg,
+    backgroundColor: colors.warningSoft,
+  },
+  waitingTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  waitingText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: 2,
   },
   bannerButton: {
     alignSelf: 'flex-start',

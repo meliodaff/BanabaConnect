@@ -24,7 +24,10 @@ import { Icon, icons, type IconName } from '@/components/Icon';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { buildSubmission, INCIDENT_TIME_OPTIONS } from '@/features/report/buildSubmission';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
-import { OFFLINE_REPORT_MESSAGE } from '@/features/report/messages';
+import { OFFLINE_REPORT_MESSAGE, OFFLINE_REPORT_TITLE } from '@/features/report/messages';
+import { saveReport } from '@/features/queue/reportRepository';
+import { reportsStore } from '@/features/queue/reportsStore';
+import { requestSync } from '@/features/queue/syncEngine';
 import {
   PhotoPermissionError,
   pickReportPhoto,
@@ -54,7 +57,8 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
   const { location, retryLocation } = useReportLocation();
   const look = CATEGORY_APPEARANCE[category];
 
-  const canSend = location.coords !== null && !photoBusy;
+  const [saving, setSaving] = useState(false);
+  const canSend = location.coords !== null && !photoBusy && !saving;
 
   async function handlePickPhoto(source: PhotoSource) {
     setPhotoBusy(true);
@@ -75,7 +79,7 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
     }
   }
 
-  function handleSend() {
+  async function handleSend() {
     if (location.coords === null) {
       return;
     }
@@ -86,9 +90,22 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
       minutesAgo,
     });
 
-    // TODO: save to the offline queue (SQLite) instead of only logging it.
-    console.log('Report ready', submission, photo);
-    router.replace({ pathname: '/report/sent', params: { category } });
+    setSaving(true);
+    try {
+      // Save on the phone first, so the report survives no signal, app closes, and restarts.
+      await saveReport(submission, photo);
+      await reportsStore.refresh();
+    } catch (error) {
+      console.warn('Could not save report', error);
+      setSaving(false);
+      Alert.alert(
+        'Report not saved',
+        'Something went wrong while saving your report. Please try again. If it is urgent, call a hotline.',
+      );
+      return;
+    }
+    requestSync();
+    router.replace({ pathname: '/report/sent', params: { id: submission.id } });
   }
 
   return (
@@ -101,7 +118,7 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
           <Text style={styles.step}>Step 2 of 2</Text>
           <Text style={styles.title}>Add details</Text>
 
-          <OfflineBanner message={OFFLINE_REPORT_MESSAGE} />
+          <OfflineBanner title={OFFLINE_REPORT_TITLE} message={OFFLINE_REPORT_MESSAGE} />
 
           <View style={styles.categoryRow}>
             <View style={[styles.categoryIcon, { backgroundColor: look.tint }]}>
@@ -216,9 +233,9 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
             accessibilityState={{ disabled: !canSend }}
           >
             <Icon name={icons.send} size={22} color={colors.onEmergency} />
-            <Text style={styles.sendButtonText}>Send report</Text>
+            <Text style={styles.sendButtonText}>{saving ? 'Saving…' : 'Send report'}</Text>
           </Pressable>
-          {!canSend && (
+          {!canSend && !saving && (
             <Text style={styles.footerHint}>
               {photoBusy ? 'Preparing your photo…' : 'We need your location before sending.'}
             </Text>

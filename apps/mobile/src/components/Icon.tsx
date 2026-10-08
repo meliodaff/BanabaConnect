@@ -53,4 +53,7 @@ export const icons = {
   bell: { ios: 'bell.fill', android: 'notifications' },
   offline: { ios: 'wifi.slash', android: 'wifi_off' },
   online: { ios: 'wifi', android: 'wifi' },
+  queued: { ios: 'clock.arrow.circlepath', android: 'schedule_send' },
+  sending: { ios: 'icloud.and.arrow.up', android: 'cloud_upload' },
+  sent: { ios: 'checkmark.icloud', android: 'cloud_done' },
 } as const satisfies Record<string, IconName>;

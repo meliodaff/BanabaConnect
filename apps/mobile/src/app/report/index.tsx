@@ -4,7 +4,7 @@ import { CATEGORY_LABELS, REPORT_CATEGORIES, type ReportCategory } from '@banaba
 import { Icon } from '@/components/Icon';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
-import { OFFLINE_REPORT_MESSAGE } from '@/features/report/messages';
+import { OFFLINE_REPORT_MESSAGE, OFFLINE_REPORT_TITLE } from '@/features/report/messages';
 import { colors, radius } from '@/theme';
 
 export default function ChooseCategoryScreen() {
@@ -18,7 +18,11 @@ export default function ChooseCategoryScreen() {
       <Text style={styles.title}>What is happening?</Text>
       <Text style={styles.subtitle}>Ano ang nangyayari? Tap the closest match.</Text>
 
-      <OfflineBanner message={OFFLINE_REPORT_MESSAGE} style={styles.offlineBanner} />
+      <OfflineBanner
+        title={OFFLINE_REPORT_TITLE}
+        message={OFFLINE_REPORT_MESSAGE}
+        style={styles.offlineBanner}
+      />
 
       <View style={styles.grid}>
         {REPORT_CATEGORIES.map((category) => {

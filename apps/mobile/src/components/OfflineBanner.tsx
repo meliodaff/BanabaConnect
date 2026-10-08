@@ -2,20 +2,22 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Icon, icons } from '@/components/Icon';
 import { useIsOffline } from '@/features/network/useIsOffline';
+import { OFFLINE_DEFAULT_MESSAGE } from '@/features/report/messages';
 import { colors, radius } from '@/theme';
 
 const BACK_ONLINE_VISIBLE_MS = 3000;
 
-const DEFAULT_MESSAGE = 'Some features need internet. You can still call the hotlines.';
 
 /**
  * Shows "You're offline" while there is no internet, then "Back online" for a few
  * seconds once the connection returns. Renders nothing the rest of the time.
  */
 export function OfflineBanner({
-  message = DEFAULT_MESSAGE,
+  title = "You're offline",
+  message = OFFLINE_DEFAULT_MESSAGE,
   style,
 }: {
+  title?: string;
   message?: string;
   style?: StyleProp<ViewStyle>;
 }) {
@@ -46,7 +48,7 @@ export function OfflineBanner({
       >
         <Icon name={icons.offline} size={22} color={colors.warning} />
         <View style={styles.flex}>
-          <Text style={[styles.title, { color: colors.warning }]}>You&apos;re offline</Text>
+          <Text style={[styles.title, { color: colors.warning }]}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
         </View>
       </View>

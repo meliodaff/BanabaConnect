@@ -1,8 +1,11 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useSyncTriggers } from '@/features/queue/useSyncTriggers';
 import { colors } from '@/theme';
 
 export default function RootLayout() {
+  useSyncTriggers();
+
   return (
     <>
       <Stack
