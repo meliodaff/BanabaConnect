@@ -1,0 +1,13 @@
+{
+  "name": "banabaconnect",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "mobile": "npm run start --workspace @banabaconnect/mobile",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}
