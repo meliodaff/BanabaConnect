@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CATEGORY_LABELS } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
+import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
 import { useIsOffline } from '@/features/network/useIsOffline';
 import { useQueuedReports } from '@/features/queue/reportsStore';
 import { colors, radius } from '@/theme';
@@ -39,7 +40,7 @@ export default function ReportSentScreen() {
     tone = { color: colors.warning, background: colors.warningSoft };
     title = 'Saved on your phone';
     message = offline
-      ? 'No signal right now, and that is okay. Your report is queued and will be sent automatically as soon as you get even a little signal.'
+      ? 'No signal right now. Your report is queued and will be sent automatically as soon as you get even a little signal.'
       : 'Your signal is weak, so the report is queued. We will keep trying and send it automatically.';
   }
 
@@ -57,12 +58,20 @@ export default function ReportSentScreen() {
         <Text style={styles.message}>{message}</Text>
 
         {report?.syncStatus !== 'sent' && (
-          <View style={styles.tip}>
-            <Icon name={icons.phone} size={20} color={colors.textMuted} />
-            <Text style={styles.tipText}>
-              If someone is in danger right now, call a hotline too. Calls work without internet.
-            </Text>
-          </View>
+          <Pressable
+            onPress={() => callNumber(NATIONAL_EMERGENCY_NUMBER)}
+            style={({ pressed }) => [styles.tip, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel={`Call ${NATIONAL_EMERGENCY_NUMBER}`}
+          >
+            <Icon name={icons.phone} size={22} color={colors.emergency} />
+            <View style={styles.tipBody}>
+              <Text style={styles.tipTitle}>
+                Someone in danger now? Call {NATIONAL_EMERGENCY_NUMBER}
+              </Text>
+              <Text style={styles.tipText}>Calls work without internet.</Text>
+            </View>
+          </Pressable>
         )}
       </View>
 
@@ -123,18 +132,27 @@ const styles = StyleSheet.create({
   tip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: colors.background,
+    gap: 12,
+    backgroundColor: colors.emergencySoft,
     borderRadius: radius.md,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     marginTop: 24,
     maxWidth: 340,
   },
-  tipText: {
+  tipBody: {
     flex: 1,
+  },
+  tipTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.emergency,
+  },
+  tipText: {
     fontSize: 13,
     lineHeight: 18,
     color: colors.textMuted,
+    marginTop: 2,
   },
   primaryButton: {
     backgroundColor: colors.primary,

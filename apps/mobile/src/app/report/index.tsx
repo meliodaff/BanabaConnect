@@ -16,7 +16,9 @@ export default function ChooseCategoryScreen() {
     <ScrollView contentContainerStyle={styles.content}>
       <Text style={styles.step}>Step 1 of 2</Text>
       <Text style={styles.title}>What is happening?</Text>
-      <Text style={styles.subtitle}>Ano ang nangyayari? Tap the closest match.</Text>
+      <Text style={styles.subtitle}>
+        Ano ang nangyayari? Tap the closest match, or choose Other if you&apos;re not sure.
+      </Text>
 
       <OfflineBanner
         title={OFFLINE_REPORT_TITLE}

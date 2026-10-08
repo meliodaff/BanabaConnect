@@ -1,25 +1,15 @@
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon, icons } from '@/components/Icon';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { HOTLINES, type Hotline } from '@/features/hotlines/hotlines';
+import { callNumber } from '@/features/hotlines/call';
+import { HOTLINES } from '@/features/hotlines/hotlines';
 import { colors, radius } from '@/theme';
-
-async function call(hotline: Hotline) {
-  if (!hotline.number) {
-    return;
-  }
-  try {
-    await Linking.openURL(`tel:${hotline.number}`);
-  } catch {
-    Alert.alert('Could not start the call', `Please dial ${hotline.number} manually.`);
-  }
-}
 
 export default function HotlinesScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <OfflineBanner
-        message="Don't worry, calling a hotline doesn't need internet."
+        message="These calls still work without internet."
         style={styles.offlineBanner}
       />
       <Text style={styles.intro}>
@@ -28,39 +18,47 @@ export default function HotlinesScreen() {
       </Text>
 
       <View style={styles.card}>
-        {HOTLINES.map((hotline, index) => (
-          <Pressable
-            key={hotline.name}
-            onPress={() => call(hotline)}
-            disabled={!hotline.number}
-            style={({ pressed }) => [
-              styles.row,
-              index > 0 && styles.rowDivider,
-              pressed && styles.pressed,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={
-              hotline.number ? `Call ${hotline.name}, ${hotline.number}` : `${hotline.name}, number not yet available`
-            }
-          >
-            <View style={[styles.phoneIcon, !hotline.number && styles.phoneIconMuted]}>
-              <Icon
-                name={icons.phone}
-                size={22}
-                color={hotline.number ? colors.success : colors.disabled}
-              />
-            </View>
-            <View style={styles.flex}>
-              <Text style={styles.name}>{hotline.name}</Text>
-              <Text style={styles.description}>{hotline.description}</Text>
-            </View>
-            {hotline.number ? (
-              <Text style={styles.number}>{hotline.number}</Text>
-            ) : (
-              <Text style={styles.pending}>Number to be added</Text>
-            )}
-          </Pressable>
-        ))}
+        {HOTLINES.map((hotline, index) => {
+          const { number } = hotline;
+          return (
+            <Pressable
+              key={hotline.name}
+              onPress={() => number && callNumber(number)}
+              disabled={!number}
+              style={({ pressed }) => [
+                styles.row,
+                index > 0 && styles.rowDivider,
+                pressed && styles.pressed,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={
+                number
+                  ? `Call ${hotline.name}, ${number}`
+                  : `${hotline.name}, number not yet available`
+              }
+            >
+              <View style={[styles.phoneIcon, !number && styles.phoneIconMuted]}>
+                <Icon
+                  name={icons.phone}
+                  size={22}
+                  color={number ? colors.success : colors.disabled}
+                />
+              </View>
+              <View style={styles.flex}>
+                <Text style={styles.name}>{hotline.name}</Text>
+                <Text style={styles.description}>{hotline.description}</Text>
+              </View>
+              {number ? (
+                <View style={styles.callPill}>
+                  <Icon name={icons.phone} size={16} color={colors.onPrimary} />
+                  <Text style={styles.callPillText}>{number}</Text>
+                </View>
+              ) : (
+                <Text style={styles.pending}>Number not added yet</Text>
+              )}
+            </Pressable>
+          );
+        })}
       </View>
     </ScrollView>
   );
@@ -82,8 +80,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   intro: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 21,
     color: colors.textMuted,
     marginBottom: 16,
   },
@@ -97,6 +95,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingVertical: 14,
+    minHeight: 64,
   },
   rowDivider: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -119,19 +118,28 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   description: {
-    fontSize: 13,
+    fontSize: 14,
     color: colors.textMuted,
     marginTop: 2,
   },
-  number: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.success,
+  callPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.success,
+    borderRadius: radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  callPillText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.onPrimary,
   },
   pending: {
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textMuted,
-    maxWidth: 80,
+    maxWidth: 90,
     textAlign: 'right',
   },
   pressed: {

@@ -3,6 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
 import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
 import { colors, radius, shadow } from '@/theme';
 
@@ -23,7 +24,11 @@ const SERVICES: Service[] = [
 const STEPS: { icon: IconName; title: string; detail: string }[] = [
   { icon: icons.tap, title: 'Choose what is happening', detail: 'Flood, fire, accident, and more.' },
   { icon: icons.location, title: 'We add your location', detail: 'So responders know where to go.' },
-  { icon: icons.camera, title: 'Add a photo', detail: 'Optional, but it helps a lot.' },
+  {
+    icon: icons.camera,
+    title: 'Add a photo',
+    detail: 'Optional. Helps responders see how bad it is.',
+  },
   {
     icon: icons.queued,
     title: 'No signal? No problem',
@@ -47,13 +52,16 @@ export default function HomeScreen() {
             Banaba<Text style={styles.wordmarkAccent}>Connect</Text>
           </Text>
           <Pressable
-            onPress={() => comingSoon('Notifications')}
+            onPress={() => router.push('/reports')}
             style={styles.iconButton}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Notifications"
+            accessibilityLabel={
+              waiting > 0 ? `Report updates, ${waiting} waiting for signal` : 'Report updates'
+            }
           >
             <Icon name={icons.bell} size={22} color={colors.primary} />
+            {waiting > 0 && <Text style={styles.bellBadge}>{waiting}</Text>}
           </Pressable>
         </View>
 
@@ -104,7 +112,11 @@ export default function HomeScreen() {
               {({ pressed }) => (
                 <>
                   <View style={[styles.serviceCircle, pressed && styles.pressed]}>
-                    <Icon name={service.icon} size={26} color={colors.primary} />
+                    <Icon
+                      name={service.icon}
+                      size={26}
+                      color={service.href ? colors.primary : colors.textMuted}
+                    />
                     {!service.href && <Text style={styles.soonBadge}>Soon</Text>}
                   </View>
                   <Text style={styles.serviceLabel} numberOfLines={1} adjustsFontSizeToFit>
@@ -124,15 +136,27 @@ export default function HomeScreen() {
         >
           <View style={styles.flex}>
             <Text style={styles.bannerEyebrow}>May emergency?</Text>
-            <Text style={styles.bannerTitle}>Report it to the barangay in under a minute</Text>
+            <Text style={styles.bannerTitle}>Report it to the barangay in a few taps</Text>
             <Text style={styles.bannerNote}>Works even with no signal</Text>
-            <View style={styles.bannerButton}>
-              <Text style={styles.bannerButtonText}>Report now</Text>
+            <View style={styles.bannerActions}>
+              <View style={styles.bannerButton}>
+                <Text style={styles.bannerButtonText}>Report now</Text>
+              </View>
+              <Pressable
+                onPress={() => callNumber(NATIONAL_EMERGENCY_NUMBER)}
+                style={({ pressed }) => [styles.callButton, pressed && styles.pressed]}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={`Call ${NATIONAL_EMERGENCY_NUMBER}`}
+              >
+                <Icon name={icons.phone} size={16} color={colors.emergency} />
+                <Text style={styles.callButtonText}>Call {NATIONAL_EMERGENCY_NUMBER}</Text>
+              </Pressable>
             </View>
           </View>
           <View style={styles.bannerArt}>
             <View style={styles.bannerArtInner}>
-              <Icon name={icons.emergency} size={40} color={colors.onEmergency} />
+              <Icon name={icons.emergency} size={34} color={colors.onEmergency} />
             </View>
           </View>
         </Pressable>
@@ -196,6 +220,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  bellBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: radius.pill,
+    backgroundColor: colors.warning,
+    color: colors.onPrimary,
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 20,
+    paddingHorizontal: 5,
+    overflow: 'hidden',
+  },
   offlineBanner: {
     marginHorizontal: 20,
     marginTop: 16,
@@ -251,17 +291,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -6,
     right: -10,
-    backgroundColor: colors.emergency,
-    color: colors.onEmergency,
-    fontSize: 9,
-    fontWeight: '800',
+    backgroundColor: colors.border,
+    color: colors.textMuted,
+    fontSize: 10,
+    fontWeight: '700',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
   serviceLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
@@ -318,30 +358,50 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 2,
   },
+  bannerActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
   bannerButton: {
-    alignSelf: 'flex-start',
     backgroundColor: colors.emergency,
     borderRadius: radius.pill,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginTop: 12,
+    paddingVertical: 10,
   },
   bannerButtonText: {
     color: colors.onEmergency,
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  callButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.emergency,
+    borderRadius: radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  callButtonText: {
+    color: colors.emergency,
+    fontSize: 15,
     fontWeight: '700',
   },
   bannerArt: {
-    width: 92,
-    height: 92,
+    width: 80,
+    height: 80,
     borderRadius: radius.pill,
     backgroundColor: colors.emergencySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   bannerArtInner: {
-    width: 68,
-    height: 68,
+    width: 58,
+    height: 58,
     borderRadius: radius.pill,
     backgroundColor: colors.emergency,
     alignItems: 'center',

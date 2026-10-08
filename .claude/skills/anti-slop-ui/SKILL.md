@@ -1,82 +1,72 @@
 ---
 name: anti-slop-ui
-description: Audit or fix "AI slop" in BanabaConnect's mobile UI and UX - generic AI-generated visuals, dead or duplicate controls, decorative color, and filler microcopy. Use when designing, reviewing, or changing any screen, component, style, or user-facing text in apps/mobile, or when the user says the UI feels generic, cluttered, template-like, or "AI-made".
+description: Audit or improve BanabaConnect's mobile UI and UX for usability and "AI slop" - unclear next steps, dead or confusing controls, missing feedback, misused colors, and filler microcopy - while keeping the app's chosen eGovPH-style look. Use when designing, reviewing, or changing any screen, component, style, or user-facing text in apps/mobile, or when the user says the UI feels confusing, unintuitive, generic, or "AI-made".
 ---
 
 # Anti-slop UI for BanabaConnect
 
-AI-generated interfaces share a look: every item in a rounded card, every icon in a pastel
-circle, a rainbow of accent colors, an uppercase eyebrow over every heading, a carousel of
-"how it works" cards, and cheerful filler text. None of it helps a resident report a flood at
-night with one bar of signal. This skill names those patterns and says what to do instead.
+Slop in an app is anything that makes the resident stop and think without a reason: a button
+that does nothing, a status that doesn't say what happens next, a red badge on something that
+isn't urgent, cheerful text that says nothing. This skill names those patterns and what to do
+instead, inside the visual style the project already chose.
 
 ## Who the app is for
 
-Decide every screen against this person, not against a design gallery:
+Decide every screen against this person:
 
 - A Barangay Banaba resident, possibly panicking, wet, or holding a child, using one hand.
 - A low- to mid-range Android phone, often in bright sun or at night, with weak or no signal.
 - Reads English and Tagalog; may not read long text at all in the moment.
 - Has one job on most visits: report what is happening, or check that the report went through.
 
-If an element does not help that job, a status the resident needs, or a real feature that
-works today, remove it.
+## House style: keep it
+
+The user chose an eGovPH-inspired look and asked to keep it after a stripped-down redesign.
+Do not remove or flatten these:
+
+- White home with the wordmark top bar, greeting row, round service icons in a 4-column grid,
+  the light-blue report banner, and the "How reporting works" step cards.
+- Icons in soft tinted circles, per-category icon colors, rounded cards with soft shadows.
+- The raised round Report button in the middle of the tab bar.
+- Bold titles and the existing type scale.
+
+Improve usability inside this style: make actions clearer, states more visible, controls
+honest, and text more useful. Propose larger visual changes to the user before making them.
 
 ## Two modes
 
-**Audit.** List each pattern below that appears, with `file:line`, the offending element or
-string, and the fix in a few words. Do not change code. Rank by harm to the reporting flow.
+**Audit.** List each problem below that appears, with `file:line`, the element or string, and
+the fix in a few words. Do not change code. Rank by harm to the reporting flow.
 
-**Apply.** Fix the patterns with the smallest change that removes them. Keep layout decisions
-the user explicitly asked for (for example, the eGovPH-style home and the raised center Report
-tab), but strip the slop inside them. Say what you removed and why.
+**Apply.** Fix the problems with the smallest change that keeps the house style. Say what
+changed and why.
 
-## Visual patterns to cut
+## Interaction problems to fix
 
-**Icon-in-a-tinted-circle everywhere.** A pastel disc behind every icon (steps, headers,
-tiles, avatars, empty states) is the most recognizable AI-app tell. Use a bare icon at text
-color or the primary color. Keep a filled shape only where it carries meaning, such as the
-round Report button.
+**Dead controls.** A bell, tile, or button that only says "coming soon" feels broken. Either
+give it a real job (for example, the bell opens report updates) or mark it clearly as not
+available (a gray "Soon" badge, a muted icon) so nobody expects it to work.
 
-**Rainbow accents.** Eight category tints, green phone icons, purple shelters: color as
-decoration. Color in this app is a signal, so each color has one meaning (see Color rules).
-Categories are told apart by icon and label, not by hue.
+**Unclear next step.** Every screen should make the next tap obvious. A disabled button must
+say why it is disabled, on or next to the button ("Waiting for your location").
 
-**Card soup.** Wrapping every block in a white rounded card with a soft shadow flattens the
-hierarchy; when everything is a card, nothing stands out. Use plain sections on the page
-background with dividers and spacing. Reserve cards for items in a list and for the one
-primary action.
+**Missing feedback.** Every tap gets a visible response (pressed state, spinner, or a change
+of screen). Every report shows where it is: waiting for signal, sending, or sent.
 
-**Uppercase eyebrows.** "STEP 1 OF 2", "MAY EMERGENCY?" in small tracked capitals over a
-heading. Use sentence case, regular weight, muted color, or drop the label.
+**Hidden content.** Horizontal scrollers must show that they scroll (a partly visible next
+card is enough) and must not hide anything the resident needs to act.
 
-**Weight inflation.** 800-weight text all over the screen. Use at most two weights per screen
-(700 for titles and the main action, 400 to 600 for the rest).
+**Unverifiable promises.** Say only what the app can guarantee right now. "Sent" means the
+server accepted it, nothing more.
 
-**Decorative art.** Concentric circles, glows, hero icons at 60px, illustrations that say
-nothing. If it is not tappable and not information, cut it.
+**Alarm misuse.** Red means emergency or a problem the resident must fix. A red badge on a
+non-urgent item ("Soon") trains people to ignore red.
 
-**Carousels for content.** Horizontal scrolls hide most of their cards off-screen. If the
-content matters, stack it; if it does not, remove it.
+**Emergency shortcuts.** On any screen where a resident might be in immediate danger (home,
+confirmation, offline states), a call to 911 should be one tap away.
 
-## Interaction patterns to cut
-
-**Dead controls.** A bell, tile, or button that only says "coming soon" looks like a broken
-app during an emergency. Do not show unbuilt features as full-weight controls. If the user
-wants them visible, group them as one quiet, non-interactive "Coming soon" line.
-
-**Duplicate entry points on one screen.** The same action as a banner, a tile, and a button
-makes the resident wonder which is the real one. One prominent primary action per screen;
-the tab bar already gives global access.
-
-**Fake personalization.** "Hi, Guest!" with a generic avatar is filler. Greet by name only
-when there is an account; otherwise show something useful (the barangay, connection state,
-waiting reports).
-
-**Unverifiable promises.** "In under a minute", "Sent to the barangay" before a server
-confirms it. Say only what the app can guarantee right now.
-
-**Alarm misuse.** A red badge on a non-urgent item ("Soon") trains people to ignore red.
+**Small text and targets.** Body text at least 15px, secondary text at least 13px, tap targets
+at least 44px, contrast at least 4.5:1. Sunlight and panic make small text unreadable.
 
 ## Copy patterns to cut
 
@@ -85,8 +75,8 @@ in UI are:
 
 - **Lead with the fact or action.** "Saved on your phone." not "Great news! Your report has
   been successfully saved."
-- **Cut reassurance filler.** "Don't worry", "and that is okay", "No problem", exclamation
-  marks. State what happens next instead; that is what reassures.
+- **Cut reassurance filler.** "Don't worry", "and that is okay", "No problem". State what
+  happens next instead; that is what reassures.
 - **No kickers.** Drop closing lines like "Stay safe and keep your phone with you." unless
   they are an instruction the resident needs.
 - **Concrete over vague.** "Optional, but it helps a lot" says nothing; "A photo helps
@@ -99,31 +89,29 @@ in UI are:
 - **Banned words**: seamless, effortless, empower, leverage, utilize, robust, elevate,
   journey, unlock, supercharge.
 
-**Language.** Use Tagalog where it does a job: category names under the English label, and
-the main question on the report screen. Do not sprinkle decorative Tagalog ("Abangan!",
-"Salamat!", "Kumusta!") into English sentences. Full Tagalog belongs in a proper language
-setting, not in interjections.
+**Language.** Tagalog labels under English ones (categories, the main report question) are
+part of the design. Keep short friendly Tagalog touches the user already accepted (greeting,
+"May emergency?"), but don't add new interjections without asking.
 
 ## Color rules
 
 | Color | Meaning | Use for |
 |---|---|---|
-| Red (`colors.emergency`) | Emergency action or danger | Report button, location/permission errors |
+| Red (`colors.emergency`) | Emergency action or danger | Report actions, 911, errors the resident must fix |
 | Amber (`colors.warning`) | Waiting or degraded | Offline, waiting for signal, approximate location |
-| Green (`colors.success`) | Done | Sent, location found |
-| Blue (`colors.primary`) | Navigation and secondary actions | Links, tabs, secondary buttons |
-| Ink and grays | Everything else | Text, icons, dividers |
-
-Any other hue needs a reason written next to it in code.
+| Green (`colors.success`) | Done or available | Sent, location found, callable hotlines |
+| Blue (`colors.primary`) | Navigation and secondary actions | Links, tabs, service icons |
+| Category tints | Recognizing a category | Category icons only |
+| Grays | Inactive or not available | "Soon" badges, disabled controls |
 
 ## Checklist before finishing a UI change
 
 1. Can a resident start a report from this screen in one tap, and is it obvious which tap?
-2. Does every visible control work today?
-3. Does every color follow the table above?
-4. Are there icons in tinted circles, uppercase eyebrows, or cards wrapping single blocks?
+2. Does every visible control either work or clearly look unavailable?
+3. Does every disabled button say why?
+4. Does every color follow the table above?
 5. Does any string fail the portability test, use filler reassurance, or promise more than the
    code delivers?
-6. Is text readable in sunlight: body at least 15px, contrast at least 4.5:1, tap targets at
-   least 44px?
-7. Did typecheck and lint pass, and did you look at the result (screenshot or device)?
+6. Is text readable in sunlight (sizes and contrast above)?
+7. Did the house style survive the change?
+8. Did typecheck and lint pass, and did you look at the result (screenshot or device)?

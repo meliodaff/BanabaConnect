@@ -22,6 +22,7 @@ import {
 } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { useIsOffline } from '@/features/network/useIsOffline';
 import { buildSubmission, INCIDENT_TIME_OPTIONS } from '@/features/report/buildSubmission';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
 import { OFFLINE_REPORT_MESSAGE, OFFLINE_REPORT_TITLE } from '@/features/report/messages';
@@ -58,7 +59,9 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
   const look = CATEGORY_APPEARANCE[category];
 
   const [saving, setSaving] = useState(false);
+  const offline = useIsOffline();
   const canSend = location.coords !== null && !photoBusy && !saving;
+  const sendState = describeSendState({ location, photoBusy, saving, offline });
 
   async function handlePickPhoto(source: PhotoSource) {
     setPhotoBusy(true);
@@ -232,18 +235,55 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
             accessibilityRole="button"
             accessibilityState={{ disabled: !canSend }}
           >
-            <Icon name={icons.send} size={22} color={colors.onEmergency} />
-            <Text style={styles.sendButtonText}>{saving ? 'Saving…' : 'Send report'}</Text>
+            {sendState.busy ? (
+              <ActivityIndicator color={colors.onEmergency} />
+            ) : (
+              canSend && <Icon name={icons.send} size={22} color={colors.onEmergency} />
+            )}
+            <Text style={styles.sendButtonText}>{sendState.label}</Text>
           </Pressable>
-          {!canSend && !saving && (
-            <Text style={styles.footerHint}>
-              {photoBusy ? 'Preparing your photo…' : 'We need your location before sending.'}
-            </Text>
-          )}
+          {sendState.hint && <Text style={styles.footerHint}>{sendState.hint}</Text>}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
+}
+
+/** What the Send button says, and why it can't be pressed yet. */
+function describeSendState({
+  location,
+  photoBusy,
+  saving,
+  offline,
+}: {
+  location: LocationState;
+  photoBusy: boolean;
+  saving: boolean;
+  offline: boolean;
+}): { label: string; hint: string | null; busy: boolean } {
+  if (saving) {
+    return { label: 'Saving…', hint: null, busy: true };
+  }
+  if (photoBusy) {
+    return { label: 'Preparing photo…', hint: null, busy: true };
+  }
+  if (location.coords === null) {
+    return location.status === 'locating'
+      ? {
+          label: 'Finding your location…',
+          hint: 'You can send as soon as your location is found.',
+          busy: true,
+        }
+      : { label: 'Location needed', hint: 'Turn on location above to send your report.', busy: false };
+  }
+  if (offline) {
+    return {
+      label: 'Save and send later',
+      hint: 'No signal. Saved on your phone and sent automatically when you get signal.',
+      busy: false,
+    };
+  }
+  return { label: 'Send report', hint: null, busy: false };
 }
 
 function Section({
