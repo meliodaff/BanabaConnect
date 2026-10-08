@@ -79,11 +79,11 @@ const styles = StyleSheet.create({
   },
   offline: {
     backgroundColor: colors.warningSoft,
-    borderColor: '#F3D9A8',
+    borderColor: colors.warningBorder,
   },
   online: {
     backgroundColor: colors.successSoft,
-    borderColor: '#C3E3C5',
+    borderColor: colors.successBorder,
   },
   flex: {
     flex: 1,

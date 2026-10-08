@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   wordmarkAccent: {
-    color: colors.emergency,
+    color: colors.brandAccent,
   },
   iconButton: {
     width: 40,

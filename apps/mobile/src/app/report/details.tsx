@@ -124,8 +124,8 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
           <OfflineBanner title={OFFLINE_REPORT_TITLE} message={OFFLINE_REPORT_MESSAGE} />
 
           <View style={styles.categoryRow}>
-            <View style={[styles.categoryIcon, { backgroundColor: look.tint }]}>
-              <Icon name={look.icon} size={26} color={look.color} />
+            <View style={[styles.categoryIcon, { backgroundColor: colors.categoryTint }]}>
+              <Icon name={look.icon} size={26} color={colors.categoryIcon} />
             </View>
             <View style={styles.flex}>
               <Text style={styles.categoryLabel}>{CATEGORY_LABELS[category]}</Text>

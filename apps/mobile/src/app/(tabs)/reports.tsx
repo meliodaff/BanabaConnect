@@ -58,7 +58,7 @@ function WaitingSummary({ count }: { count: number }) {
           {count === 1 ? '1 report waiting for signal' : `${count} reports waiting for signal`}
         </Text>
         <Text style={styles.summaryText}>
-          Saved on your phone. They will be sent automatically when you get signal.
+          Saved on your phone. Sends automatically when you get signal.
         </Text>
       </View>
       <Pressable
@@ -124,8 +124,8 @@ function ReportCard({ report, sending }: { report: QueuedReport; sending: boolea
       {photo ? (
         <Image source={{ uri: photo.uri }} style={styles.thumbnail} />
       ) : (
-        <View style={[styles.thumbnail, styles.iconThumbnail, { backgroundColor: look.tint }]}>
-          <Icon name={look.icon} size={28} color={look.color} />
+        <View style={[styles.thumbnail, styles.iconThumbnail, { backgroundColor: colors.categoryTint }]}>
+          <Icon name={look.icon} size={28} color={colors.categoryIcon} />
         </View>
       )}
       <View style={styles.flex}>
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: '#F3D9A8',
+    borderColor: colors.warningBorder,
     padding: 14,
   },
   summaryTitle: {

@@ -37,8 +37,8 @@ export default function ChooseCategoryScreen() {
               accessibilityRole="button"
               accessibilityLabel={`${CATEGORY_LABELS[category]}, ${look.tagalog}`}
             >
-              <View style={[styles.tileIcon, { backgroundColor: look.tint }]}>
-                <Icon name={look.icon} size={32} color={look.color} />
+              <View style={[styles.tileIcon, { backgroundColor: colors.categoryTint }]}>
+                <Icon name={look.icon} size={32} color={colors.categoryIcon} />
               </View>
               <Text style={styles.tileLabel}>{CATEGORY_LABELS[category]}</Text>
               <Text style={styles.tileTagalog}>{look.tagalog}</Text>

@@ -1,24 +1,38 @@
+// Every color in the app comes from here, so the palette can change in one place.
+// The palette follows the banaba tree (Lagerstroemia speciosa) that Barangay Banaba is
+// named after: mauve-purple petals, dark green leaves, yellow stamens, cream and bark tones.
+// Emergency red is not from the tree; it stays so emergencies stand out.
 export const colors = {
-  primary: '#1447C6',
-  primaryDark: '#0E3496',
-  primarySoft: '#EAF0FC',
+  /** Banaba petal purple. */
+  primary: '#6A3A8E',
+  primaryDark: '#52296F',
+  primarySoft: '#F3ECF8',
   onPrimary: '#FFFFFF',
-  background: '#F5F7FB',
+  /** Banaba leaf green, used for the "Connect" in the wordmark. */
+  brandAccent: '#2F6B3F',
+  background: '#FAF7F2',
   surface: '#FFFFFF',
-  border: '#E3E8F0',
-  text: '#16213A',
-  textMuted: '#5E6A80',
-  emergency: '#D32F2F',
-  emergencySoft: '#FDECEC',
+  border: '#E9E2DA',
+  text: '#2A2230',
+  textMuted: '#6E6474',
+  emergency: '#C62E2E',
+  emergencySoft: '#FBEAE8',
   onEmergency: '#FFFFFF',
-  selected: '#1447C6',
-  selectedSoft: '#EAF0FC',
+  selected: '#6A3A8E',
+  selectedSoft: '#F3ECF8',
   onSelected: '#FFFFFF',
-  success: '#2E7D32',
-  successSoft: '#E8F5E9',
-  warning: '#B26A00',
-  warningSoft: '#FFF4E0',
-  disabled: '#A9AEB6',
+  /** Leaf green. */
+  success: '#2F6B3F',
+  successSoft: '#E7F1E8',
+  successBorder: '#C4DCC8',
+  /** Stamen gold, darkened for readable text. */
+  warning: '#946200',
+  warningSoft: '#FBF4DC',
+  warningBorder: '#EADBA6',
+  disabled: '#B3ABB5',
+  /** Report category icons share one color; the icon and label tell them apart. */
+  categoryIcon: '#6A3A8E',
+  categoryTint: '#F3ECF8',
 };
 
 export const radius = {
@@ -31,7 +45,7 @@ export const radius = {
 
 export const shadow = {
   card: {
-    shadowColor: '#16213A',
+    shadowColor: colors.text,
     shadowOpacity: 0.08,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },

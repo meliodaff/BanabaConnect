@@ -95,14 +95,19 @@ part of the design. Keep short friendly Tagalog touches the user already accepte
 
 ## Color rules
 
-| Color | Meaning | Use for |
+The palette comes from the banaba tree (Lagerstroemia speciosa) that the barangay is named
+after. All values live in `apps/mobile/src/theme.ts`; never hard-code a hex value elsewhere.
+
+| Token | Source | Use for |
 |---|---|---|
-| Red (`colors.emergency`) | Emergency action or danger | Report actions, 911, errors the resident must fix |
-| Amber (`colors.warning`) | Waiting or degraded | Offline, waiting for signal, approximate location |
-| Green (`colors.success`) | Done or available | Sent, location found, callable hotlines |
-| Blue (`colors.primary`) | Navigation and secondary actions | Links, tabs, service icons |
-| Category tints | Recognizing a category | Category icons only |
-| Grays | Inactive or not available | "Soon" badges, disabled controls |
+| `emergency` (red) | Not from the tree, on purpose | Report actions, 911, errors the resident must fix |
+| `primary` (petal purple) | Banaba flowers | Navigation, links, tabs, service and category icons |
+| `success` / `brandAccent` (leaf green) | Banaba leaves | Sent, location found, callable hotlines, "Connect" in the wordmark |
+| `warning` (stamen gold) | Yellow stamens | Offline, waiting for signal, approximate location |
+| `background`, `text` (cream, plum-brown) | Petals and bark | Page backgrounds and text |
+| Grays (`disabled`, `border`) | | "Soon" badges, inactive controls |
+
+Report categories share one icon color (`categoryIcon`); do not give each category its own hue.
 
 ## Checklist before finishing a UI change
 
