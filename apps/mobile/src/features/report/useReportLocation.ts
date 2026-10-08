@@ -10,6 +10,8 @@ export interface ReportCoords {
 export type LocationState =
   | { status: 'locating'; coords: ReportCoords | null }
   | { status: 'ready'; coords: ReportCoords }
+  /** An older fix used because a fresh one could not be found in time. */
+  | { status: 'approximate'; coords: ReportCoords }
   | { status: 'denied'; coords: null }
   | { status: 'error'; coords: ReportCoords | null };
 
@@ -17,6 +19,10 @@ export type LocationState =
 // a fresh one is requested. GPS itself works without mobile data.
 const LAST_KNOWN_MAX_AGE_MS = 2 * 60 * 1000;
 const LAST_KNOWN_REQUIRED_ACCURACY_M = 100;
+// How long to wait for a fresh GPS fix before falling back or offering a retry.
+const CURRENT_POSITION_TIMEOUT_MS = 20 * 1000;
+// Oldest fix accepted as a fallback when a fresh one can't be found.
+const FALLBACK_MAX_AGE_MS = 30 * 60 * 1000;
 
 function toCoords(location: Location.LocationObject): ReportCoords {
   return {
@@ -43,15 +49,38 @@ async function findLocation(update: (action: SetStateAction<LocationState>) => v
       update({ status: 'locating', coords: toCoords(lastKnown) });
     }
 
-    const current = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
-    });
+    const current = await withTimeout(
+      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
+      CURRENT_POSITION_TIMEOUT_MS,
+    );
     update({ status: 'ready', coords: toCoords(current) });
   } catch {
-    update((prev) =>
-      prev.coords ? { status: 'ready', coords: prev.coords } : { status: 'error', coords: null },
-    );
+    // No fresh fix in time (e.g. indoors). Fall back to an older fix rather than block the report.
+    const fallback = await Location.getLastKnownPositionAsync({
+      maxAge: FALLBACK_MAX_AGE_MS,
+    }).catch(() => null);
+    update((prev) => {
+      if (prev.coords) return { status: 'ready', coords: prev.coords };
+      if (fallback) return { status: 'approximate', coords: toCoords(fallback) };
+      return { status: 'error', coords: null };
+    });
   }
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`Timed out after ${ms} ms`)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
 }
 
 /** Gets the resident's position for a report. Call `retryLocation` after a denial or error. */
