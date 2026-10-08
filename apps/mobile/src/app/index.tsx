@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@/theme';
 
@@ -8,11 +8,13 @@ export default function HomeScreen() {
       <Text style={styles.heading}>Barangay Banaba</Text>
       <Text style={styles.subheading}>Report an emergency to the barangay, even with weak signal.</Text>
 
-      <Link href="/report" asChild>
-        <Pressable style={({ pressed }) => [styles.reportButton, pressed && styles.pressed]}>
-          <Text style={styles.reportButtonText}>Report an emergency</Text>
-        </Pressable>
-      </Link>
+      <Pressable
+        onPress={() => router.push('/report')}
+        style={({ pressed }) => [styles.reportButton, pressed && styles.pressed]}
+        accessibilityRole="button"
+      >
+        <Text style={styles.reportButtonText}>Report an emergency</Text>
+      </Pressable>
     </View>
   );
 }
