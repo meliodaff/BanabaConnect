@@ -1,39 +1,45 @@
-import { router, type Href } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { callNumber } from '@/features/hotlines/call';
 import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
-import { colors, radius, shadow } from '@/theme';
+import { colors, radius } from '@/theme';
 
-interface Service {
+const NATIONAL_EMERGENCY_NUMBER = '911';
+
+interface QuickAction {
   label: string;
+  detail: string;
   icon: IconName;
-  /** Where the tile goes; `null` shows a "coming soon" notice. */
-  href: Href | null;
+  color: string;
+  onPress: () => void;
 }
 
-const SERVICES: Service[] = [
-  { label: 'My Reports', icon: icons.reports, href: '/reports' },
-  { label: 'Hotlines', icon: icons.phone, href: '/hotlines' },
-  { label: 'Announcements', icon: icons.announce, href: null },
-  { label: 'Evacuation', icon: icons.evacuation, href: null },
-];
-
-const STEPS: { icon: IconName; title: string; detail: string }[] = [
-  { icon: icons.tap, title: 'Choose what is happening', detail: 'Flood, fire, accident, and more.' },
-  { icon: icons.location, title: 'We add your location', detail: 'So responders know where to go.' },
-  { icon: icons.camera, title: 'Add a photo', detail: 'Optional, but it helps a lot.' },
+const QUICK_ACTIONS: QuickAction[] = [
   {
-    icon: icons.queued,
-    title: 'No signal? No problem',
-    detail: 'Saved on your phone and sent as soon as you get signal.',
+    label: `Call ${NATIONAL_EMERGENCY_NUMBER}`,
+    detail: 'National hotline',
+    icon: icons.phone,
+    color: colors.emergency,
+    onPress: () => callNumber(NATIONAL_EMERGENCY_NUMBER),
+  },
+  {
+    label: 'Hotlines',
+    detail: 'All numbers',
+    icon: icons.phone,
+    color: colors.primary,
+    onPress: () => router.push('/hotlines'),
+  },
+  {
+    label: 'My reports',
+    detail: 'Check status',
+    icon: icons.reports,
+    color: colors.primary,
+    onPress: () => router.push('/reports'),
   },
 ];
-
-function comingSoon(label: string) {
-  Alert.alert(label, 'This service is coming soon. Abangan!');
-}
 
 export default function HomeScreen() {
   const { reports } = useQueuedReports();
@@ -42,120 +48,68 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topBar}>
-          <Text style={styles.wordmark}>
-            Banaba<Text style={styles.wordmarkAccent}>Connect</Text>
-          </Text>
-          <Pressable
-            onPress={() => comingSoon('Notifications')}
-            style={styles.iconButton}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Notifications"
-          >
-            <Icon name={icons.bell} size={22} color={colors.primary} />
-          </Pressable>
-        </View>
+        <Text style={styles.wordmark}>
+          Banaba<Text style={styles.wordmarkAccent}>Connect</Text>
+        </Text>
+        <Text style={styles.place}>Barangay Banaba, San Mateo, Rizal</Text>
 
         <OfflineBanner style={styles.offlineBanner} />
 
-        <View style={styles.greetingRow}>
-          <View style={styles.avatar}>
-            <Icon name={icons.profile} size={40} color={colors.primary} />
-          </View>
+        <Pressable
+          onPress={() => router.push('/report')}
+          style={({ pressed }) => [styles.reportButton, pressed && styles.reportButtonPressed]}
+          accessibilityRole="button"
+          accessibilityLabel="Report an emergency"
+        >
+          <Icon name={icons.emergency} size={36} color={colors.onEmergency} />
           <View style={styles.flex}>
-            <Text style={styles.greeting}>Hi, Guest!</Text>
-            <Text style={styles.greetingSub}>Barangay Banaba, San Mateo, Rizal</Text>
+            <Text style={styles.reportTitle}>Report an emergency</Text>
+            <Text style={styles.reportDetail}>Works with no signal. Sent when you reconnect.</Text>
           </View>
-        </View>
+          <Icon name={icons.chevron} size={26} color={colors.onEmergency} />
+        </Pressable>
 
         {waiting > 0 && (
           <Pressable
             onPress={() => router.push('/reports')}
-            style={({ pressed }) => [styles.waitingCard, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.waiting, pressed && styles.pressed]}
             accessibilityRole="button"
           >
-            <Icon name={icons.queued} size={24} color={colors.warning} />
+            <Icon name={icons.queued} size={22} color={colors.warning} />
             <View style={styles.flex}>
               <Text style={styles.waitingTitle}>
                 {waiting === 1
                   ? '1 report waiting for signal'
                   : `${waiting} reports waiting for signal`}
               </Text>
-              <Text style={styles.waitingText}>
-                Saved on your phone. Sends automatically when you get signal.
-              </Text>
+              <Text style={styles.waitingText}>Saved on your phone. Sends automatically.</Text>
             </View>
             <Icon name={icons.chevron} size={22} color={colors.textMuted} />
           </Pressable>
         )}
 
-        <View style={styles.grid}>
-          {SERVICES.map((service) => (
+        <View style={styles.actions}>
+          {QUICK_ACTIONS.map((action, index) => (
             <Pressable
-              key={service.label}
-              onPress={() =>
-                service.href ? router.push(service.href) : comingSoon(service.label)
-              }
-              style={styles.serviceTile}
+              key={action.label}
+              onPress={action.onPress}
+              style={({ pressed }) => [
+                styles.action,
+                index > 0 && styles.actionDivider,
+                pressed && styles.pressed,
+              ]}
               accessibilityRole="button"
-              accessibilityLabel={service.href ? service.label : `${service.label}, coming soon`}
             >
-              {({ pressed }) => (
-                <>
-                  <View style={[styles.serviceCircle, pressed && styles.pressed]}>
-                    <Icon name={service.icon} size={26} color={colors.primary} />
-                    {!service.href && <Text style={styles.soonBadge}>Soon</Text>}
-                  </View>
-                  <Text style={styles.serviceLabel} numberOfLines={1} adjustsFontSizeToFit>
-                    {service.label}
-                  </Text>
-                </>
-              )}
+              <Icon name={action.icon} size={26} color={action.color} />
+              <Text style={[styles.actionLabel, { color: action.color }]}>{action.label}</Text>
+              <Text style={styles.actionDetail}>{action.detail}</Text>
             </Pressable>
           ))}
         </View>
 
-        <Pressable
-          onPress={() => router.push('/report')}
-          style={({ pressed }) => [styles.banner, pressed && styles.pressed]}
-          accessibilityRole="button"
-          accessibilityLabel="Report an emergency now"
-        >
-          <View style={styles.flex}>
-            <Text style={styles.bannerEyebrow}>May emergency?</Text>
-            <Text style={styles.bannerTitle}>Report it to the barangay in under a minute</Text>
-            <Text style={styles.bannerNote}>Works even with no signal</Text>
-            <View style={styles.bannerButton}>
-              <Text style={styles.bannerButtonText}>Report now</Text>
-            </View>
-          </View>
-          <View style={styles.bannerArt}>
-            <View style={styles.bannerArtInner}>
-              <Icon name={icons.emergency} size={40} color={colors.onEmergency} />
-            </View>
-          </View>
-        </Pressable>
-
-        <Text style={styles.sectionTitle}>How reporting works</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.featuredRow}
-        >
-          {STEPS.map((step, index) => (
-            <View key={step.title} style={styles.featuredCard}>
-              <View style={styles.featuredTop}>
-                <View style={styles.featuredIcon}>
-                  <Icon name={step.icon} size={22} color={colors.primary} />
-                </View>
-                <Text style={styles.featuredStep}>Step {index + 1}</Text>
-              </View>
-              <Text style={styles.featuredTitle}>{step.title}</Text>
-              <Text style={styles.featuredDetail}>{step.detail}</Text>
-            </View>
-          ))}
-        </ScrollView>
+        <Text style={styles.comingSoon}>
+          Coming soon: barangay announcements and evacuation centers.
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -167,145 +121,60 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   content: {
-    paddingBottom: 32,
+    padding: 20,
+    paddingBottom: 40,
   },
   flex: {
     flex: 1,
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
   wordmark: {
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.primary,
-    letterSpacing: -0.3,
+    marginTop: 8,
   },
   wordmarkAccent: {
     color: colors.emergency,
   },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  offlineBanner: {
-    marginHorizontal: 20,
-    marginTop: 16,
-  },
-  greetingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  greeting: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  greetingSub: {
-    fontSize: 13,
+  place: {
+    fontSize: 15,
     color: colors.textMuted,
     marginTop: 2,
   },
-  grid: {
+  offlineBanner: {
+    marginTop: 20,
+  },
+  reportButton: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 12,
-    marginTop: 24,
-    rowGap: 18,
-  },
-  serviceTile: {
-    width: '25%',
     alignItems: 'center',
-  },
-  serviceCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadow.card,
-  },
-  soonBadge: {
-    position: 'absolute',
-    top: -6,
-    right: -10,
+    gap: 14,
     backgroundColor: colors.emergency,
-    color: colors.onEmergency,
-    fontSize: 9,
-    fontWeight: '800',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-    overflow: 'hidden',
-  },
-  serviceLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.text,
-    textAlign: 'center',
-    marginTop: 8,
-    paddingHorizontal: 2,
-  },
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginHorizontal: 20,
-    marginTop: 28,
-    padding: 18,
-    borderRadius: radius.xl,
-    backgroundColor: colors.primarySoft,
-  },
-  bannerEyebrow: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.emergency,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  bannerTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: colors.text,
-    marginTop: 4,
-    lineHeight: 23,
-  },
-  bannerNote: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.primary,
-    marginTop: 4,
-  },
-  waitingCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginHorizontal: 20,
-    marginTop: 16,
-    padding: 14,
     borderRadius: radius.lg,
+    paddingVertical: 22,
+    paddingHorizontal: 18,
+    marginTop: 20,
+  },
+  reportButtonPressed: {
+    backgroundColor: '#B71C1C',
+  },
+  reportTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.onEmergency,
+  },
+  reportDetail: {
+    fontSize: 14,
+    color: colors.onEmergency,
+    marginTop: 4,
+  },
+  waiting: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: radius.md,
     backgroundColor: colors.warningSoft,
   },
   waitingTitle: {
@@ -314,91 +183,46 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   waitingText: {
-    fontSize: 13,
+    fontSize: 14,
     color: colors.textMuted,
     marginTop: 2,
   },
-  bannerButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.emergency,
-    borderRadius: radius.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginTop: 12,
-  },
-  bannerButtonText: {
-    color: colors.onEmergency,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  bannerArt: {
-    width: 92,
-    height: 92,
-    borderRadius: radius.pill,
-    backgroundColor: colors.emergencySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bannerArtInner: {
-    width: 68,
-    height: 68,
-    borderRadius: radius.pill,
-    backgroundColor: colors.emergency,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: colors.text,
-    marginTop: 28,
-    marginBottom: 12,
-    paddingHorizontal: 20,
-  },
-  featuredRow: {
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-    gap: 12,
-  },
-  featuredCard: {
-    width: 200,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-  },
-  featuredTop: {
+  actions: {
     flexDirection: 'row',
+    marginTop: 24,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
+  action: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
+    paddingVertical: 18,
+    paddingHorizontal: 4,
+    minHeight: 96,
   },
-  featuredIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+  actionDivider: {
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: colors.border,
   },
-  featuredStep: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  featuredTitle: {
+  actionLabel: {
     fontSize: 15,
     fontWeight: '700',
-    color: colors.text,
+    marginTop: 8,
+    textAlign: 'center',
   },
-  featuredDetail: {
+  actionDetail: {
     fontSize: 13,
     color: colors.textMuted,
-    marginTop: 4,
-    lineHeight: 18,
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  comingSoon: {
+    fontSize: 14,
+    color: colors.textMuted,
+    marginTop: 20,
   },
   pressed: {
-    opacity: 0.7,
+    backgroundColor: colors.background,
   },
 });

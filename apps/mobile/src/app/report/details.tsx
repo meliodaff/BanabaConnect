@@ -121,9 +121,7 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
           <OfflineBanner title={OFFLINE_REPORT_TITLE} message={OFFLINE_REPORT_MESSAGE} />
 
           <View style={styles.categoryRow}>
-            <View style={[styles.categoryIcon, { backgroundColor: look.tint }]}>
-              <Icon name={look.icon} size={26} color={look.color} />
-            </View>
+            <Icon name={look.icon} size={28} color={colors.text} />
             <View style={styles.flex}>
               <Text style={styles.categoryLabel}>{CATEGORY_LABELS[category]}</Text>
               <Text style={styles.categoryTagalog}>{look.tagalog}</Text>
@@ -135,7 +133,7 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
 
           <LocationBanner location={location} onRetry={retryLocation} />
 
-          <Section icon={icons.camera} title="Photo" hint="Optional">
+          <Section title="Photo" hint="Optional. Helps responders see how bad it is.">
             {photo ? (
               <View>
                 <Image
@@ -182,7 +180,7 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
             )}
           </Section>
 
-          <Section icon={icons.details} title="What do you see?" hint="Optional">
+          <Section title="What do you see?" hint="Optional">
             <TextInput
               style={styles.textArea}
               value={description}
@@ -198,7 +196,7 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
             </Text>
           </Section>
 
-          <Section icon={icons.time} title="When did it happen?">
+          <Section title="When did it happen?">
             <View style={styles.chips}>
               {INCIDENT_TIME_OPTIONS.map((option) => {
                 const selected = minutesAgo === option.minutesAgo;
@@ -247,24 +245,19 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
 }
 
 function Section({
-  icon,
   title,
   hint,
   children,
 }: {
-  icon: IconName;
   title: string;
   hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Icon name={icon} size={20} color={colors.textMuted} />
-        <Text style={styles.sectionTitle}>{title}</Text>
-        {hint && <Text style={styles.sectionHint}>{hint}</Text>}
-      </View>
-      {children}
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {hint && <Text style={styles.sectionHint}>{hint}</Text>}
+      <View style={styles.sectionBody}>{children}</View>
     </View>
   );
 }
@@ -353,7 +346,7 @@ function formatAccuracy(accuracy: number | null) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
   flex: {
     flex: 1,
@@ -364,32 +357,23 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   step: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.selected,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontSize: 14,
+    color: colors.textMuted,
   },
   title: {
     fontSize: 26,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.text,
     marginTop: -12,
   },
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: 14,
-  },
-  categoryIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 14,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
   categoryLabel: {
     fontSize: 17,
@@ -417,25 +401,22 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   section: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: 16,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    paddingTop: 16,
   },
   sectionTitle: {
-    flex: 1,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
     color: colors.text,
   },
   sectionHint: {
-    fontSize: 13,
+    fontSize: 14,
     color: colors.textMuted,
+    marginTop: 2,
+  },
+  sectionBody: {
+    marginTop: 12,
   },
   photoDrop: {
     borderWidth: 2,
@@ -538,7 +519,7 @@ const styles = StyleSheet.create({
   sendButtonText: {
     color: colors.onEmergency,
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   footerHint: {
     textAlign: 'center',

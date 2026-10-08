@@ -3,9 +3,14 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CATEGORY_LABELS } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
+import { callNumber } from '@/features/hotlines/call';
 import { useIsOffline } from '@/features/network/useIsOffline';
 import { useQueuedReports } from '@/features/queue/reportsStore';
 import { colors, radius } from '@/theme';
+
+function formatClock(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' });
+}
 
 export default function ReportSentScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -15,54 +20,57 @@ export default function ReportSentScreen() {
   const label = report ? CATEGORY_LABELS[report.submission.category] : 'Your';
 
   let icon: IconName;
-  let tone: { color: string; background: string };
+  let color: string;
   let title: string;
   let message: string;
   let busy = false;
 
   if (report?.syncStatus === 'sent') {
     icon = icons.check;
-    tone = { color: colors.success, background: colors.successSoft };
+    color = colors.success;
     title = 'Sent to the barangay';
-    message = `${label} report received. Salamat! Stay safe and keep your phone with you.`;
+    message = `${label} report sent${report.sentAt ? ` at ${formatClock(report.sentAt)}` : ''}. You can follow it in My reports.`;
   } else if (
     !offline &&
     (!report || report.attempts === 0 || sendingIds.has(report.submission.id))
   ) {
     icon = icons.sending;
-    tone = { color: colors.primary, background: colors.primarySoft };
-    title = 'Sending your report…';
-    message = 'Your report is saved on your phone and is on its way to the barangay.';
+    color = colors.primary;
+    title = 'Sending your report';
+    message = 'It is saved on your phone and is being sent now.';
     busy = true;
   } else {
     icon = icons.queued;
-    tone = { color: colors.warning, background: colors.warningSoft };
+    color = colors.warning;
     title = 'Saved on your phone';
     message = offline
-      ? 'No signal right now, and that is okay. Your report is queued and will be sent automatically as soon as you get even a little signal.'
-      : 'Your signal is weak, so the report is queued. We will keep trying and send it automatically.';
+      ? 'No signal right now. Your report is queued and will be sent automatically as soon as you get even a little signal.'
+      : 'Your signal is too weak to send right now. The app keeps retrying and will send it automatically.';
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.body}>
-        <View style={[styles.statusCircle, { backgroundColor: tone.background }]}>
-          {busy ? (
-            <ActivityIndicator size="large" color={tone.color} />
-          ) : (
-            <Icon name={icon} size={60} color={tone.color} />
-          )}
-        </View>
+        {busy ? (
+          <ActivityIndicator size="large" color={color} style={styles.statusIcon} />
+        ) : (
+          <View style={styles.statusIcon}>
+            <Icon name={icon} size={56} color={color} />
+          </View>
+        )}
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.message}>{message}</Text>
 
         {report?.syncStatus !== 'sent' && (
-          <View style={styles.tip}>
-            <Icon name={icons.phone} size={20} color={colors.textMuted} />
-            <Text style={styles.tipText}>
-              If someone is in danger right now, call a hotline too. Calls work without internet.
-            </Text>
-          </View>
+          <Pressable
+            onPress={() => callNumber('911')}
+            style={({ pressed }) => [styles.callLink, pressed && styles.pressed]}
+            hitSlop={8}
+            accessibilityRole="button"
+          >
+            <Icon name={icons.phone} size={20} color={colors.emergency} />
+            <Text style={styles.callLinkText}>Someone in danger now? Call 911</Text>
+          </Pressable>
         )}
       </View>
 
@@ -98,17 +106,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statusCircle: {
-    width: 112,
-    height: 112,
-    borderRadius: radius.pill,
-    alignItems: 'center',
+  statusIcon: {
+    height: 56,
     justifyContent: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   title: {
     fontSize: 24,
-    fontWeight: '800',
+    fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
   },
@@ -120,21 +125,18 @@ const styles = StyleSheet.create({
     marginTop: 10,
     maxWidth: 340,
   },
-  tip: {
+  callLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: colors.background,
-    borderRadius: radius.md,
-    padding: 12,
-    marginTop: 24,
-    maxWidth: 340,
+    gap: 8,
+    marginTop: 28,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
-  tipText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.textMuted,
+  callLinkText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.emergency,
   },
   primaryButton: {
     backgroundColor: colors.primary,

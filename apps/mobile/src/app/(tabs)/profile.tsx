@@ -6,31 +6,29 @@ import { colors, radius } from '@/theme';
 
 // TODO: registration, login, and Barangay ID verification (Supabase Auth).
 export default function ProfileScreen() {
+  const version = Constants.expoConfig?.version;
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <OfflineBanner style={styles.offlineBanner} />
-      <View style={styles.profileCard}>
-        <View style={styles.avatar}>
-          <Icon name={icons.profile} size={56} color={colors.primary} />
-        </View>
-        <Text style={styles.name}>Guest</Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>Not verified</Text>
-        </View>
-      </View>
 
-      <View style={styles.infoCard}>
-        <Icon name={icons.info} size={22} color={colors.primary} />
+      <View style={styles.identity}>
+        <Icon name={icons.profile} size={48} color={colors.textMuted} />
         <View style={styles.flex}>
-          <Text style={styles.infoTitle}>Resident accounts are coming soon</Text>
-          <Text style={styles.infoText}>
-            Soon you can register and verify with your Barangay ID. Reports from verified residents
-            are given higher priority.
-          </Text>
+          <Text style={styles.name}>Guest</Text>
+          <Text style={styles.status}>Not verified</Text>
         </View>
       </View>
 
-      <Text style={styles.version}>BanabaConnect v{Constants.expoConfig?.version ?? '—'}</Text>
+      <View style={styles.note}>
+        <Text style={styles.noteTitle}>Reporting as a guest</Text>
+        <Text style={styles.noteText}>
+          Your reports still reach the barangay, but verified residents get higher priority.
+          Resident accounts with Barangay ID verification are not available yet.
+        </Text>
+      </View>
+
+      {version && <Text style={styles.version}>BanabaConnect v{version}</Text>}
     </ScrollView>
   );
 }
@@ -38,72 +36,55 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
   content: {
-    padding: 16,
+    padding: 20,
     paddingBottom: 32,
   },
   flex: {
     flex: 1,
   },
   offlineBanner: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  profileCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+  identity: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 24,
-  },
-  avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: radius.pill,
-    backgroundColor: colors.selectedSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 14,
+    paddingBottom: 20,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
   name: {
     fontSize: 20,
-    fontWeight: '800',
-    color: colors.text,
-    marginTop: 12,
-  },
-  badge: {
-    marginTop: 8,
-    backgroundColor: colors.warningSoft,
-    borderRadius: radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  badgeText: {
-    fontSize: 12,
     fontWeight: '700',
-    color: colors.warning,
+    color: colors.text,
   },
-  infoCard: {
-    flexDirection: 'row',
-    gap: 12,
-    backgroundColor: colors.selectedSoft,
-    borderRadius: radius.lg,
-    padding: 16,
-    marginTop: 16,
-  },
-  infoTitle: {
+  status: {
     fontSize: 15,
+    color: colors.warning,
+    marginTop: 2,
+  },
+  note: {
+    marginTop: 20,
+    padding: 16,
+    borderRadius: radius.md,
+    backgroundColor: colors.background,
+  },
+  noteTitle: {
+    fontSize: 16,
     fontWeight: '700',
     color: colors.text,
   },
-  infoText: {
-    fontSize: 14,
-    lineHeight: 20,
+  noteText: {
+    fontSize: 15,
+    lineHeight: 21,
     color: colors.textMuted,
     marginTop: 4,
   },
   version: {
-    textAlign: 'center',
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textMuted,
     marginTop: 24,
   },
