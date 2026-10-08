@@ -166,7 +166,7 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
               style={styles.textArea}
               value={description}
               onChangeText={setDescription}
-              placeholder="e.g. Water is knee-deep near the chapel. Two families need help."
+              placeholder={look.placeholder}
               placeholderTextColor={colors.textMuted}
               multiline
               maxLength={DESCRIPTION_MAX_LENGTH}
