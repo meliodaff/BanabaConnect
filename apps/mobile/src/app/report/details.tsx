@@ -253,7 +253,7 @@ function LocationBanner({ location, onRetry }: { location: LocationState; onRetr
   let title: string;
   let detail: string;
   let tone: { color: string; background: string };
-  let showRetry = false;
+  let action: string | null = null;
 
   switch (location.status) {
     case 'ready':
@@ -267,7 +267,7 @@ function LocationBanner({ location, onRetry }: { location: LocationState; onRetr
       title = 'Using your last known location';
       detail = 'We could not get a fresh GPS fix. Step outside or near a window, then try again.';
       tone = { color: colors.warning, background: colors.warningSoft };
-      showRetry = true;
+      action = 'Try again';
       break;
     case 'locating':
       icon = icons.locating;
@@ -279,17 +279,26 @@ function LocationBanner({ location, onRetry }: { location: LocationState; onRetr
       break;
     case 'denied':
       icon = icons.locationOff;
-      title = 'Location is turned off';
-      detail = 'The barangay needs your location to send help. Allow it in your phone settings.';
+      title = 'Location permission needed';
+      detail = location.canAskAgain
+        ? 'The barangay needs your location to send help.'
+        : 'Open Settings, tap Permissions, then Location, and choose "Allow". Then come back here.';
       tone = { color: colors.emergency, background: colors.emergencySoft };
-      showRetry = true;
+      action = location.canAskAgain ? 'Allow' : 'Open settings';
+      break;
+    case 'servicesOff':
+      icon = icons.locationOff;
+      title = "Your phone's location is off";
+      detail = 'Turn on Location so the barangay can find you.';
+      tone = { color: colors.emergency, background: colors.emergencySoft };
+      action = Platform.OS === 'android' ? 'Turn on' : 'Open settings';
       break;
     case 'error':
       icon = icons.locationOff;
       title = 'Could not find your location';
       detail = 'Step outside or near a window, then try again.';
       tone = { color: colors.emergency, background: colors.emergencySoft };
-      showRetry = true;
+      action = 'Try again';
       break;
   }
 
@@ -307,9 +316,9 @@ function LocationBanner({ location, onRetry }: { location: LocationState; onRetr
         <Text style={[styles.bannerTitle, { color: tone.color }]}>{title}</Text>
         <Text style={styles.bannerDetail}>{detail}</Text>
       </View>
-      {showRetry && (
+      {action && (
         <Pressable onPress={onRetry} hitSlop={12} accessibilityRole="button">
-          <Text style={styles.link}>Try again</Text>
+          <Text style={styles.link}>{action}</Text>
         </Pressable>
       )}
     </View>
