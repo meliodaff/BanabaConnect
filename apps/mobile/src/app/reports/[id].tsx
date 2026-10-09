@@ -20,12 +20,15 @@ import {
   isPhotoWaiting,
 } from '@/features/queue/deliveryStatus';
 import { useQueuedReports } from '@/features/queue/reportsStore';
-import { requestSync } from '@/features/queue/syncEngine';
+import { useIsOffline } from '@/features/network/useIsOffline';
+import { tryToSendNow } from '@/features/queue/tryToSendNow';
 import type { QueuedReport } from '@/features/queue/types';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
-import { colors, radius } from '@/theme';
+import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
 export default function ReportDetailScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { loaded, reports, sendingIds } = useQueuedReports();
   const report = reports.find((r) => r.submission.id === id);
@@ -54,10 +57,13 @@ export default function ReportDetailScreen() {
 }
 
 function ReportDetail({ report, sending }: { report: QueuedReport; sending: boolean }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { submission, photo } = report;
   const look = CATEGORY_APPEARANCE[submission.category];
-  const status = deliveryStatusOf(report, sending);
+  const status = deliveryStatusOf(report, sending, colors);
   const sent = report.syncStatus === 'sent';
+  const offline = useIsOffline();
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
@@ -88,7 +94,7 @@ function ReportDetail({ report, sending }: { report: QueuedReport; sending: bool
           </View>
           {!sent && !sending && (
             <Pressable
-              onPress={() => requestSync({ ignoreBackoff: true })}
+              onPress={() => tryToSendNow(offline)}
               hitSlop={12}
               accessibilityRole="button"
             >
@@ -104,7 +110,7 @@ function ReportDetail({ report, sending }: { report: QueuedReport; sending: bool
             accessibilityRole="button"
             accessibilityLabel={`Call ${NATIONAL_EMERGENCY_NUMBER}`}
           >
-            <Icon name={icons.phone} size={22} color={colors.emergency} />
+            <Icon name={icons.phone} size={22} color={colors.emergencyText} />
             <View style={styles.flex}>
               <Text style={styles.callTitle}>
                 Someone in danger now? Call {NATIONAL_EMERGENCY_NUMBER}
@@ -181,6 +187,8 @@ async function openInMaps(latitude: number, longitude: number) {
 }
 
 function SectionHeader({ icon, title }: { icon: IconName; title: string }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.sectionHeader}>
       <Icon name={icon} size={20} color={colors.textMuted} />
@@ -190,6 +198,7 @@ function SectionHeader({ icon, title }: { icon: IconName; title: string }) {
 }
 
 function Row({ label, value }: { label: string; value: string }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -198,158 +207,160 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 24,
-    backgroundColor: colors.background,
-  },
-  missingTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  missingText: {
-    fontSize: 15,
-    color: colors.textMuted,
-    marginBottom: 12,
-  },
-  flex: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 32,
-    gap: 12,
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: 14,
-  },
-  categoryIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryLabel: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  categoryTagalog: {
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  status: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderRadius: radius.lg,
-    padding: 14,
-  },
-  statusTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  statusText: {
-    fontSize: 14,
-    lineHeight: 19,
-    color: colors.text,
-    marginTop: 2,
-  },
-  callTip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.emergencySoft,
-    borderRadius: radius.lg,
-    padding: 14,
-  },
-  callTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.emergency,
-  },
-  callText: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  section: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: 16,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  photo: {
-    width: '100%',
-    borderRadius: radius.md,
-    backgroundColor: colors.background,
-  },
-  note: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: 8,
-  },
-  body: {
-    fontSize: 16,
-    lineHeight: 23,
-    color: colors.text,
-  },
-  muted: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: colors.textMuted,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-  },
-  rowLabel: {
-    fontSize: 15,
-    color: colors.textMuted,
-  },
-  rowValue: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  mapButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 12,
-  },
-  link: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    centered: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      padding: 24,
+      backgroundColor: colors.background,
+    },
+    missingTitle: {
+      fontSize: 20,
+      fontWeight: '800',
+      color: colors.text,
+    },
+    missingText: {
+      fontSize: 15,
+      color: colors.textMuted,
+      marginBottom: 12,
+    },
+    flex: {
+      flex: 1,
+    },
+    content: {
+      padding: 16,
+      paddingBottom: 32,
+      gap: 12,
+    },
+    categoryRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: 14,
+    },
+    categoryIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    categoryLabel: {
+      fontSize: 18,
+      fontWeight: '800',
+      color: colors.text,
+    },
+    categoryTagalog: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    status: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      borderRadius: radius.lg,
+      padding: 14,
+    },
+    statusTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+    },
+    statusText: {
+      fontSize: 14,
+      lineHeight: 19,
+      color: colors.text,
+      marginTop: 2,
+    },
+    callTip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: colors.emergencySoft,
+      borderRadius: radius.lg,
+      padding: 14,
+    },
+    callTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.emergencyText,
+    },
+    callText: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    section: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: 16,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 10,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    photo: {
+      width: '100%',
+      borderRadius: radius.md,
+      backgroundColor: colors.background,
+    },
+    note: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 8,
+    },
+    body: {
+      fontSize: 16,
+      lineHeight: 23,
+      color: colors.text,
+    },
+    muted: {
+      fontSize: 15,
+      lineHeight: 21,
+      color: colors.textMuted,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 6,
+    },
+    rowLabel: {
+      fontSize: 15,
+      color: colors.textMuted,
+    },
+    rowValue: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    mapButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginTop: 12,
+    },
+    link: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.primary,
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+  });
+}

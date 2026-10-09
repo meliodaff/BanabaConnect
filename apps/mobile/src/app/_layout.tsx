@@ -1,13 +1,31 @@
-import { Stack } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { ToastHost } from '@/components/ToastHost';
+import { useOfflineToasts } from '@/features/network/useOfflineToasts';
 import { useSyncTriggers } from '@/features/queue/useSyncTriggers';
-import { colors } from '@/theme';
+import { useTheme } from '@/theme';
 
 export default function RootLayout() {
   useSyncTriggers();
+  useOfflineToasts();
+  const { scheme, colors } = useTheme();
+  const baseTheme = scheme === 'dark' ? DarkTheme : DefaultTheme;
 
   return (
-    <>
+    <ThemeProvider
+      value={{
+        ...baseTheme,
+        colors: {
+          ...baseTheme.colors,
+          primary: colors.primary,
+          background: colors.background,
+          card: colors.surface,
+          text: colors.text,
+          border: colors.border,
+          notification: colors.emergency,
+        },
+      }}
+    >
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.surface },
@@ -26,7 +44,8 @@ export default function RootLayout() {
           options={{ headerShown: false, gestureEnabled: false }}
         />
       </Stack>
-      <StatusBar style="dark" />
-    </>
+      <ToastHost />
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+    </ThemeProvider>
   );
 }

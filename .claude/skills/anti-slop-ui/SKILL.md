@@ -95,17 +95,28 @@ part of the design. Keep short friendly Tagalog touches the user already accepte
 
 ## Color rules
 
-The palette comes from the banaba tree (Lagerstroemia speciosa) that the barangay is named
-after. All values live in `apps/mobile/src/theme.ts`; never hard-code a hex value elsewhere.
+The palette follows the bright pink-magenta banaba flower (Lagerstroemia speciosa) that the
+barangay is named after, with light and dark versions. The user found the earlier muted rose
+dull, so keep tints saturated rather than washing them out.
+
+For now the user has switched the app to a temporary neutral gray palette (`ACTIVE_PALETTE =
+'neutral'` in `theme.ts`). The pink palette is kept there unchanged. The table below
+describes token roles, which are the same in both palettes. All values live in `apps/mobile/src/theme.ts`;
+never hard-code a hex value elsewhere. Read colors with `useTheme()` and build styles with
+`useThemedStyles(createStyles)` so both modes work; never import a fixed palette into a screen.
 
 | Token | Source | Use for |
 |---|---|---|
-| `emergency` (red) | Not from the tree, on purpose | Report actions, 911, errors the resident must fix |
-| `primary` (petal purple) | Banaba flowers | Navigation, links, tabs, service and category icons |
+| `emergency` (red) | Not from the tree, on purpose | Fill of report and 911 buttons (same red in both modes) |
+| `emergencyText` | | Red text, icons, and outlines on a surface or soft tint |
+| `primary` (magenta) | Banaba flowers | Navigation, links, tabs, service and category icons |
 | `success` / `brandAccent` (leaf green) | Banaba leaves | Sent, location found, callable hotlines, "Connect" in the wordmark |
-| `warning` (stamen gold) | Yellow stamens | Offline, waiting for signal, approximate location |
-| `background`, `text` (cream, plum-brown) | Petals and bark | Page backgrounds and text |
+| `warning` (deep amber) | | Offline, waiting for signal, approximate location |
+| `highlight` (stamen gold) | Yellow stamens | Decoration only: step icon circles, the banner halo. Never a status, never text |
+| `background`, `text` (blush, plum-brown) | Petals and bark | Page backgrounds and text |
 | Grays (`disabled`, `border`) | | "Soon" badges, inactive controls |
+
+Check new color pairs in both modes; every text pair in the palette is at least 4.5:1.
 
 Report categories share one icon color (`categoryIcon`); do not give each category its own hue.
 

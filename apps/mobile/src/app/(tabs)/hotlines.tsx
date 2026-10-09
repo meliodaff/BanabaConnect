@@ -1,17 +1,14 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon, icons } from '@/components/Icon';
-import { OfflineBanner } from '@/components/OfflineBanner';
 import { callNumber } from '@/features/hotlines/call';
 import { HOTLINES } from '@/features/hotlines/hotlines';
-import { colors, radius } from '@/theme';
+import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
 export default function HotlinesScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <OfflineBanner
-        message="These calls still work without internet."
-        style={styles.offlineBanner}
-      />
       <Text style={styles.intro}>
         Tap a number to call. Calls use your regular phone signal, so they can work even without
         mobile data.
@@ -64,85 +61,84 @@ export default function HotlinesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 32,
-  },
-  flex: {
-    flex: 1,
-  },
-  offlineBanner: {
-    marginBottom: 16,
-  },
-  intro: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: colors.textMuted,
-    marginBottom: 16,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    paddingHorizontal: 16,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 14,
-    minHeight: 64,
-  },
-  rowDivider: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  phoneIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.pill,
-    backgroundColor: colors.successSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  phoneIconMuted: {
-    backgroundColor: colors.background,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  description: {
-    fontSize: 14,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  callPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: colors.success,
-    borderRadius: radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  callPillText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.onPrimary,
-  },
-  pending: {
-    fontSize: 13,
-    color: colors.textMuted,
-    maxWidth: 90,
-    textAlign: 'right',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      padding: 16,
+      paddingBottom: 32,
+    },
+    flex: {
+      flex: 1,
+    },
+    intro: {
+      fontSize: 15,
+      lineHeight: 21,
+      color: colors.textMuted,
+      marginBottom: 16,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      paddingHorizontal: 16,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 14,
+      minHeight: 64,
+    },
+    rowDivider: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+    },
+    phoneIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.pill,
+      backgroundColor: colors.successSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    phoneIconMuted: {
+      backgroundColor: colors.background,
+    },
+    name: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    description: {
+      fontSize: 14,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    callPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: colors.success,
+      borderRadius: radius.pill,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    callPillText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.onPrimary,
+    },
+    pending: {
+      fontSize: 13,
+      color: colors.textMuted,
+      maxWidth: 90,
+      textAlign: 'right',
+    },
+    pressed: {
+      opacity: 0.7,
+    },
+  });
+}

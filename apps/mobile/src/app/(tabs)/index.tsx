@@ -1,11 +1,12 @@
 import { router, type Href } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon, icons, type IconName } from '@/components/Icon';
-import { OfflineBanner } from '@/components/OfflineBanner';
 import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
+import { setThemePreference } from '@/features/appearance/themePreference';
 import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
-import { colors, radius, shadow } from '@/theme';
+import { showToast } from '@/features/toast/toastStore';
+import { radius, cardShadow, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
 interface Service {
   label: string;
@@ -37,10 +38,12 @@ const STEPS: { icon: IconName; title: string; detail: string }[] = [
 ];
 
 function comingSoon(label: string) {
-  Alert.alert(label, 'This service is coming soon. Abangan!');
+  showToast({ message: `${label} isn't ready yet. Abangan!` });
 }
 
 export default function HomeScreen() {
+  const { colors, scheme } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { reports } = useQueuedReports();
   const waiting = countWaiting(reports);
 
@@ -51,21 +54,35 @@ export default function HomeScreen() {
           <Text style={styles.wordmark}>
             Banaba<Text style={styles.wordmarkAccent}>Connect</Text>
           </Text>
-          <Pressable
-            onPress={() => router.push('/reports')}
-            style={styles.iconButton}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={
-              waiting > 0 ? `Report updates, ${waiting} waiting for signal` : 'Report updates'
-            }
-          >
-            <Icon name={icons.bell} size={22} color={colors.primary} />
-            {waiting > 0 && <Text style={styles.bellBadge}>{waiting}</Text>}
-          </Pressable>
+          <View style={styles.topActions}>
+            <Pressable
+              onPress={() => setThemePreference(scheme === 'dark' ? 'light' : 'dark')}
+              style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+              hitSlop={8}
+              accessibilityRole="switch"
+              accessibilityLabel="Dark mode"
+              accessibilityState={{ checked: scheme === 'dark' }}
+            >
+              <Icon
+                name={scheme === 'dark' ? icons.lightMode : icons.darkMode}
+                size={22}
+                color={colors.primary}
+              />
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/reports')}
+              style={styles.iconButton}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={
+                waiting > 0 ? `Report updates, ${waiting} waiting for signal` : 'Report updates'
+              }
+            >
+              <Icon name={icons.bell} size={22} color={colors.primary} />
+              {waiting > 0 && <Text style={styles.bellBadge}>{waiting}</Text>}
+            </Pressable>
+          </View>
         </View>
-
-        <OfflineBanner style={styles.offlineBanner} />
 
         <View style={styles.greetingRow}>
           <View style={styles.avatar}>
@@ -111,7 +128,13 @@ export default function HomeScreen() {
             >
               {({ pressed }) => (
                 <>
-                  <View style={[styles.serviceCircle, pressed && styles.pressed]}>
+                  <View
+                    style={[
+                      styles.serviceCircle,
+                      !service.href && styles.serviceCircleSoon,
+                      pressed && styles.pressed,
+                    ]}
+                  >
                     <Icon
                       name={service.icon}
                       size={26}
@@ -149,7 +172,7 @@ export default function HomeScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Call ${NATIONAL_EMERGENCY_NUMBER}`}
               >
-                <Icon name={icons.phone} size={16} color={colors.emergency} />
+                <Icon name={icons.phone} size={16} color={colors.emergencyText} />
                 <Text style={styles.callButtonText}>Call {NATIONAL_EMERGENCY_NUMBER}</Text>
               </Pressable>
             </View>
@@ -185,280 +208,285 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.surface,
-  },
-  content: {
-    paddingBottom: 32,
-  },
-  flex: {
-    flex: 1,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  wordmark: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.primary,
-    letterSpacing: -0.3,
-  },
-  wordmarkAccent: {
-    color: colors.brandAccent,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bellBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 20,
-    height: 20,
-    borderRadius: radius.pill,
-    backgroundColor: colors.warning,
-    color: colors.onPrimary,
-    fontSize: 11,
-    fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: 5,
-    overflow: 'hidden',
-  },
-  offlineBanner: {
-    marginHorizontal: 20,
-    marginTop: 16,
-  },
-  greetingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  greeting: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  greetingSub: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 12,
-    marginTop: 24,
-    rowGap: 18,
-  },
-  serviceTile: {
-    width: '25%',
-    alignItems: 'center',
-  },
-  serviceCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadow.card,
-  },
-  soonBadge: {
-    position: 'absolute',
-    top: -6,
-    right: -10,
-    backgroundColor: colors.border,
-    color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: '700',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-    overflow: 'hidden',
-  },
-  serviceLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.text,
-    textAlign: 'center',
-    marginTop: 8,
-    paddingHorizontal: 2,
-  },
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginHorizontal: 20,
-    marginTop: 28,
-    padding: 18,
-    borderRadius: radius.xl,
-    backgroundColor: colors.primarySoft,
-  },
-  bannerEyebrow: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.emergency,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  bannerTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: colors.text,
-    marginTop: 4,
-    lineHeight: 23,
-  },
-  bannerNote: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.primary,
-    marginTop: 4,
-  },
-  waitingCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginHorizontal: 20,
-    marginTop: 16,
-    padding: 14,
-    borderRadius: radius.lg,
-    backgroundColor: colors.warningSoft,
-  },
-  waitingTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  waitingText: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  bannerActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 12,
-  },
-  bannerButton: {
-    backgroundColor: colors.emergency,
-    borderRadius: radius.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  bannerButtonText: {
-    color: colors.onEmergency,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  callButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.emergency,
-    borderRadius: radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-  },
-  callButtonText: {
-    color: colors.emergency,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  bannerArt: {
-    width: 80,
-    height: 80,
-    borderRadius: radius.pill,
-    backgroundColor: colors.emergencySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bannerArtInner: {
-    width: 58,
-    height: 58,
-    borderRadius: radius.pill,
-    backgroundColor: colors.emergency,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: colors.text,
-    marginTop: 28,
-    marginBottom: 12,
-    paddingHorizontal: 20,
-  },
-  featuredRow: {
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-    gap: 12,
-  },
-  featuredCard: {
-    width: 200,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-  },
-  featuredTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  featuredIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featuredStep: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  featuredTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  featuredDetail: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: 4,
-    lineHeight: 18,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.surface,
+    },
+    content: {
+      paddingBottom: 32,
+    },
+    flex: {
+      flex: 1,
+    },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 20,
+      paddingTop: 8,
+    },
+    wordmark: {
+      fontSize: 22,
+      fontWeight: '800',
+      color: colors.primary,
+      letterSpacing: -0.3,
+    },
+    wordmarkAccent: {
+      color: colors.brandAccent,
+    },
+    topActions: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    iconButton: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.pill,
+      backgroundColor: colors.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bellBadge: {
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      minWidth: 20,
+      height: 20,
+      borderRadius: radius.pill,
+      backgroundColor: colors.warning,
+      color: colors.onPrimary,
+      fontSize: 11,
+      fontWeight: '700',
+      textAlign: 'center',
+      lineHeight: 20,
+      paddingHorizontal: 5,
+      overflow: 'hidden',
+    },
+    greetingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 20,
+      marginTop: 20,
+    },
+    avatar: {
+      width: 52,
+      height: 52,
+      borderRadius: radius.pill,
+      backgroundColor: colors.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    greeting: {
+      fontSize: 18,
+      fontWeight: '800',
+      color: colors.text,
+    },
+    greetingSub: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      paddingHorizontal: 12,
+      marginTop: 24,
+      rowGap: 18,
+    },
+    serviceTile: {
+      width: '25%',
+      alignItems: 'center',
+    },
+    serviceCircle: {
+      width: 60,
+      height: 60,
+      borderRadius: radius.pill,
+      backgroundColor: colors.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...cardShadow(colors),
+    },
+    serviceCircleSoon: {
+      backgroundColor: colors.border,
+    },
+    soonBadge: {
+      position: 'absolute',
+      top: -6,
+      right: -10,
+      backgroundColor: colors.border,
+      color: colors.textMuted,
+      fontSize: 10,
+      fontWeight: '700',
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: radius.pill,
+      overflow: 'hidden',
+    },
+    serviceLabel: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.text,
+      textAlign: 'center',
+      marginTop: 8,
+      paddingHorizontal: 2,
+    },
+    banner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginHorizontal: 20,
+      marginTop: 28,
+      padding: 18,
+      borderRadius: radius.xl,
+      backgroundColor: colors.primarySoft,
+    },
+    bannerEyebrow: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.emergencyText,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    bannerTitle: {
+      fontSize: 17,
+      fontWeight: '800',
+      color: colors.text,
+      marginTop: 4,
+      lineHeight: 23,
+    },
+    bannerNote: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.primary,
+      marginTop: 4,
+    },
+    waitingCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginHorizontal: 20,
+      marginTop: 16,
+      padding: 14,
+      borderRadius: radius.lg,
+      backgroundColor: colors.warningSoft,
+    },
+    waitingTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    waitingText: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    bannerActions: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 12,
+    },
+    bannerButton: {
+      backgroundColor: colors.emergency,
+      borderRadius: radius.pill,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+    },
+    bannerButtonText: {
+      color: colors.onEmergency,
+      fontSize: 15,
+      fontWeight: '700',
+    },
+    callButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
+      borderColor: colors.emergencyText,
+      borderRadius: radius.pill,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+    },
+    callButtonText: {
+      color: colors.emergencyText,
+      fontSize: 15,
+      fontWeight: '700',
+    },
+    bannerArt: {
+      width: 80,
+      height: 80,
+      borderRadius: radius.pill,
+      backgroundColor: colors.highlightSoft,
+      borderWidth: 3,
+      borderColor: colors.highlight,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bannerArtInner: {
+      width: 58,
+      height: 58,
+      borderRadius: radius.pill,
+      backgroundColor: colors.emergency,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    sectionTitle: {
+      fontSize: 17,
+      fontWeight: '800',
+      color: colors.text,
+      marginTop: 28,
+      marginBottom: 12,
+      paddingHorizontal: 20,
+    },
+    featuredRow: {
+      paddingHorizontal: 20,
+      paddingBottom: 8,
+      gap: 12,
+    },
+    featuredCard: {
+      width: 200,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 16,
+    },
+    featuredTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+    },
+    featuredIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.pill,
+      backgroundColor: colors.highlightSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    featuredStep: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.primary,
+    },
+    featuredTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    featuredDetail: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 4,
+      lineHeight: 18,
+    },
+    pressed: {
+      opacity: 0.7,
+    },
+  });
+}

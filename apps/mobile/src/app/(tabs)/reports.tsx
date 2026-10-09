@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { CATEGORY_LABELS } from '@banabaconnect/shared';
 import { Icon, icons } from '@/components/Icon';
-import { OfflineBanner } from '@/components/OfflineBanner';
+import { useIsOffline } from '@/features/network/useIsOffline';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
 import {
   deliveryStatusOf,
@@ -18,11 +18,13 @@ import {
   isPhotoWaiting,
 } from '@/features/queue/deliveryStatus';
 import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
-import { requestSync } from '@/features/queue/syncEngine';
+import { tryToSendNow } from '@/features/queue/tryToSendNow';
 import type { QueuedReport } from '@/features/queue/types';
-import { colors, radius } from '@/theme';
+import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
 export default function MyReportsScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { loaded, reports, sendingIds } = useQueuedReports();
   const waiting = countWaiting(reports);
 
@@ -40,12 +42,7 @@ export default function MyReportsScreen() {
       contentContainerStyle={reports.length === 0 ? styles.emptyContent : styles.listContent}
       data={reports}
       keyExtractor={(item) => item.submission.id}
-      ListHeaderComponent={
-        <View style={styles.header}>
-          <OfflineBanner />
-          {waiting > 0 && <WaitingSummary count={waiting} />}
-        </View>
-      }
+      ListHeaderComponent={waiting > 0 ? <WaitingSummary count={waiting} /> : null}
       ListEmptyComponent={<EmptyState />}
       renderItem={({ item }) => (
         <ReportCard report={item} sending={sendingIds.has(item.submission.id)} />
@@ -55,6 +52,9 @@ export default function MyReportsScreen() {
 }
 
 function WaitingSummary({ count }: { count: number }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+  const offline = useIsOffline();
   return (
     <View style={styles.summary}>
       <Icon name={icons.queued} size={24} color={colors.warning} />
@@ -67,7 +67,7 @@ function WaitingSummary({ count }: { count: number }) {
         </Text>
       </View>
       <Pressable
-        onPress={() => requestSync({ ignoreBackoff: true })}
+        onPress={() => tryToSendNow(offline)}
         hitSlop={8}
         accessibilityRole="button"
       >
@@ -78,9 +78,11 @@ function WaitingSummary({ count }: { count: number }) {
 }
 
 function ReportCard({ report, sending }: { report: QueuedReport; sending: boolean }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { submission, photo } = report;
   const look = CATEGORY_APPEARANCE[submission.category];
-  const status = deliveryStatusOf(report, sending);
+  const status = deliveryStatusOf(report, sending, colors);
   const photoWaiting = isPhotoWaiting(report);
 
   return (
@@ -126,6 +128,8 @@ function ReportCard({ report, sending }: { report: QueuedReport; sending: boolea
 }
 
 function EmptyState() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}>
@@ -146,161 +150,160 @@ function EmptyState() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    padding: 16,
-    gap: 12,
-  },
-  emptyContent: {
-    flexGrow: 1,
-    padding: 16,
-  },
-  header: {
-    gap: 12,
-  },
-  flex: {
-    flex: 1,
-  },
-  summary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.warningBorder,
-    padding: 14,
-  },
-  summaryTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  summaryText: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  link: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  card: {
-    flexDirection: 'row',
-    gap: 12,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: 12,
-  },
-  chevron: {
-    justifyContent: 'center',
-  },
-  thumbnail: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.md,
-    backgroundColor: colors.background,
-  },
-  iconThumbnail: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardTop: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
-  },
-  cardTitle: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  cardTime: {
-    fontSize: 12,
-    color: colors.textMuted,
-  },
-  cardDescription: {
-    fontSize: 14,
-    lineHeight: 19,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  photoNote: {
-    fontSize: 12,
-    color: colors.textMuted,
-  },
-  empty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-  },
-  emptyIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  emptyMessage: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  emptyButton: {
-    backgroundColor: colors.emergency,
-    borderRadius: radius.md,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-  },
-  emptyButtonText: {
-    color: colors.onEmergency,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    centered: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.background,
+    },
+    listContent: {
+      padding: 16,
+      gap: 12,
+    },
+    emptyContent: {
+      flexGrow: 1,
+      padding: 16,
+    },
+    flex: {
+      flex: 1,
+    },
+    summary: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.warningBorder,
+      padding: 14,
+    },
+    summaryTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    summaryText: {
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    link: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.primary,
+    },
+    card: {
+      flexDirection: 'row',
+      gap: 12,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: 12,
+    },
+    chevron: {
+      justifyContent: 'center',
+    },
+    thumbnail: {
+      width: 64,
+      height: 64,
+      borderRadius: radius.md,
+      backgroundColor: colors.background,
+    },
+    iconThumbnail: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cardTop: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: 8,
+    },
+    cardTitle: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    cardTime: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    cardDescription: {
+      fontSize: 14,
+      lineHeight: 19,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    statusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 8,
+    },
+    statusPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      borderRadius: radius.pill,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    statusText: {
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    photoNote: {
+      fontSize: 12,
+      color: colors.textMuted,
+    },
+    empty: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 16,
+    },
+    emptyIcon: {
+      width: 96,
+      height: 96,
+      borderRadius: radius.pill,
+      backgroundColor: colors.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 20,
+    },
+    emptyTitle: {
+      fontSize: 20,
+      fontWeight: '800',
+      color: colors.text,
+    },
+    emptyMessage: {
+      fontSize: 15,
+      lineHeight: 22,
+      color: colors.textMuted,
+      textAlign: 'center',
+      marginTop: 8,
+      marginBottom: 24,
+    },
+    emptyButton: {
+      backgroundColor: colors.emergency,
+      borderRadius: radius.md,
+      paddingVertical: 14,
+      paddingHorizontal: 24,
+    },
+    emptyButtonText: {
+      color: colors.onEmergency,
+      fontSize: 16,
+      fontWeight: '700',
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+  });
+}
