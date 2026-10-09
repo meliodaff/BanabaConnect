@@ -1,4 +1,7 @@
-import type { ReportCategory } from '@banabaconnect/shared';
+import { router } from 'expo-router';
+import { CATEGORY_LABELS, type ReportCategory } from '@banabaconnect/shared';
+import { icons } from '@/components/Icon';
+import { showToast } from '@/features/toast/toastStore';
 import {
   duePhotos,
   dueReports,
@@ -37,6 +40,12 @@ function byPriority(a: QueuedReport, b: QueuedReport) {
   return rank !== 0 ? rank : a.submission.createdAt.localeCompare(b.submission.createdAt);
 }
 
+/** "Your flood report was sent to the barangay." Plain "Your report" for Other. */
+function sentMessage(category: ReportCategory) {
+  const kind = category === 'other' ? '' : `${CATEGORY_LABELS[category].toLowerCase()} `;
+  return `Your ${kind}report was sent to the barangay.`;
+}
+
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
@@ -56,7 +65,8 @@ let pending: SyncOptions | null = null;
 export function requestSync(options: SyncOptions = {}): Promise<void> {
   if (running) {
     pending = { ignoreBackoff: Boolean(pending?.ignoreBackoff || options.ignoreBackoff) };
-    return running;
+    // Resolve after the queued run too, so callers see the result of their own request.
+    return running.then(() => running ?? undefined);
   }
   running = syncOnce(options)
     .catch((error) => console.warn('Report sync failed', error))
@@ -80,6 +90,18 @@ async function syncOnce({ ignoreBackoff = false }: SyncOptions) {
     try {
       await transport.sendReport(report.submission);
       await markReportSent(id, new Date().toISOString());
+      if (report.attempts > 0) {
+        // It waited for signal, so the resident may not be watching. First tries show on the sent screen.
+        showToast({
+          tone: 'success',
+          icon: icons.sent,
+          message: sentMessage(report.submission.category),
+          action: {
+            label: 'View',
+            onPress: () => router.push({ pathname: '/reports/[id]', params: { id } }),
+          },
+        });
+      }
     } catch (error) {
       const attempts = report.attempts + 1;
       await markReportRetry(id, attempts, Date.now() + retryDelay(attempts), errorMessage(error));

@@ -29,6 +29,7 @@ function getSnapshot() {
 }
 
 export const reportsStore = {
+  getState: getSnapshot,
   /** Reloads reports from the local database. */
   async refresh() {
     const reports = await listReports();

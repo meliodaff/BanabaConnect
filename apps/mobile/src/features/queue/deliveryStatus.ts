@@ -1,5 +1,5 @@
 import { icons, type IconName } from '@/components/Icon';
-import { colors } from '@/theme';
+import type { ThemeColors } from '@/theme';
 import type { QueuedReport } from './types';
 
 export interface DeliveryStatus {
@@ -10,7 +10,11 @@ export interface DeliveryStatus {
 }
 
 /** Where a saved report is: sending, sent, or waiting for signal. */
-export function deliveryStatusOf(report: QueuedReport, sending: boolean): DeliveryStatus {
+export function deliveryStatusOf(
+  report: QueuedReport,
+  sending: boolean,
+  colors: ThemeColors,
+): DeliveryStatus {
   if (sending) {
     return {
       label: 'Sending…',

@@ -21,14 +21,13 @@ import {
   type ReportCategory,
 } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
-import { OfflineBanner } from '@/components/OfflineBanner';
 import { useIsOffline } from '@/features/network/useIsOffline';
 import { buildSubmission, INCIDENT_TIME_OPTIONS } from '@/features/report/buildSubmission';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
-import { OFFLINE_REPORT_MESSAGE, OFFLINE_REPORT_TITLE } from '@/features/report/messages';
 import { saveReport } from '@/features/queue/reportRepository';
 import { reportsStore } from '@/features/queue/reportsStore';
 import { requestSync } from '@/features/queue/syncEngine';
+import { showToast } from '@/features/toast/toastStore';
 import {
   PhotoPermissionError,
   pickReportPhoto,
@@ -36,7 +35,7 @@ import {
   type ReportPhoto,
 } from '@/features/report/photo';
 import { useReportLocation, type LocationState } from '@/features/report/useReportLocation';
-import { colors, radius } from '@/theme';
+import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
 function isReportCategory(value: unknown): value is ReportCategory {
   return typeof value === 'string' && (REPORT_CATEGORIES as readonly string[]).includes(value);
@@ -51,6 +50,8 @@ export default function ReportDetailsScreen() {
 }
 
 function ReportDetailsForm({ category }: { category: ReportCategory }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [description, setDescription] = useState('');
   const [minutesAgo, setMinutesAgo] = useState<number>(0);
   const [photo, setPhoto] = useState<ReportPhoto | null>(null);
@@ -80,6 +81,15 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
     } finally {
       setPhotoBusy(false);
     }
+  }
+
+  function handleRemovePhoto(removed: ReportPhoto) {
+    setPhoto(null);
+    showToast({
+      message: 'Photo removed.',
+      icon: icons.gallery,
+      action: { label: 'Undo', onPress: () => setPhoto(removed) },
+    });
   }
 
   async function handleSend() {
@@ -121,8 +131,6 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
           <Text style={styles.step}>Step 2 of 2</Text>
           <Text style={styles.title}>Add details</Text>
 
-          <OfflineBanner title={OFFLINE_REPORT_TITLE} message={OFFLINE_REPORT_MESSAGE} />
-
           <View style={styles.categoryRow}>
             <View style={[styles.categoryIcon, { backgroundColor: colors.categoryTint }]}>
               <Icon name={look.icon} size={26} color={colors.categoryIcon} />
@@ -150,8 +158,8 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
                   <Pressable onPress={() => handlePickPhoto('camera')} hitSlop={8}>
                     <Text style={styles.link}>Retake</Text>
                   </Pressable>
-                  <Pressable onPress={() => setPhoto(null)} hitSlop={8}>
-                    <Text style={[styles.link, { color: colors.emergency }]}>Remove</Text>
+                  <Pressable onPress={() => handleRemovePhoto(photo)} hitSlop={8}>
+                    <Text style={[styles.link, { color: colors.emergencyText }]}>Remove</Text>
                   </Pressable>
                 </View>
               </View>
@@ -297,6 +305,8 @@ function Section({
   hint?: string;
   children: React.ReactNode;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -310,6 +320,8 @@ function Section({
 }
 
 function LocationBanner({ location, onRetry }: { location: LocationState; onRetry: () => void }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   let icon: IconName;
   let title: string;
   let detail: string;
@@ -344,21 +356,21 @@ function LocationBanner({ location, onRetry }: { location: LocationState; onRetr
       detail = location.canAskAgain
         ? 'The barangay needs your location to send help.'
         : 'Open Settings, tap Permissions, then Location, and choose "Allow". Then come back here.';
-      tone = { color: colors.emergency, background: colors.emergencySoft };
+      tone = { color: colors.emergencyText, background: colors.emergencySoft };
       action = location.canAskAgain ? 'Allow' : 'Open settings';
       break;
     case 'servicesOff':
       icon = icons.locationOff;
       title = "Your phone's location is off";
       detail = 'Turn on Location so the barangay can find you.';
-      tone = { color: colors.emergency, background: colors.emergencySoft };
+      tone = { color: colors.emergencyText, background: colors.emergencySoft };
       action = Platform.OS === 'android' ? 'Turn on' : 'Open settings';
       break;
     case 'error':
       icon = icons.locationOff;
       title = 'Could not find your location';
       detail = 'Step outside or near a window, then try again.';
-      tone = { color: colors.emergency, background: colors.emergencySoft };
+      tone = { color: colors.emergencyText, background: colors.emergencySoft };
       action = 'Try again';
       break;
   }
@@ -390,203 +402,205 @@ function formatAccuracy(accuracy: number | null) {
   return accuracy === null ? null : `Accurate to about ${Math.round(accuracy)} meters.`;
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  flex: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-    paddingBottom: 32,
-    gap: 16,
-  },
-  step: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.selected,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: colors.text,
-    marginTop: -12,
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: 14,
-  },
-  categoryIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryLabel: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  categoryTagalog: {
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderRadius: radius.lg,
-    padding: 14,
-  },
-  bannerTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  bannerDetail: {
-    fontSize: 14,
-    color: colors.text,
-    marginTop: 2,
-  },
-  section: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: 16,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  sectionHint: {
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  photoDrop: {
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: colors.selected,
-    backgroundColor: colors.selectedSoft,
-    borderRadius: radius.md,
-    paddingVertical: 28,
-    alignItems: 'center',
-    gap: 8,
-  },
-  photoDropText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.selected,
-  },
-  galleryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 12,
-  },
-  photo: {
-    width: '100%',
-    borderRadius: radius.md,
-    backgroundColor: colors.background,
-  },
-  photoActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  link: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.selected,
-  },
-  textArea: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: 12,
-    minHeight: 100,
-    fontSize: 16,
-    color: colors.text,
-    backgroundColor: colors.background,
-  },
-  counter: {
-    alignSelf: 'flex-end',
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 4,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.pill,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: colors.surface,
-  },
-  chipSelected: {
-    backgroundColor: colors.selected,
-    borderColor: colors.selected,
-  },
-  chipText: {
-    fontSize: 15,
-    color: colors.text,
-  },
-  chipTextSelected: {
-    color: colors.onSelected,
-    fontWeight: '700',
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  sendButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: colors.emergency,
-    borderRadius: radius.md,
-    paddingVertical: 18,
-  },
-  sendButtonDisabled: {
-    backgroundColor: colors.disabled,
-  },
-  sendButtonText: {
-    color: colors.onEmergency,
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  footerHint: {
-    textAlign: 'center',
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: 8,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    flex: {
+      flex: 1,
+    },
+    content: {
+      padding: 20,
+      paddingBottom: 32,
+      gap: 16,
+    },
+    step: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.selected,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    title: {
+      fontSize: 26,
+      fontWeight: '800',
+      color: colors.text,
+      marginTop: -12,
+    },
+    categoryRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: 14,
+    },
+    categoryIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    categoryLabel: {
+      fontSize: 17,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    categoryTagalog: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    banner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      borderRadius: radius.lg,
+      padding: 14,
+    },
+    bannerTitle: {
+      fontSize: 15,
+      fontWeight: '700',
+    },
+    bannerDetail: {
+      fontSize: 14,
+      color: colors.text,
+      marginTop: 2,
+    },
+    section: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: 16,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 12,
+    },
+    sectionTitle: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    sectionHint: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    photoDrop: {
+      borderWidth: 2,
+      borderStyle: 'dashed',
+      borderColor: colors.selected,
+      backgroundColor: colors.selectedSoft,
+      borderRadius: radius.md,
+      paddingVertical: 28,
+      alignItems: 'center',
+      gap: 8,
+    },
+    photoDropText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.selected,
+    },
+    galleryButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      marginTop: 12,
+    },
+    photo: {
+      width: '100%',
+      borderRadius: radius.md,
+      backgroundColor: colors.background,
+    },
+    photoActions: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 10,
+    },
+    link: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.selected,
+    },
+    textArea: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      padding: 12,
+      minHeight: 100,
+      fontSize: 16,
+      color: colors.text,
+      backgroundColor: colors.background,
+    },
+    counter: {
+      alignSelf: 'flex-end',
+      fontSize: 12,
+      color: colors.textMuted,
+      marginTop: 4,
+    },
+    chips: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    chip: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.pill,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      backgroundColor: colors.surface,
+    },
+    chipSelected: {
+      backgroundColor: colors.selected,
+      borderColor: colors.selected,
+    },
+    chipText: {
+      fontSize: 15,
+      color: colors.text,
+    },
+    chipTextSelected: {
+      color: colors.onSelected,
+      fontWeight: '700',
+    },
+    footer: {
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 12,
+      backgroundColor: colors.surface,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+    },
+    sendButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 10,
+      backgroundColor: colors.emergency,
+      borderRadius: radius.md,
+      paddingVertical: 18,
+    },
+    sendButtonDisabled: {
+      backgroundColor: colors.disabled,
+    },
+    sendButtonText: {
+      color: colors.onEmergency,
+      fontSize: 18,
+      fontWeight: '800',
+    },
+    footerHint: {
+      textAlign: 'center',
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: 8,
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+  });
+}

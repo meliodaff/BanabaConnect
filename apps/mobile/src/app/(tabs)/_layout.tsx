@@ -1,7 +1,7 @@
 import { router, Tabs } from 'expo-router';
 import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import { Icon, icons, type IconName } from '@/components/Icon';
-import { colors, radius } from '@/theme';
+import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
 function tabIcon(name: IconName) {
   return function TabIcon({ color }: { color: ColorValue }) {
@@ -11,6 +11,8 @@ function tabIcon(name: IconName) {
 
 /** The raised round button in the middle of the tab bar. Opens the report flow. */
 function ReportTabButton() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   return (
     <Pressable
       onPress={() => router.push('/report')}
@@ -31,6 +33,7 @@ function ReportTabButton() {
 }
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
   return (
     <Tabs
       screenOptions={{
@@ -65,34 +68,36 @@ export default function TabsLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  reportTab: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  reportCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: radius.pill,
-    backgroundColor: colors.emergency,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: -26,
-    borderWidth: 4,
-    borderColor: colors.surface,
-    shadowColor: colors.emergency,
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  reportLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.emergency,
-    marginTop: 2,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    reportTab: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    reportCircle: {
+      width: 60,
+      height: 60,
+      borderRadius: radius.pill,
+      backgroundColor: colors.emergency,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: -26,
+      borderWidth: 4,
+      borderColor: colors.surface,
+      shadowColor: colors.emergency,
+      shadowOpacity: 0.35,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 6,
+    },
+    reportLabel: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: colors.emergencyText,
+      marginTop: 2,
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+  });
+}
