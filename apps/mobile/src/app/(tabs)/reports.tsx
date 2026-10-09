@@ -9,9 +9,14 @@ import {
   View,
 } from 'react-native';
 import { CATEGORY_LABELS } from '@banabaconnect/shared';
-import { Icon, icons, type IconName } from '@/components/Icon';
+import { Icon, icons } from '@/components/Icon';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
+import {
+  deliveryStatusOf,
+  formatReportTime,
+  isPhotoWaiting,
+} from '@/features/queue/deliveryStatus';
 import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
 import { requestSync } from '@/features/queue/syncEngine';
 import type { QueuedReport } from '@/features/queue/types';
@@ -72,55 +77,20 @@ function WaitingSummary({ count }: { count: number }) {
   );
 }
 
-interface DeliveryStatus {
-  label: string;
-  icon: IconName;
-  color: string;
-  background: string;
-}
-
-function statusOf(report: QueuedReport, sending: boolean): DeliveryStatus {
-  if (sending) {
-    return {
-      label: 'Sending…',
-      icon: icons.sending,
-      color: colors.primary,
-      background: colors.primarySoft,
-    };
-  }
-  if (report.syncStatus === 'sent') {
-    return {
-      label: 'Sent',
-      icon: icons.sent,
-      color: colors.success,
-      background: colors.successSoft,
-    };
-  }
-  return {
-    label: 'Waiting for signal',
-    icon: icons.queued,
-    color: colors.warning,
-    background: colors.warningSoft,
-  };
-}
-
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleString('en-PH', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
 function ReportCard({ report, sending }: { report: QueuedReport; sending: boolean }) {
   const { submission, photo } = report;
   const look = CATEGORY_APPEARANCE[submission.category];
-  const status = statusOf(report, sending);
-  const photoWaiting = report.syncStatus === 'sent' && photo?.syncStatus === 'queued';
+  const status = deliveryStatusOf(report, sending);
+  const photoWaiting = isPhotoWaiting(report);
 
   return (
-    <View style={styles.card}>
+    <Pressable
+      onPress={() => router.push({ pathname: '/reports/[id]', params: { id: submission.id } })}
+      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      accessibilityRole="button"
+      accessibilityLabel={`${CATEGORY_LABELS[submission.category]} report, ${status.label}`}
+      accessibilityHint="Opens the report details"
+    >
       {photo ? (
         <Image source={{ uri: photo.uri }} style={styles.thumbnail} />
       ) : (
@@ -133,7 +103,7 @@ function ReportCard({ report, sending }: { report: QueuedReport; sending: boolea
           <Text style={styles.cardTitle} numberOfLines={1}>
             {CATEGORY_LABELS[submission.category]}
           </Text>
-          <Text style={styles.cardTime}>{formatTime(submission.createdAt)}</Text>
+          <Text style={styles.cardTime}>{formatReportTime(submission.createdAt)}</Text>
         </View>
         {submission.description.length > 0 && (
           <Text style={styles.cardDescription} numberOfLines={2}>
@@ -148,7 +118,10 @@ function ReportCard({ report, sending }: { report: QueuedReport; sending: boolea
           {photoWaiting && <Text style={styles.photoNote}>Photo still uploading</Text>}
         </View>
       </View>
-    </View>
+      <View style={styles.chevron}>
+        <Icon name={icons.chevron} size={22} color={colors.textMuted} />
+      </View>
+    </Pressable>
   );
 }
 
@@ -230,6 +203,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: 12,
+  },
+  chevron: {
+    justifyContent: 'center',
   },
   thumbnail: {
     width: 64,

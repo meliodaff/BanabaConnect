@@ -20,6 +20,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="report/index" options={{ title: 'New report' }} />
         <Stack.Screen name="report/details" options={{ title: 'New report' }} />
+        <Stack.Screen name="reports/[id]" options={{ title: 'Report details' }} />
         <Stack.Screen
           name="report/sent"
           options={{ headerShown: false, gestureEnabled: false }}
