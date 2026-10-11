@@ -1,9 +1,12 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ToastHost } from '@/components/ToastHost';
+import { startAuth } from '@/features/auth/authStore';
 import { useOfflineToasts } from '@/features/network/useOfflineToasts';
 import { useSyncTriggers } from '@/features/queue/useSyncTriggers';
 import { useTheme } from '@/theme';
+
+startAuth();
 
 export default function RootLayout() {
   useSyncTriggers();
@@ -43,6 +46,11 @@ export default function RootLayout() {
           name="report/sent"
           options={{ headerShown: false, gestureEnabled: false }}
         />
+        <Stack.Screen name="auth/sign-in" options={{ title: 'Sign in' }} />
+        <Stack.Screen name="auth/register" options={{ title: 'Create account' }} />
+        <Stack.Screen name="auth/details" options={{ title: 'Create account' }} />
+        <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+        <Stack.Screen name="verify-id" options={{ title: 'Verify your ID' }} />
       </Stack>
       <ToastHost />
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />

@@ -1,6 +1,23 @@
 import Constants from 'expo-constants';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import {
+  isProfileComplete,
+  VERIFICATION_LABELS,
+  type VerificationStatus,
+} from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
+import { useAuth } from '@/features/auth/authStore';
+import { signOut } from '@/features/auth/residentProfile';
+import { showToast } from '@/features/toast/toastStore';
 import {
   setThemePreference,
   useThemePreference,
@@ -8,37 +25,192 @@ import {
 } from '@/features/appearance/themePreference';
 import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
-// TODO: registration, login, and Barangay ID verification (Supabase Auth).
 export default function ProfileScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const auth = useAuth();
+  const profile = auth.status === 'signedIn' ? auth.profile : null;
+  const status = profile?.verification_status ?? 'unverified';
+  const badge = badgeTone(status, colors);
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.profileCard}>
         <View style={styles.avatar}>
           <Icon name={icons.profile} size={56} color={colors.primary} />
         </View>
-        <Text style={styles.name}>Guest</Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>Not verified</Text>
-        </View>
+        {auth.status === 'loading' ? (
+          <ActivityIndicator style={styles.name} color={colors.selected} />
+        ) : auth.status === 'guest' ? (
+          <>
+            <Text style={styles.name}>Guest</Text>
+            <Text style={styles.subline}>Reporting without an account</Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.name}>
+              {profile?.full_name || auth.session.user.email || 'Resident'}
+            </Text>
+            {profile?.area && <Text style={styles.subline}>{profile.area}</Text>}
+            <View style={[styles.badge, { backgroundColor: badge.background }]}>
+              <Icon name={badge.icon} size={14} color={badge.color} />
+              <Text style={[styles.badgeText, { color: badge.color }]}>
+                {VERIFICATION_LABELS[status]}
+              </Text>
+            </View>
+          </>
+        )}
       </View>
 
-      <View style={styles.infoCard}>
-        <Icon name={icons.info} size={22} color={colors.primary} />
-        <View style={styles.flex}>
-          <Text style={styles.infoTitle}>Resident accounts are coming soon</Text>
-          <Text style={styles.infoText}>
-            Soon you can register and verify with your Barangay ID. Reports from verified residents
-            are given higher priority.
-          </Text>
+      {auth.status === 'guest' && (
+        <ActionCard
+          icon={icons.personAdd}
+          title="Create a resident account"
+          text="The barangay can follow up with you, and verified residents' reports get higher priority. You can still report without an account."
+          actions={[
+            { label: 'Create account', onPress: () => router.push('/auth/register'), primary: true },
+            { label: 'Sign in', onPress: () => router.push('/auth/sign-in') },
+          ]}
+        />
+      )}
+
+      {auth.status === 'signedIn' && profile && !isProfileComplete(profile) && (
+        <ActionCard
+          icon={icons.details}
+          title="Finish your registration"
+          text="Add your mobile number and sitio so the barangay can reach you."
+          actions={[
+            { label: 'Add details', onPress: () => router.push('/auth/details'), primary: true },
+          ]}
+        />
+      )}
+
+      {auth.status === 'signedIn' &&
+        isProfileComplete(profile) &&
+        (status === 'unverified' || status === 'rejected') && (
+          <ActionCard
+            icon={icons.idCard}
+            title={status === 'rejected' ? 'Send your ID again' : 'Verify with your Barangay ID'}
+            text={
+              status === 'rejected'
+                ? profile?.verification_note ||
+                  'Your last ID photo was not approved. Send a clearer photo.'
+                : 'Verified residents’ reports are given higher priority. Takes a minute.'
+            }
+            actions={[
+              { label: 'Verify my ID', onPress: () => router.push('/verify-id'), primary: true },
+            ]}
+          />
+        )}
+
+      {status === 'pending' && auth.status === 'signedIn' && (
+        <View style={styles.infoCard}>
+          <Icon name={icons.pending} size={22} color={colors.warning} />
+          <View style={styles.flex}>
+            <Text style={styles.infoTitle}>Your ID is under review</Text>
+            <Text style={styles.infoText}>
+              The barangay will check it soon. You can keep reporting while you wait.
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
       <AppearanceSetting />
 
+      {auth.status === 'signedIn' && <SignOutButton />}
+
       <Text style={styles.version}>BanabaConnect v{Constants.expoConfig?.version ?? '—'}</Text>
     </ScrollView>
+  );
+}
+
+function badgeTone(status: VerificationStatus, colors: ThemeColors) {
+  switch (status) {
+    case 'verified':
+      return { icon: icons.verified, color: colors.success, background: colors.successSoft };
+    case 'pending':
+      return { icon: icons.pending, color: colors.warning, background: colors.warningSoft };
+    case 'rejected':
+      return { icon: icons.alert, color: colors.emergencyText, background: colors.emergencySoft };
+    default:
+      return { icon: icons.info, color: colors.warning, background: colors.warningSoft };
+  }
+}
+
+function ActionCard({
+  icon,
+  title,
+  text,
+  actions,
+}: {
+  icon: IconName;
+  title: string;
+  text: string;
+  actions: { label: string; onPress: () => void; primary?: boolean }[];
+}) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+  return (
+    <View style={styles.settingCard}>
+      <View style={styles.actionHeader}>
+        <Icon name={icon} size={24} color={colors.primary} />
+        <View style={styles.flex}>
+          <Text style={styles.infoTitle}>{title}</Text>
+          <Text style={styles.infoText}>{text}</Text>
+        </View>
+      </View>
+      <View style={styles.actionRow}>
+        {actions.map((action) => (
+          <Pressable
+            key={action.label}
+            onPress={action.onPress}
+            style={({ pressed }) => [
+              styles.actionButton,
+              action.primary && styles.actionButtonPrimary,
+              pressed && styles.pressed,
+            ]}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.actionText, action.primary && styles.actionTextPrimary]}>
+              {action.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function SignOutButton() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+
+  function confirmSignOut() {
+    Alert.alert('Sign out?', 'Reports saved on this phone stay here.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign out',
+        style: 'destructive',
+        onPress: () => {
+          signOut()
+            .then(() => showToast({ message: 'Signed out.' }))
+            .catch(() =>
+              showToast({ tone: 'error', message: 'Could not sign out. Please try again.' }),
+            );
+        },
+      },
+    ]);
+  }
+
+  return (
+    <Pressable
+      onPress={confirmSignOut}
+      style={({ pressed }) => [styles.signOut, pressed && styles.pressed]}
+      accessibilityRole="button"
+    >
+      <Icon name={icons.logout} size={20} color={colors.emergencyText} />
+      <Text style={styles.signOutText}>Sign out</Text>
+    </Pressable>
   );
 }
 
@@ -124,7 +296,15 @@ function createStyles(colors: ThemeColors) {
       color: colors.text,
       marginTop: 12,
     },
+    subline: {
+      fontSize: 15,
+      color: colors.textMuted,
+      marginTop: 2,
+    },
     badge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
       marginTop: 8,
       backgroundColor: colors.warningSoft,
       borderRadius: radius.pill,
@@ -132,9 +312,53 @@ function createStyles(colors: ThemeColors) {
       paddingVertical: 4,
     },
     badgeText: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: '700',
       color: colors.warning,
+    },
+    actionHeader: {
+      flexDirection: 'row',
+      gap: 12,
+    },
+    actionRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginTop: 14,
+    },
+    actionButton: {
+      flex: 1,
+      minHeight: 48,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.primary,
+    },
+    actionButtonPrimary: {
+      backgroundColor: colors.primary,
+    },
+    actionText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.primary,
+    },
+    actionTextPrimary: {
+      color: colors.onPrimary,
+    },
+    signOut: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      minHeight: 52,
+      marginTop: 16,
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+    },
+    signOutText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.emergencyText,
     },
     infoCard: {
       flexDirection: 'row',
@@ -150,7 +374,7 @@ function createStyles(colors: ThemeColors) {
       color: colors.text,
     },
     infoText: {
-      fontSize: 14,
+      fontSize: 15,
       lineHeight: 20,
       color: colors.textMuted,
       marginTop: 4,

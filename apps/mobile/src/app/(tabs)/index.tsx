@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
 import { setThemePreference } from '@/features/appearance/themePreference';
+import { firstName, useAuth } from '@/features/auth/authStore';
 import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
 import { showToast } from '@/features/toast/toastStore';
 import { radius, cardShadow, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
@@ -46,6 +47,8 @@ export default function HomeScreen() {
   const styles = useThemedStyles(createStyles);
   const { reports } = useQueuedReports();
   const waiting = countWaiting(reports);
+  const auth = useAuth();
+  const name = auth.status === 'signedIn' ? firstName(auth.profile) : null;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -89,7 +92,7 @@ export default function HomeScreen() {
             <Icon name={icons.profile} size={40} color={colors.primary} />
           </View>
           <View style={styles.flex}>
-            <Text style={styles.greeting}>Hi, Guest!</Text>
+            <Text style={styles.greeting}>Hi, {name ?? 'Guest'}!</Text>
             <Text style={styles.greetingSub}>Barangay Banaba, San Mateo, Rizal</Text>
           </View>
         </View>
