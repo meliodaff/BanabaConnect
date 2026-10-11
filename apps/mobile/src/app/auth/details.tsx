@@ -12,10 +12,11 @@ import { Redirect, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BARANGAY_AREAS, normalizePhone } from '@banabaconnect/shared';
 import { FormField } from '@/components/FormField';
-import { Icon, icons } from '@/components/Icon';
+import { icons } from '@/components/Icon';
+import { ProfileAvatar } from '@/components/ProfileAvatar';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { ErrorBanner } from '@/features/auth/AuthParts';
-import { useAuth } from '@/features/auth/authStore';
+import { avatarUrl, useAuth } from '@/features/auth/authStore';
 import { createAuthStyles } from '@/features/auth/authStyles';
 import { MissingProfileError, saveResidentDetails } from '@/features/auth/residentProfile';
 import { showToast } from '@/features/toast/toastStore';
@@ -114,8 +115,13 @@ export default function ResidentDetailsScreen() {
           </Text>
 
           {accountName && (
-            <View style={styles.infoBanner}>
-              <Icon name={icons.profile} size={22} color={colors.primary} />
+            <View style={[styles.infoBanner, { alignItems: 'center' }]}>
+              <ProfileAvatar
+                uri={avatarUrl(auth)}
+                size={44}
+                iconSize={28}
+                backgroundColor={colors.surface}
+              />
               <View style={styles.flex}>
                 <Text style={styles.infoTitle}>{accountName}</Text>
                 {email && <Text style={styles.infoText}>{email}</Text>}

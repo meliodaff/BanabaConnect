@@ -1,7 +1,9 @@
 import { File } from 'expo-file-system';
 import { Platform } from 'react-native';
+import { eraseAccountReports } from '@/features/queue/accountSync';
 import type { ReportPhoto } from '@/features/report/photo';
 import { refreshProfile } from './authStore';
+import { currentReportOwner } from './guestSession';
 import { supabase } from './supabase';
 
 export interface ResidentDetails {
@@ -75,9 +77,18 @@ export async function submitBarangayId(photo: ReportPhoto) {
   await refreshProfile();
 }
 
+/**
+ * Signs out on this phone and erases this account's reports from it, so the next person can't
+ * see them. They stay on the server and come back at the next sign-in.
+ */
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
+  const ownerId = await currentReportOwner();
+  // "local" signs out this phone only, and works without signal.
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
   if (error) {
     throw error;
+  }
+  if (ownerId) {
+    await eraseAccountReports(ownerId);
   }
 }

@@ -1,6 +1,10 @@
 import { useSyncExternalStore } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { PROFILE_COLUMNS, type ResidentProfile } from '@banabaconnect/shared';
+import { syncAccountReports } from '@/features/queue/accountSync';
+import { reportsStore } from '@/features/queue/reportsStore';
+import { refreshStatuses } from '@/features/queue/statusSync';
+import { claimGuestReports } from './guestSession';
 import { supabase, supabaseConfigured } from './supabase';
 
 export type AuthState =
@@ -41,11 +45,22 @@ async function fetchProfile(userId: string): Promise<ResidentProfile | null> {
   return data as ResidentProfile | null;
 }
 
+/** No session, or the hidden account a guest gets when they first send a report. */
+function isGuestSession(session: Session | null): session is null {
+  return !session || session.user.is_anonymous === true;
+}
+
 async function applySession(session: Session | null) {
-  if (!session) {
+  if (isGuestSession(session)) {
     setState({ status: 'guest', session: null, profile: null });
+    // Show the guest's reports, not the account that just signed out.
+    void reportsStore.refresh().catch((error) => console.warn('Could not load reports', error));
     return;
   }
+  // Link this phone's guest reports to the account and download the account's earlier ones.
+  void syncAccountReports(session.user.id).catch((error) =>
+    console.warn('Could not sync this account’s reports', error),
+  );
   // Keep the profile we already have while the new one loads, so screens don't flicker.
   const previous = state.status === 'signedIn' && state.session.user.id === session.user.id;
   setState({ status: 'signedIn', session, profile: previous ? state.profile : null });
@@ -73,6 +88,13 @@ export function startAuth() {
     }
     setTimeout(() => void applySession(session), 0);
   });
+  // Finish a guest report hand-over that couldn't complete earlier, e.g. sign-up confirmed by
+  // email after the app was closed.
+  void claimGuestReports().then((moved) => {
+    if (moved > 0) {
+      void refreshStatuses({ force: true });
+    }
+  });
 }
 
 /**
@@ -83,7 +105,8 @@ export async function refreshProfile(): Promise<ResidentProfile | null> {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  if (!session) {
+  if (isGuestSession(session)) {
+    setState({ status: 'guest', session: null, profile: null });
     return null;
   }
   const profile = await fetchProfile(session.user.id);
@@ -102,4 +125,18 @@ export function useAuth(): AuthState {
 /** "Juan" from "Juan Dela Cruz", for greetings. */
 export function firstName(profile: ResidentProfile | null): string | null {
   return profile?.full_name?.trim().split(/\s+/)[0] || null;
+}
+
+/** The profile photo from the resident's Google account, or null (guests, email accounts). */
+export function avatarUrl(auth: AuthState): string | null {
+  if (auth.status !== 'signedIn') {
+    return null;
+  }
+  const metadata = auth.session.user.user_metadata ?? {};
+  const url: unknown = metadata.avatar_url ?? metadata.picture;
+  if (typeof url !== 'string' || !url.startsWith('https://')) {
+    return null;
+  }
+  // Google sends a 96 px photo; ask for a sharper one for high-resolution screens.
+  return url.replace(/=s\d+-c$/, '=s256-c');
 }

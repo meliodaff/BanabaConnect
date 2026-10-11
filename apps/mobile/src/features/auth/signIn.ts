@@ -3,7 +3,9 @@ import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
 import { isProfileComplete } from '@banabaconnect/shared';
 import { showToast } from '@/features/toast/toastStore';
+import { refreshStatuses } from '@/features/queue/statusSync';
 import { firstName, refreshProfile } from './authStore';
+import { claimGuestReports, prepareGuestClaim } from './guestSession';
 import { supabase, supabaseConfigured } from './supabase';
 
 export type SignInResult = 'signedIn' | 'cancelled' | 'confirmEmail';
@@ -56,6 +58,7 @@ export async function signInWithGoogle(): Promise<SignInResult> {
   if (!supabaseConfigured) {
     throw new SignInError(NOT_CONFIGURED);
   }
+  await prepareGuestClaim();
   if (__DEV__) {
     // Supabase only returns to addresses on its Redirect URLs list; otherwise it opens the Site URL.
     console.log(`Google sign-in returns to: ${AUTH_CALLBACK_URL}`);
@@ -95,6 +98,7 @@ export async function signInWithEmail(email: string, password: string): Promise<
   if (!supabaseConfigured) {
     throw new SignInError(NOT_CONFIGURED);
   }
+  await prepareGuestClaim();
   const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
   if (error) {
     if (error.code === 'invalid_credentials') {
@@ -117,6 +121,7 @@ export async function signUpWithEmail(
   if (!supabaseConfigured) {
     throw new SignInError(NOT_CONFIGURED);
   }
+  await prepareGuestClaim();
   const { data, error } = await supabase.auth.signUp({
     email: email.trim(),
     password,
@@ -142,6 +147,10 @@ export async function signUpWithEmail(
  * isn't finished, otherwise back to the Me tab.
  */
 export async function continueAfterSignIn() {
+  // Reports sent as a guest on this phone now belong to this account.
+  if ((await claimGuestReports()) > 0) {
+    void refreshStatuses({ force: true });
+  }
   const profile = await refreshProfile();
   if (!isProfileComplete(profile)) {
     router.replace('/auth/details');

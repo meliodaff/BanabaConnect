@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { router } from 'expo-router';
 import {
   ActivityIndicator,
   FlatList,
   Image,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
@@ -18,6 +20,8 @@ import {
   isPhotoWaiting,
 } from '@/features/queue/deliveryStatus';
 import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
+import { refreshStatuses } from '@/features/queue/statusSync';
+import { requestSync } from '@/features/queue/syncEngine';
 import { tryToSendNow } from '@/features/queue/tryToSendNow';
 import type { QueuedReport } from '@/features/queue/types';
 import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
@@ -27,6 +31,18 @@ export default function MyReportsScreen() {
   const styles = useThemedStyles(createStyles);
   const { loaded, reports, sendingIds } = useQueuedReports();
   const waiting = countWaiting(reports);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Pull down to send anything waiting and get the barangay's latest status.
+  async function handleRefresh() {
+    setRefreshing(true);
+    try {
+      await requestSync({ ignoreBackoff: true });
+      await refreshStatuses({ force: true });
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   if (!loaded) {
     return (
@@ -42,6 +58,14 @@ export default function MyReportsScreen() {
       contentContainerStyle={reports.length === 0 ? styles.emptyContent : styles.listContent}
       data={reports}
       keyExtractor={(item) => item.submission.id}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={colors.primary}
+          colors={[colors.primary]}
+        />
+      }
       ListHeaderComponent={waiting > 0 ? <WaitingSummary count={waiting} /> : null}
       ListEmptyComponent={<EmptyState />}
       renderItem={({ item }) => (

@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { CATEGORY_LABELS, type ReportCategory } from '@banabaconnect/shared';
 import { icons } from '@/components/Icon';
+import { currentReportOwner } from '@/features/auth/guestSession';
 import { showToast } from '@/features/toast/toastStore';
 import {
   duePhotos,
@@ -11,6 +12,7 @@ import {
   markReportSent,
 } from './reportRepository';
 import { reportsStore } from './reportsStore';
+import { refreshStatuses } from './statusSync';
 import { OfflineError, transport } from './transport';
 import type { QueuedReport } from './types';
 
@@ -83,13 +85,17 @@ export function requestSync(options: SyncOptions = {}): Promise<void> {
 
 async function syncOnce({ ignoreBackoff = false }: SyncOptions) {
   // Text reports first: they are small and let the barangay act even before photos arrive.
-  const reports = (await dueReports(Date.now(), ignoreBackoff)).sort(byPriority);
+  // Only the signed-in account's (or the guest's) reports. Another account's wait until it signs back in.
+  const owner = await currentReportOwner();
+  const reports = (await dueReports(owner, Date.now(), ignoreBackoff)).sort(byPriority);
+  let sentAny = false;
   for (const report of reports) {
     const id = report.submission.id;
     reportsStore.setSending(id, true);
     try {
       await transport.sendReport(report.submission);
       await markReportSent(id, new Date().toISOString());
+      sentAny = true;
       if (report.attempts > 0) {
         // It waited for signal, so the resident may not be watching. First tries show on the sent screen.
         showToast({
@@ -114,7 +120,7 @@ async function syncOnce({ ignoreBackoff = false }: SyncOptions) {
     }
   }
 
-  const photos = (await duePhotos(Date.now(), ignoreBackoff)).sort(byPriority);
+  const photos = (await duePhotos(owner, Date.now(), ignoreBackoff)).sort(byPriority);
   for (const report of photos) {
     if (!report.photo) {
       continue;
@@ -122,7 +128,7 @@ async function syncOnce({ ignoreBackoff = false }: SyncOptions) {
     const id = report.submission.id;
     reportsStore.setSending(id, true);
     try {
-      await transport.uploadPhoto(id, report.photo.uri);
+      await transport.uploadPhoto(id, report.photo);
       await markPhotoSent(id);
     } catch (error) {
       const attempts = report.photo.attempts + 1;
@@ -135,4 +141,7 @@ async function syncOnce({ ignoreBackoff = false }: SyncOptions) {
       await reportsStore.refresh();
     }
   }
+
+  // Pick up the barangay's status changes; right away when something new was just sent.
+  await refreshStatuses({ force: sentAny });
 }

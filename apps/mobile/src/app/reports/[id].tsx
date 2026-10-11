@@ -15,6 +15,7 @@ import { CATEGORY_LABELS } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
 import {
+  deliveryStatusDetail,
   deliveryStatusOf,
   formatReportTime,
   isPhotoWaiting,
@@ -86,11 +87,7 @@ function ReportDetail({ report, sending }: { report: QueuedReport; sending: bool
           )}
           <View style={styles.flex}>
             <Text style={[styles.statusTitle, { color: status.color }]}>{status.label}</Text>
-            <Text style={styles.statusText}>
-              {sent
-                ? `Sent to the barangay on ${formatReportTime(report.sentAt ?? submission.createdAt)}.`
-                : 'Saved on your phone. Sends automatically when you get signal.'}
-            </Text>
+            <Text style={styles.statusText}>{deliveryStatusDetail(report)}</Text>
           </View>
           {!sent && !sending && (
             <Pressable

@@ -24,6 +24,7 @@ import { Icon, icons, type IconName } from '@/components/Icon';
 import { useIsOffline } from '@/features/network/useIsOffline';
 import { buildSubmission, INCIDENT_TIME_OPTIONS } from '@/features/report/buildSubmission';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
+import { currentReportOwner } from '@/features/auth/guestSession';
 import { saveReport } from '@/features/queue/reportRepository';
 import { reportsStore } from '@/features/queue/reportsStore';
 import { requestSync } from '@/features/queue/syncEngine';
@@ -106,7 +107,7 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
     setSaving(true);
     try {
       // Save on the phone first, so the report survives no signal, app closes, and restarts.
-      await saveReport(submission, photo);
+      await saveReport(submission, photo, await currentReportOwner());
       await reportsStore.refresh();
     } catch (error) {
       console.warn('Could not save report', error);

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import {
@@ -15,8 +16,13 @@ import {
   type VerificationStatus,
 } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
-import { useAuth } from '@/features/auth/authStore';
+import { ProfileAvatar } from '@/components/ProfileAvatar';
+import { avatarUrl, useAuth } from '@/features/auth/authStore';
 import { signOut } from '@/features/auth/residentProfile';
+import { isPhotoWaiting } from '@/features/queue/deliveryStatus';
+import { reportsStore } from '@/features/queue/reportsStore';
+import { requestSync } from '@/features/queue/syncEngine';
+import type { QueuedReport } from '@/features/queue/types';
 import { showToast } from '@/features/toast/toastStore';
 import {
   setThemePreference,
@@ -36,9 +42,12 @@ export default function ProfileScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.profileCard}>
-        <View style={styles.avatar}>
-          <Icon name={icons.profile} size={56} color={colors.primary} />
-        </View>
+        <ProfileAvatar
+          uri={avatarUrl(auth)}
+          size={88}
+          iconSize={56}
+          backgroundColor={colors.selectedSoft}
+        />
         {auth.status === 'loading' ? (
           <ActivityIndicator style={styles.name} color={colors.selected} />
         ) : auth.status === 'guest' ? (
@@ -181,35 +190,71 @@ function ActionCard({
   );
 }
 
+/** Reports, or their photos, that haven't reached the barangay yet. */
+function countNotFullySent(reports: QueuedReport[]) {
+  return reports.filter((report) => report.syncStatus === 'queued' || isPhotoWaiting(report))
+    .length;
+}
+
 function SignOutButton() {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const [checking, setChecking] = useState(false);
 
-  function confirmSignOut() {
-    Alert.alert('Sign out?', 'Reports saved on this phone stay here.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign out',
-        style: 'destructive',
-        onPress: () => {
-          signOut()
-            .then(() => showToast({ message: 'Signed out.' }))
-            .catch(() =>
-              showToast({ tone: 'error', message: 'Could not sign out. Please try again.' }),
-            );
-        },
-      },
-    ]);
+  function signOutNow() {
+    signOut()
+      .then(() => showToast({ message: 'Signed out. Your reports are saved to your account.' }))
+      .catch(() => showToast({ tone: 'error', message: 'Could not sign out. Please try again.' }));
+  }
+
+  // Signing out erases this account's reports from the phone, so anything unsent would be lost.
+  async function handlePress() {
+    if (countNotFullySent(reportsStore.getState().reports) > 0) {
+      setChecking(true);
+      try {
+        await requestSync({ ignoreBackoff: true });
+      } finally {
+        setChecking(false);
+      }
+    }
+
+    const unsent = countNotFullySent(reportsStore.getState().reports);
+    if (unsent > 0) {
+      Alert.alert(
+        unsent === 1 ? '1 report isn’t fully sent' : `${unsent} reports aren’t fully sent`,
+        'Signing out deletes them from this phone, and the barangay won’t receive them. Stay signed in until you have signal and they send.',
+        [
+          { text: 'Stay signed in', style: 'cancel' },
+          { text: 'Sign out and delete', style: 'destructive', onPress: signOutNow },
+        ],
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Sign out?',
+      'Your reports are saved to your account. They’re removed from this phone and come back when you sign in again.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign out', style: 'destructive', onPress: signOutNow },
+      ],
+    );
   }
 
   return (
     <Pressable
-      onPress={confirmSignOut}
+      onPress={handlePress}
+      disabled={checking}
       style={({ pressed }) => [styles.signOut, pressed && styles.pressed]}
       accessibilityRole="button"
+      accessibilityState={{ busy: checking }}
     >
-      <Icon name={icons.logout} size={20} color={colors.emergencyText} />
-      <Text style={styles.signOutText}>Sign out</Text>
+      {checking ? (
+        <ActivityIndicator color={colors.emergencyText} />
+      ) : (
+        <Icon name={icons.logout} size={20} color={colors.emergencyText} />
+      )}
+      <Text style={styles.signOutText}>{checking ? 'Sending your reports…' : 'Sign out'}</Text>
     </Pressable>
   );
 }
@@ -281,14 +326,6 @@ function createStyles(colors: ThemeColors) {
       borderRadius: radius.lg,
       alignItems: 'center',
       paddingVertical: 24,
-    },
-    avatar: {
-      width: 88,
-      height: 88,
-      borderRadius: radius.pill,
-      backgroundColor: colors.selectedSoft,
-      alignItems: 'center',
-      justifyContent: 'center',
     },
     name: {
       fontSize: 20,

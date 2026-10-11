@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { currentReportOwner } from '@/features/auth/guestSession';
 import { listReports } from './reportRepository';
 import type { QueuedReport } from './types';
 
@@ -30,9 +31,9 @@ function getSnapshot() {
 
 export const reportsStore = {
   getState: getSnapshot,
-  /** Reloads reports from the local database. */
+  /** Reloads the signed-in account's (or the guest's) reports from the local database. */
   async refresh() {
-    const reports = await listReports();
+    const reports = await listReports(await currentReportOwner());
     setState({ ...state, loaded: true, reports });
   },
   setSending(id: string, sending: boolean) {
