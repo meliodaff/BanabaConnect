@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/*
+ * eGovPH-style palette, kept vivid: Philippine blue for navigation and actions, sun yellow for
+ * highlights, red only for urgent things. Status and priority colors stay consistent with the
+ * mobile app (success green, warning orange).
+ */
+@theme {
+  --color-brand: #0038a8;
+  --color-brand-dark: #00297a;
+  --color-brand-soft: #e6eeff;
+  --color-sun: #fcd116;
+  --color-sun-soft: #fff6cc;
+  --color-urgent: #c8101a;
+  --color-urgent-soft: #fde7e8;
+  --color-success: #17732f;
+  --color-success-soft: #e2f5e7;
+  --color-warning: #a84800;
+  --color-warning-soft: #ffeedd;
+  --color-page: #f3f5fa;
+  --color-surface: #ffffff;
+  --color-line: #dfe4ee;
+  --color-ink: #141a26;
+  --color-muted: #4d5668;
+
+  --font-sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* A clear focus ring on everything, so the whole dashboard works from the keyboard. */
+:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* Map popups and controls use the app font. */
+.maplibregl-map,
+.maplibregl-popup-content {
+  font-family: var(--font-sans);
+}
+
+.maplibregl-popup-content {
+  border-radius: 12px;
+  padding: 12px 14px;
+}

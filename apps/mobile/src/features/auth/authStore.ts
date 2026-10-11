@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { Session } from '@supabase/supabase-js';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { PROFILE_COLUMNS, type ResidentProfile } from '@banabaconnect/shared';
 import { syncAccountReports } from '@/features/queue/accountSync';
 import { reportsStore } from '@/features/queue/reportsStore';
@@ -50,24 +50,31 @@ function isGuestSession(session: Session | null): session is null {
   return !session || session.user.is_anonymous === true;
 }
 
-async function applySession(session: Session | null) {
+async function applySession(session: Session | null, event: AuthChangeEvent) {
   if (isGuestSession(session)) {
     setState({ status: 'guest', session: null, profile: null });
     // Show the guest's reports, not the account that just signed out.
     void reportsStore.refresh().catch((error) => console.warn('Could not load reports', error));
     return;
   }
+
+  // Check the account type before touching this phone's reports.
+  const profile = await fetchProfile(session.user.id);
+  if (profile?.role === 'admin') {
+    // Staff accounts are for the Command Dashboard. The sign-in screen explains and signs out;
+    // a staff session left over from before is simply signed out here.
+    setState({ status: 'guest', session: null, profile: null });
+    if (event === 'INITIAL_SESSION') {
+      void supabase.auth.signOut({ scope: 'local' });
+    }
+    return;
+  }
+
   // Link this phone's guest reports to the account and download the account's earlier ones.
   void syncAccountReports(session.user.id).catch((error) =>
     console.warn('Could not sync this account’s reports', error),
   );
-  // Keep the profile we already have while the new one loads, so screens don't flicker.
-  const previous = state.status === 'signedIn' && state.session.user.id === session.user.id;
-  setState({ status: 'signedIn', session, profile: previous ? state.profile : null });
-  const profile = await fetchProfile(session.user.id);
-  if (state.status === 'signedIn' && state.session.user.id === session.user.id) {
-    setState({ status: 'signedIn', session: state.session, profile });
-  }
+  setState({ status: 'signedIn', session, profile });
 }
 
 /** Starts listening for sign-in and sign-out. Safe to call more than once. */
@@ -86,7 +93,7 @@ export function startAuth() {
       setState({ ...state, session });
       return;
     }
-    setTimeout(() => void applySession(session), 0);
+    setTimeout(() => void applySession(session, event), 0);
   });
   // Finish a guest report hand-over that couldn't complete earlier, e.g. sign-up confirmed by
   // email after the app was closed.

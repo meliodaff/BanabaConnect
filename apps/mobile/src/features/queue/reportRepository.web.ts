@@ -21,6 +21,7 @@ export async function saveReport(
     photo: photo ? { ...photo, syncStatus: 'queued', attempts: 0, nextAttemptAt: 0 } : null,
     serverStatus: null,
     serverStatusAt: null,
+    serverNote: null,
   });
 }
 
@@ -73,8 +74,8 @@ export async function markPhotoRetry(reportId: string, attempts: number, nextAtt
 }
 
 export async function saveServerStatuses(statuses: ServerStatus[]) {
-  for (const { id, status, statusAt } of statuses) {
-    update(id, (r) => ({ ...r, serverStatus: status, serverStatusAt: statusAt }));
+  for (const { id, status, statusAt, note } of statuses) {
+    update(id, (r) => ({ ...r, serverStatus: status, serverStatusAt: statusAt, serverNote: note }));
   }
 }
 
@@ -112,6 +113,7 @@ export async function insertDownloadedReport(report: DownloadedReport, ownerId: 
       : null,
     serverStatus: report.serverStatus,
     serverStatusAt: report.serverStatusAt,
+    serverNote: report.serverNote,
   });
 }
 

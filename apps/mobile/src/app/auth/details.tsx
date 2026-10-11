@@ -96,7 +96,7 @@ export default function ResidentDetailsScreen() {
     router.dismissTo('/profile');
     showToast({
       tone: 'success',
-      message: 'You are registered. Verify your Barangay ID anytime from the Me tab.',
+      message: 'You are registered. Verify your Barangay ID anytime from the Profile tab.',
       duration: 5000,
     });
   }

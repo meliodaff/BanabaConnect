@@ -25,6 +25,7 @@ interface ReportRow {
   owner_id: string | null;
   server_status: string | null;
   server_status_at: string | null;
+  server_note: string | null;
   photo_uri: string | null;
   photo_width: number | null;
   photo_height: number | null;
@@ -62,6 +63,7 @@ function toQueuedReport(row: ReportRow): QueuedReport {
     sentAt: row.sent_at,
     serverStatus: isReportStatus(row.server_status) ? row.server_status : null,
     serverStatusAt: row.server_status_at,
+    serverNote: row.server_note,
     photo:
       row.photo_uri === null
         ? null
@@ -237,11 +239,12 @@ export async function saveServerStatuses(statuses: ServerStatus[]) {
   }
   await withWriteLock((db) =>
     db.withTransactionAsync(async () => {
-      for (const { id, status, statusAt } of statuses) {
+      for (const { id, status, statusAt, note } of statuses) {
         await db.runAsync(
-          'UPDATE reports SET server_status = ?, server_status_at = ? WHERE id = ?',
+          'UPDATE reports SET server_status = ?, server_status_at = ?, server_note = ? WHERE id = ?',
           status,
           statusAt,
+          note,
           id,
         );
       }
@@ -277,8 +280,8 @@ export async function insertDownloadedReport(report: DownloadedReport, ownerId: 
       await db.runAsync(
         `INSERT OR IGNORE INTO reports
           (id, category, latitude, longitude, location_accuracy, description, incident_at, created_at,
-           owner_id, sync_status, sent_at, server_status, server_status_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'sent', ?, ?, ?)`,
+           owner_id, sync_status, sent_at, server_status, server_status_at, server_note)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'sent', ?, ?, ?, ?)`,
         submission.id,
         submission.category,
         submission.latitude,
@@ -291,6 +294,7 @@ export async function insertDownloadedReport(report: DownloadedReport, ownerId: 
         report.sentAt,
         report.serverStatus,
         report.serverStatusAt,
+        report.serverNote,
       );
       if (photo) {
         await db.runAsync(

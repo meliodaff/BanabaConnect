@@ -42,6 +42,20 @@ export async function ensureSession(): Promise<Session> {
   return data.session;
 }
 
+/** Barangay staff accounts are for the Command Dashboard, not the resident app. */
+export async function isStaffAccount(userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle();
+  if (error) {
+    console.warn('Could not check the account type', error);
+    return false;
+  }
+  return data?.role === 'admin';
+}
+
 function readToken(): string | null {
   try {
     return localStorage.getItem(CLAIM_KEY);
@@ -97,6 +111,10 @@ export async function claimGuestReports(): Promise<number> {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session || session.user.is_anonymous) {
+    return 0;
+  }
+  // Never hand a guest's reports to a staff account; keep the token for the next resident sign-in.
+  if (await isStaffAccount(session.user.id)) {
     return 0;
   }
   const { data, error } = await supabase.rpc('claim_guest_reports', { p_token: token });

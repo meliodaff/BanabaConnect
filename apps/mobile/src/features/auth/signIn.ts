@@ -5,7 +5,7 @@ import { isProfileComplete } from '@banabaconnect/shared';
 import { showToast } from '@/features/toast/toastStore';
 import { refreshStatuses } from '@/features/queue/statusSync';
 import { firstName, refreshProfile } from './authStore';
-import { claimGuestReports, prepareGuestClaim } from './guestSession';
+import { claimGuestReports, isStaffAccount, prepareGuestClaim } from './guestSession';
 import { supabase, supabaseConfigured } from './supabase';
 
 export type SignInResult = 'signedIn' | 'cancelled' | 'confirmEmail';
@@ -14,6 +14,8 @@ export type SignInResult = 'signedIn' | 'cancelled' | 'confirmEmail';
 export class SignInError extends Error {}
 
 const NOT_CONFIGURED = 'Accounts are not set up in this version of the app yet.';
+const STAFF_ACCOUNT =
+  'This is a barangay staff account. Use the Command Dashboard on a computer instead. To report as a resident, use a resident account.';
 
 /** Where Google sends the resident back to: banabaconnect://auth/callback (exp://… in Expo Go). */
 export const AUTH_CALLBACK_URL = Linking.createURL('auth/callback');
@@ -144,9 +146,18 @@ export async function signUpWithEmail(
 
 /**
  * Sends a newly signed-in resident to the right place: their details form if registration
- * isn't finished, otherwise back to the Me tab.
+ * isn't finished, otherwise back to the Profile tab.
  */
 export async function continueAfterSignIn() {
+  // Staff accounts are for the Command Dashboard. Check before anything moves to the account.
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (session && (await isStaffAccount(session.user.id))) {
+    await supabase.auth.signOut({ scope: 'local' });
+    throw new SignInError(STAFF_ACCOUNT);
+  }
+
   // Reports sent as a guest on this phone now belong to this account.
   if ((await claimGuestReports()) > 0) {
     void refreshStatuses({ force: true });

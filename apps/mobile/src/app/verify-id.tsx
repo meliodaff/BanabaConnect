@@ -4,6 +4,7 @@ import { Redirect, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon, icons } from '@/components/Icon';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { StaffNote } from '@/components/StaffNote';
 import { ErrorBanner } from '@/features/auth/AuthParts';
 import { useAuth } from '@/features/auth/authStore';
 import { createAuthStyles } from '@/features/auth/authStyles';
@@ -116,8 +117,13 @@ export default function VerifyIdScreen() {
             <View style={styles.flex}>
               <Text style={styles.infoTitle}>Your last ID was not approved</Text>
               <Text style={styles.infoText}>
-                {profile.verification_note || 'Please send a clearer photo of your Barangay ID.'}
+                {profile.verification_note?.trim()
+                  ? 'Read the note below, then send a new photo.'
+                  : 'Send a clearer photo of your Barangay ID.'}
               </Text>
+              {profile.verification_note?.trim() ? (
+                <StaffNote note={profile.verification_note.trim()} />
+              ) : null}
             </View>
           </View>
         )}

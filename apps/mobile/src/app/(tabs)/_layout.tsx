@@ -63,7 +63,7 @@ export default function TabsLayout() {
         name="hotlines"
         options={{ title: 'Hotlines', tabBarIcon: tabIcon(icons.phone) }}
       />
-      <Tabs.Screen name="profile" options={{ title: 'Me', tabBarIcon: tabIcon(icons.profile) }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: tabIcon(icons.profile) }} />
     </Tabs>
   );
 }

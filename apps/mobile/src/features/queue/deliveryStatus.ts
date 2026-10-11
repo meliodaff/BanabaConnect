@@ -100,15 +100,18 @@ export function deliveryStatusDetail(report: QueuedReport): string {
       : 'Saved on your phone. Sends automatically when you get signal.';
   }
   const updated = report.serverStatusAt ? ` Updated ${formatReportTime(report.serverStatusAt)}.` : '';
+  const seeNote = report.serverNote ? ' See the note from barangay staff below.' : '';
   switch (report.serverStatus) {
     case 'in_progress':
-      return `The barangay is responding to your report.${updated}`;
+      return `The barangay is responding to your report.${updated}${seeNote}`;
     case 'resolved':
-      return `The barangay marked this incident as resolved.${updated}`;
+      return `The barangay marked this incident as resolved.${updated}${seeNote}`;
     case 'invalid':
-      return `The barangay closed this report.${updated}`;
+      return report.serverNote
+        ? `The barangay closed this report. Their reason is below.${updated}`
+        : `The barangay closed this report.${updated}`;
     default:
-      return `Sent to the barangay on ${formatReportTime(report.sentAt ?? report.submission.createdAt)}.`;
+      return `Sent to the barangay on ${formatReportTime(report.sentAt ?? report.submission.createdAt)}.${seeNote}`;
   }
 }
 

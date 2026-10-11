@@ -24,7 +24,7 @@ while the app is only tested by the team (emulator and AltStore), to keep testin
 
 - [ ] **Sign in with Apple** (App Store Review Guideline 4.8). Apps that offer Google sign-in must
   also offer a privacy-focused option.
-- [ ] **In-app account deletion** (Guideline 5.1.1). Add "Delete my account" on the Me tab. It
+- [ ] **In-app account deletion** (Guideline 5.1.1). Add "Delete my account" on the Profile tab. It
   needs a server-side function, because deleting an account requires the `service_role` key.
 - [ ] **Privacy policy URL.** The app collects phone numbers, locations, photos and Barangay ID
   photos.
