@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 
 const DATABASE_NAME = 'banabaconnect.db';
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 3;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -18,6 +18,21 @@ export function getDb(): Promise<SQLite.SQLiteDatabase> {
     });
   }
   return dbPromise;
+}
+
+let writeQueue: Promise<unknown> = Promise.resolve();
+
+/**
+ * Runs a database write after any write already in progress. withTransactionAsync isn't
+ * isolated: a query that runs while a transaction is open becomes part of it, and a second
+ * transaction at the same time fails ("cannot start a transaction within a transaction").
+ * That happened when signing in downloaded reports while statuses were being saved.
+ * Don't call another write function from inside `task`: it would wait for itself.
+ */
+export function withWriteLock<T>(task: (db: SQLite.SQLiteDatabase) => Promise<T>): Promise<T> {
+  const run = writeQueue.then(async () => task(await getDb()));
+  writeQueue = run.catch(() => undefined);
+  return run;
 }
 
 async function migrate(db: SQLite.SQLiteDatabase) {
@@ -57,6 +72,22 @@ async function migrate(db: SQLite.SQLiteDatabase) {
       );
     `);
     version = 1;
+  }
+
+  if (version === 1) {
+    // The barangay's status for sent reports, e.g. "in_progress".
+    await db.execAsync(`
+      ALTER TABLE reports ADD COLUMN server_status TEXT;
+      ALTER TABLE reports ADD COLUMN server_status_at TEXT;
+    `);
+    version = 2;
+  }
+
+  if (version === 2) {
+    // The account that made the report; NULL for a guest. Reports saved before this version
+    // are NULL and move to whoever signs in next.
+    await db.execAsync('ALTER TABLE reports ADD COLUMN owner_id TEXT;');
+    version = 3;
   }
 
   await db.execAsync(`PRAGMA user_version = ${version}`);

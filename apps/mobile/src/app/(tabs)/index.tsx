@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
 import { setThemePreference } from '@/features/appearance/themePreference';
-import { firstName, useAuth } from '@/features/auth/authStore';
+import { ProfileAvatar } from '@/components/ProfileAvatar';
+import { avatarUrl, firstName, useAuth } from '@/features/auth/authStore';
 import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
 import { showToast } from '@/features/toast/toastStore';
 import { radius, cardShadow, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
@@ -88,9 +89,12 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.greetingRow}>
-          <View style={styles.avatar}>
-            <Icon name={icons.profile} size={40} color={colors.primary} />
-          </View>
+          <ProfileAvatar
+            uri={avatarUrl(auth)}
+            size={52}
+            iconSize={40}
+            backgroundColor={colors.primarySoft}
+          />
           <View style={styles.flex}>
             <Text style={styles.greeting}>Hi, {name ?? 'Guest'}!</Text>
             <Text style={styles.greetingSub}>Barangay Banaba, San Mateo, Rizal</Text>
@@ -273,14 +277,6 @@ function createStyles(colors: ThemeColors) {
       gap: 12,
       paddingHorizontal: 20,
       marginTop: 20,
-    },
-    avatar: {
-      width: 52,
-      height: 52,
-      borderRadius: radius.pill,
-      backgroundColor: colors.primarySoft,
-      alignItems: 'center',
-      justifyContent: 'center',
     },
     greeting: {
       fontSize: 18,

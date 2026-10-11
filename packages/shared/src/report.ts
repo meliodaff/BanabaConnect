@@ -1,6 +1,7 @@
 /**
- * The report contract shared by the mobile app and the Next.js API.
- * The phone creates a report with these fields; POST /api/reports accepts them.
+ * The report contract shared by the mobile app and the dashboard.
+ * The phone creates a report with these fields and sends them to the `submit_report`
+ * database function (supabase/migrations/20261012000000_report_submission.sql).
  */
 
 // Draft list. Severity values per category are still an open question (see the
@@ -17,6 +18,10 @@ export const REPORT_CATEGORIES = [
 ] as const;
 
 export type ReportCategory = (typeof REPORT_CATEGORIES)[number];
+
+export function isReportCategory(value: unknown): value is ReportCategory {
+  return typeof value === 'string' && (REPORT_CATEGORIES as readonly string[]).includes(value);
+}
 
 export const CATEGORY_LABELS: Record<ReportCategory, string> = {
   flood: 'Flood',
@@ -50,6 +55,18 @@ export interface ReportSubmission {
 export const REPORT_STATUSES = ['received', 'in_progress', 'resolved', 'invalid'] as const;
 
 export type ReportStatus = (typeof REPORT_STATUSES)[number];
+
+/** How a report's status reads to the resident who sent it. */
+export const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
+  received: 'Received by the barangay',
+  in_progress: 'Being handled',
+  resolved: 'Resolved',
+  invalid: 'Closed',
+};
+
+export function isReportStatus(value: unknown): value is ReportStatus {
+  return typeof value === 'string' && (REPORT_STATUSES as readonly string[]).includes(value);
+}
 
 /** Delivery state of a report on the phone, shown to the resident. */
 export type LocalSyncStatus =
