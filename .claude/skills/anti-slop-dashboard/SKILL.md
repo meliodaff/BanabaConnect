@@ -28,6 +28,15 @@ Decide every page against these people:
 Professional here means **civic, calm and trustworthy**, like a well-made government service,
 not a startup analytics product.
 
+
+## Related skills
+
+Also apply **`anti-ai-slop`** (the general slop filter) and **`component-reference-design`**
+(what good dashboard patterns look like), installed from github.com/Vanszs/Anti-AI-UI. Where they
+conflict with a decision recorded in this skill (the eGovPH look, the fonts, the colors and
+layout the user chose), this skill wins, because those were the user's explicit choices. Status
+colors follow `anti-slop-status-colors`.
+
 ## House style: keep it
 
 The dashboard uses an eGovPH-inspired look. Keep it, and improve usability inside it:
@@ -41,6 +50,11 @@ The dashboard uses an eGovPH-inspired look. Keep it, and improve usability insid
   highlight and a blue bar on its left. At the bottom: the staff member's initials, name, role,
   and Sign out. The user rejected a bright blue sidebar as too loud; don't bring back large
   blue surfaces.
+- **Fonts:** headings (`h1`–`h3`, the sidebar names) in **Public Sans**, a typeface made for
+  government sites, loaded with `next/font` in `app/layout.tsx` (the `font-display` class). Body
+  text, tables and numbers stay in the system font. Three weights only: regular, semibold, bold.
+- **Radius scale:** cards and panels `rounded-lg`, buttons and inputs `rounded-md`, pills and the
+  seal `rounded-full`. No left-border accents (except a real callout), no pulsing dots.
 - White page headers with a bold title, a one-line description, and filter tabs on the right.
 - White cards with thin gray borders on a light gray page; rounded corners; little or no shadow.
 - The **priority badge**: a square with the score out of 100, filled with its band color,
@@ -161,44 +175,10 @@ another hex value in a component; use the Tailwind token classes (`bg-brand`, `t
 | `brand` (Philippine blue) / `brand-dark` / `brand-soft` | Primary buttons, links, the current sidebar section, selected filters, focus rings, "Received" | Warnings or errors |
 | `sun` / `sun-soft` (sun yellow) | Top stripe, the "Connect" in the wordmark, highlight of new rows, pending-review badges | Text on white (too light), statuses |
 | `urgent` / `urgent-soft` (red) | Critical priority, the new-report toast and "NEW" tag, reject actions, errors | Decoration, counts, anything not urgent |
-| `warning` / `warning-soft` (orange) | "In progress", "Waited … for signal", connecting state | Errors |
-| `success` / `success-soft` (green) | "Resolved", verified residents, approve, the live indicator | Neutral information |
+| `warning` / `warning-soft` (orange) | "Waited … for signal", the reconnecting indicator | Errors, report statuses |
+| `success` / `success-soft` (green) | The check glyph on Resolved and Verified, the approve button, the live dot, save confirmations | Whole pills, neutral information |
 | `page`, `surface`, `line`, `ink`, `muted` | Backgrounds, cards, borders, text | |
 
-Priority bands (Critical red, High orange, Medium amber, Low blue) are the **only** place hue
-encodes priority; categories don't get their own colors. Keep text contrast at least 4.5:1;
-white text on band colors is checked for the badge's bold size.
-
-## Accessibility and readability
-
-- Body text at least 15px, secondary text at least 13px, numbers in `tabular-nums`.
-- Click targets at least 40px tall on desktop and 44px on tablet.
-- Visible focus ring on every interactive element; the whole flow (filter, open report, change
-  status, approve ID) works with the keyboard alone.
-- Real structure: one `h1` per page, lists as `ul`, labels tied to inputs, `role="alert"` for
-  errors and `role="status"` for confirmations.
-- Readable at 125% browser zoom and when projected.
-
-## Code conventions that keep the UI consistent
-
-- Data comes from `apps/web/lib/data.ts` (server, as the signed-in staff member). Labels from
-  `lib/labels.ts` and `@banabaconnect/shared` (`CATEGORY_LABELS`, `VERIFICATION_LABELS`,
-  `MCPS_WEIGHTS`). Times from `lib/format.ts`. Don't re-implement these in a page.
-- Reuse `PriorityBadge`, `StatusPill`, `VerificationBadge`, `GuestBadge`, `FilterTabs`,
-  `PageHeader` and `LiveIndicator` instead of new look-alikes.
-- Staff actions go through the database functions (`update_report_status`,
-  `review_verification`) in `app/(dashboard)/actions.ts`, so history and notifications are
-  never skipped.
-
-## Checklist before finishing a dashboard change
-
-1. Can a staff member see the most urgent active report within two seconds of opening the page?
-2. Does every number on screen come from real data, and would staff act on it?
-3. Is every control either working or clearly unavailable, and does every disabled one say why?
-4. Does every action show pending, success, and error states?
-5. Do all colors follow the table, with nothing red that isn't urgent, and no color-only meaning?
-6. Does every string pass the portability test, use the house terms, and avoid developer words?
-7. Does it fit 1366×768 without sideways scrolling, and work with the keyboard?
-8. Did the house style survive the change?
-9. Did `npm run lint`, `npx tsc --noEmit` and `npm run build` in `apps/web` pass, and did you look
-   at the result in a browser?
+Status, priority and verification colors follow the **`anti-slop-status-colors`** skill: neutral
+pills with a shape glyph, color only for attention, and priority as one red ramp from light (Low)
+to dark (Critical). Categories don't get their own colors. Keep text contrast at least 4.5:1.

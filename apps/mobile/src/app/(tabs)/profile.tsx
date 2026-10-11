@@ -62,9 +62,9 @@ export default function ProfileScreen() {
               {profile?.full_name || auth.session.user.email || 'Resident'}
             </Text>
             {profile?.area && <Text style={styles.subline}>{profile.area}</Text>}
-            <View style={[styles.badge, { backgroundColor: badge.background }]}>
-              <Icon name={badge.icon} size={14} color={badge.color} />
-              <Text style={[styles.badgeText, { color: badge.color }]}>
+            <View style={styles.badge}>
+              <Icon name={badge.icon} size={14} color={badge.iconColor} />
+              <Text style={[styles.badgeText, { color: badge.textColor }]}>
                 {VERIFICATION_LABELS[status]}
               </Text>
             </View>
@@ -134,16 +134,20 @@ export default function ProfileScreen() {
   );
 }
 
+/**
+ * Neutral badge; the icon carries the state (see .claude/skills/anti-slop-status-colors).
+ * Not approved isn't an emergency, so it's never red.
+ */
 function badgeTone(status: VerificationStatus, colors: ThemeColors) {
   switch (status) {
     case 'verified':
-      return { icon: icons.verified, color: colors.success, background: colors.successSoft };
+      return { icon: icons.verified, iconColor: colors.success, textColor: colors.text };
     case 'pending':
-      return { icon: icons.pending, color: colors.warning, background: colors.warningSoft };
+      return { icon: icons.pending, iconColor: colors.primary, textColor: colors.text };
     case 'rejected':
-      return { icon: icons.alert, color: colors.emergencyText, background: colors.emergencySoft };
+      return { icon: icons.closed, iconColor: colors.textMuted, textColor: colors.textMuted };
     default:
-      return { icon: icons.info, color: colors.warning, background: colors.warningSoft };
+      return { icon: icons.info, iconColor: colors.textMuted, textColor: colors.textMuted };
   }
 }
 
@@ -348,7 +352,9 @@ function createStyles(colors: ThemeColors) {
       alignItems: 'center',
       gap: 4,
       marginTop: 8,
-      backgroundColor: colors.warningSoft,
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.border,
       borderRadius: radius.pill,
       paddingHorizontal: 12,
       paddingVertical: 4,

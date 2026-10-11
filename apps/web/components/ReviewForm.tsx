@@ -26,7 +26,7 @@ export function ReviewForm({ profileId, hasIdPhoto }: { profileId: string; hasId
             maxLength={300}
             required
             placeholder="e.g. The photo is blurry. Please take it again in good light."
-            className="w-full rounded-lg border border-line px-3 py-2 text-[15px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+            className="w-full rounded-md border border-line px-3 py-2 text-[15px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
           />
         </div>
       )}
@@ -45,7 +45,7 @@ export function ReviewForm({ profileId, hasIdPhoto }: { profileId: string; hasId
               name="decision"
               value="reject"
               disabled={pending}
-              className="rounded-lg bg-urgent px-4 py-2.5 text-[15px] font-bold text-white hover:opacity-90 disabled:opacity-60"
+              className="rounded-md bg-urgent px-4 py-2.5 text-[15px] font-bold text-white hover:opacity-90 disabled:opacity-60"
             >
               {pending ? "Saving…" : "Reject ID"}
             </button>
@@ -65,7 +65,7 @@ export function ReviewForm({ profileId, hasIdPhoto }: { profileId: string; hasId
               value="approve"
               disabled={pending || !hasIdPhoto}
               title={hasIdPhoto ? undefined : "There's no ID photo to check"}
-              className="rounded-lg bg-success px-4 py-2.5 text-[15px] font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md bg-success px-4 py-2.5 text-[15px] font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {pending ? "Saving…" : "Approve ID"}
             </button>

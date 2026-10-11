@@ -94,14 +94,14 @@ export function QueueTable({
 
       <div aria-live="assertive" className="pointer-events-none fixed right-6 top-6 z-50">
         {toast && (
-          <div role="status" className="rounded-xl bg-urgent px-5 py-3.5 text-base font-bold text-white shadow-lg">
+          <div role="status" className="rounded-lg bg-urgent px-5 py-3.5 text-base font-bold text-white shadow-md">
             {toast}
           </div>
         )}
       </div>
 
       {held && (
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sun bg-sun-soft px-4 py-3">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-sun bg-sun-soft px-4 py-3">
           <p className="text-[15px] font-semibold">
             {heldNewReports > 0
               ? `${heldNewReports === 1 ? "1 new report" : `${heldNewReports} new reports`} and other changes are waiting.`
@@ -111,7 +111,7 @@ export function QueueTable({
           <button
             type="button"
             onClick={showUpdates}
-            className="rounded-lg bg-brand px-4 py-2.5 text-[15px] font-bold text-white hover:bg-brand-dark"
+            className="rounded-md bg-brand px-4 py-2.5 text-[15px] font-bold text-white hover:bg-brand-dark"
           >
             Update list now
           </button>
@@ -119,13 +119,13 @@ export function QueueTable({
       )}
 
       {rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
+        <div className="rounded-lg border border-dashed border-line bg-surface px-6 py-16 text-center">
           <p className="text-lg font-bold">{emptyMessage}</p>
           <p className="mt-1 text-[15px] text-muted">New reports appear here automatically.</p>
         </div>
       ) : (
         <div
-          className="overflow-hidden rounded-2xl border border-line bg-surface"
+          className="overflow-hidden rounded-lg border border-line bg-surface"
           onPointerEnter={() => {
             inUse.current.pointer = true;
           }}
@@ -168,7 +168,7 @@ export function QueueTable({
                     <p className="flex items-center gap-2 text-base font-bold">
                       {row.categoryLabel}
                       {fresh.has(row.id) && (
-                        <span className="rounded-full bg-urgent px-2 py-0.5 text-xs font-extrabold text-white">NEW</span>
+                        <span className="rounded-full bg-urgent px-2 py-0.5 text-xs font-bold text-white">NEW</span>
                       )}
                       {row.hasPhoto && <span className="text-sm font-semibold text-muted">· Photo</span>}
                     </p>

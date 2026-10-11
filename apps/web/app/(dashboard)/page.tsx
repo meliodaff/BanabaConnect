@@ -109,9 +109,9 @@ export default async function OverviewPage() {
         </section>
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <section className="rounded-2xl border border-line bg-surface p-5" aria-labelledby="most-urgent">
+          <section className="rounded-lg border border-line bg-surface p-5" aria-labelledby="most-urgent">
             <div className="mb-3 flex items-baseline justify-between gap-3">
-              <h2 id="most-urgent" className="text-base font-extrabold">
+              <h2 id="most-urgent" className="text-base font-bold">
                 Most urgent now
               </h2>
               <Link href="/reports?status=active" className="text-sm font-bold text-brand hover:underline">
@@ -147,8 +147,8 @@ export default async function OverviewPage() {
           </section>
 
           <div className="space-y-6">
-            <section className="rounded-2xl border border-line bg-surface p-5" aria-labelledby="several">
-              <h2 id="several" className="text-base font-extrabold">
+            <section className="rounded-lg border border-line bg-surface p-5" aria-labelledby="several">
+              <h2 id="several" className="text-base font-bold">
                 Reported by several people
               </h2>
               <p className="mb-3 text-sm text-muted">Same kind of incident within 150 m and 2 hours.</p>
@@ -176,8 +176,8 @@ export default async function OverviewPage() {
               )}
             </section>
 
-            <section className="rounded-2xl border border-line bg-surface p-5" aria-labelledby="by-type">
-              <h2 id="by-type" className="text-base font-extrabold">
+            <section className="rounded-lg border border-line bg-surface p-5" aria-labelledby="by-type">
+              <h2 id="by-type" className="text-base font-bold">
                 Active reports by type
               </h2>
               <p className="mb-4 text-sm text-muted">Received and In progress.</p>

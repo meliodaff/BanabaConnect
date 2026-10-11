@@ -20,7 +20,7 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           required
-          className="w-full rounded-lg border border-line bg-white px-3.5 py-3 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+          className="w-full rounded-md border border-line bg-white px-3.5 py-3 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
         />
       </div>
       <div>
@@ -33,7 +33,7 @@ export function LoginForm() {
           type="password"
           autoComplete="current-password"
           required
-          className="w-full rounded-lg border border-line bg-white px-3.5 py-3 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+          className="w-full rounded-md border border-line bg-white px-3.5 py-3 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
         />
       </div>
 
@@ -46,7 +46,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-brand px-4 py-3.5 text-base font-bold text-white transition hover:bg-brand-dark disabled:cursor-wait disabled:opacity-70"
+        className="w-full rounded-md bg-brand px-4 py-3.5 text-base font-bold text-white transition hover:bg-brand-dark disabled:cursor-wait disabled:opacity-70"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

@@ -16,8 +16,8 @@ export default function DashboardError({
 
   return (
     <div className="px-8 py-16">
-      <div role="alert" className="mx-auto max-w-lg rounded-2xl border border-line bg-surface p-7 text-center">
-        <h1 className="text-xl font-extrabold">This page didn&apos;t load</h1>
+      <div role="alert" className="mx-auto max-w-lg rounded-lg border border-line bg-surface p-7 text-center">
+        <h1 className="text-xl font-bold">This page didn&apos;t load</h1>
         <p className="mt-2 text-[15px] text-muted">
           The dashboard couldn&apos;t reach the BanabaConnect database. Check the internet connection at
           the barangay hall, then try again. Reports from residents are still saved and will appear

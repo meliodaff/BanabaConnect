@@ -139,9 +139,14 @@ function ReportCard({ report, sending }: { report: QueuedReport; sending: boolea
           </Text>
         )}
         <View style={styles.statusRow}>
-          <View style={[styles.statusPill, { backgroundColor: status.background }]}>
-            <Icon name={status.icon} size={14} color={status.color} />
-            <Text style={[styles.statusText, { color: status.color }]}>{status.label}</Text>
+          <View
+            style={[
+              styles.statusPill,
+              { backgroundColor: status.background, borderColor: status.border },
+            ]}
+          >
+            <Icon name={status.icon} size={14} color={status.iconColor} />
+            <Text style={[styles.statusText, { color: status.textColor }]}>{status.label}</Text>
           </View>
           {photoWaiting && <Text style={styles.photoNote}>Photo still uploading</Text>}
         </View>
@@ -284,11 +289,12 @@ function createStyles(colors: ThemeColors) {
       alignItems: 'center',
       gap: 4,
       borderRadius: radius.pill,
+      borderWidth: 1,
       paddingHorizontal: 10,
       paddingVertical: 4,
     },
     statusText: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: '700',
     },
     photoNote: {

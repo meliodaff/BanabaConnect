@@ -191,7 +191,7 @@ export default function ReportsMap({
   if (failed) {
     return (
       <div
-        className="flex items-center justify-center rounded-2xl border border-line bg-surface p-6 text-center text-[15px] text-muted"
+        className="flex items-center justify-center rounded-lg border border-line bg-surface p-6 text-center text-[15px] text-muted"
         style={{ height }}
       >
         This computer can&apos;t show the map (its browser doesn&apos;t support WebGL). Every report is
@@ -202,7 +202,7 @@ export default function ReportsMap({
 
   return (
     <div>
-      <div className="relative overflow-hidden rounded-2xl border border-line" style={{ height }}>
+      <div className="relative overflow-hidden rounded-lg border border-line" style={{ height }}>
         <div
           ref={containerRef}
           className="h-full w-full"
@@ -214,7 +214,7 @@ export default function ReportsMap({
             <button
               type="button"
               onClick={showBanaba}
-              className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-bold text-ink shadow-sm hover:border-brand hover:text-brand"
+              className="rounded-md border border-line bg-surface px-3 py-2 text-sm font-bold text-ink shadow-sm hover:border-brand hover:text-brand"
             >
               Barangay Banaba
             </button>
@@ -223,7 +223,7 @@ export default function ReportsMap({
               onClick={showAll}
               disabled={points.length === 0}
               title={points.length === 0 ? "No reports to show" : undefined}
-              className="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-bold text-ink shadow-sm hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md border border-line bg-surface px-3 py-2 text-sm font-bold text-ink shadow-sm hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-50"
             >
               Show all reports
             </button>

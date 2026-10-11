@@ -1,65 +1,145 @@
 import { VERIFICATION_LABELS, type ReportStatus, type VerificationStatus } from "@banabaconnect/shared";
 import { scoreOutOf100 } from "@/lib/format";
-import {
-  PRIORITY_BAND_INK,
-  PRIORITY_BAND_LABELS,
-  STAFF_STATUS_LABELS,
-  priorityBand,
-} from "@/lib/labels";
+import { PRIORITY_BADGES, PRIORITY_BAND_LABELS, STAFF_STATUS_LABELS, priorityBand } from "@/lib/labels";
 
-/** Priority out of 100 with its band, e.g. "87 Critical". */
+/*
+ * State indicators follow .claude/skills/anti-slop-status-colors: color shows attention, not
+ * identity. Pills are neutral; a small glyph carries the state's shape, and only states that
+ * need attention or are in motion color it.
+ */
+
+type GlyphKind = "dot" | "half" | "check" | "slash" | "clock" | "ring";
+
+function Glyph({ kind, className }: { kind: GlyphKind; className: string }) {
+  return (
+    <svg viewBox="0 0 12 12" width={12} height={12} aria-hidden className={`shrink-0 ${className}`}>
+      {kind === "dot" && <circle cx="6" cy="6" r="4" fill="currentColor" />}
+      {kind === "ring" && <circle cx="6" cy="6" r="3.75" fill="none" stroke="currentColor" strokeWidth="1.5" />}
+      {kind === "half" && (
+        <>
+          <circle cx="6" cy="6" r="4.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M6 1.75a4.25 4.25 0 0 1 0 8.5z" fill="currentColor" />
+        </>
+      )}
+      {kind === "check" && (
+        <path
+          d="M2.25 6.25l2.5 2.5 5-5.25"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
+      {kind === "slash" && (
+        <>
+          <circle cx="6" cy="6" r="4.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M3 9l6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </>
+      )}
+      {kind === "clock" && (
+        <>
+          <circle cx="6" cy="6" r="4.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M6 3.75V6l1.5 1" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function Pill({
+  glyph,
+  glyphClass = "text-muted",
+  textClass = "text-ink",
+  tinted = false,
+  children,
+}: {
+  glyph: GlyphKind | null;
+  glyphClass?: string;
+  textClass?: string;
+  tinted?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-[13px] font-bold ${
+        tinted ? "border-brand/30 bg-brand-soft" : "border-line bg-surface"
+      } ${textClass}`}
+    >
+      {glyph && <Glyph kind={glyph} className={glyphClass} />}
+      {children}
+    </span>
+  );
+}
+
+/** Priority out of 100 on one red scale (darker = more urgent), with the band name in ink. */
 export function PriorityBadge({ score, size = "md" }: { score: number | null; size?: "md" | "lg" }) {
   const band = priorityBand(score);
-  const color = PRIORITY_BAND_INK[band];
+  const badge = PRIORITY_BADGES[band];
+  const urgent = band === "critical" || band === "high";
   return (
     <div className="flex items-center gap-2.5" title={`Priority ${scoreOutOf100(score)} of 100`}>
       <span
-        className={`inline-flex items-center justify-center rounded-lg font-extrabold text-white tabular-nums ${
+        className={`inline-flex items-center justify-center rounded-lg border-2 font-bold tabular-nums ${
           size === "lg" ? "h-14 w-14 text-2xl" : "h-10 w-10 text-base"
         }`}
-        style={{ backgroundColor: color }}
+        style={{ backgroundColor: badge.fill, borderColor: badge.border, color: badge.number }}
       >
         {scoreOutOf100(score)}
       </span>
-      <span className="text-sm font-bold" style={{ color }}>
+      <span className={`text-sm ${urgent ? "font-bold text-ink" : "font-semibold text-muted"}`}>
         {PRIORITY_BAND_LABELS[band]}
       </span>
     </div>
   );
 }
 
-const STATUS_STYLES: Record<ReportStatus, string> = {
-  received: "bg-brand-soft text-brand",
-  in_progress: "bg-warning-soft text-warning",
-  resolved: "bg-success-soft text-success",
-  invalid: "bg-line text-muted",
+const STATUS_STYLE: Record<
+  ReportStatus,
+  { glyph: GlyphKind; glyphClass: string; textClass: string; tinted?: boolean }
+> = {
+  // New and untouched: a blue dot, so it reads as "waiting for someone".
+  received: { glyph: "dot", glyphClass: "text-brand", textClass: "text-ink" },
+  // Someone is on it: the only tinted status.
+  in_progress: { glyph: "half", glyphClass: "text-brand", textClass: "text-brand", tinted: true },
+  // Settled: calm. A small green check is the only confirmation.
+  resolved: { glyph: "check", glyphClass: "text-success", textClass: "text-ink" },
+  invalid: { glyph: "slash", glyphClass: "text-muted", textClass: "text-muted" },
 };
 
 export function StatusPill({ status }: { status: ReportStatus }) {
+  const style = STATUS_STYLE[status];
   return (
-    <span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[13px] font-bold ${STATUS_STYLES[status]}`}>
+    <Pill glyph={style.glyph} glyphClass={style.glyphClass} textClass={style.textClass} tinted={style.tinted}>
       {STAFF_STATUS_LABELS[status]}
-    </span>
+    </Pill>
   );
 }
 
-const VERIFICATION_STYLES: Record<VerificationStatus, string> = {
-  verified: "bg-success-soft text-success",
-  pending: "bg-sun-soft text-ink",
-  unverified: "bg-line text-muted",
-  rejected: "bg-urgent-soft text-urgent",
+const VERIFICATION_STYLE: Record<
+  VerificationStatus,
+  { glyph: GlyphKind; glyphClass: string; textClass: string }
+> = {
+  verified: { glyph: "check", glyphClass: "text-success", textClass: "text-ink" },
+  // Waiting on staff to review: the work item, so its glyph is brand blue.
+  pending: { glyph: "clock", glyphClass: "text-brand", textClass: "text-ink" },
+  unverified: { glyph: "ring", glyphClass: "text-muted", textClass: "text-muted" },
+  rejected: { glyph: "slash", glyphClass: "text-muted", textClass: "text-muted" },
 };
 
 export function VerificationBadge({ status }: { status: VerificationStatus }) {
+  const style = VERIFICATION_STYLE[status];
   return (
-    <span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-[13px] font-bold ${VERIFICATION_STYLES[status]}`}>
+    <Pill glyph={style.glyph} glyphClass={style.glyphClass} textClass={style.textClass}>
       {VERIFICATION_LABELS[status]}
-    </span>
+    </Pill>
   );
 }
 
 export function GuestBadge() {
   return (
-    <span className="inline-block rounded-full bg-line px-2 py-0.5 text-[13px] font-bold text-muted">Guest</span>
+    <Pill glyph="ring" textClass="text-muted">
+      Guest
+    </Pill>
   );
 }

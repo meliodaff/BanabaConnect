@@ -36,7 +36,7 @@ const REVIEWED: Record<string, { tone: string; message: string }> = {
       "Barangay ID approved. The resident is now verified, and their open reports moved up the queue.",
   },
   rejected: {
-    tone: "border-urgent bg-urgent-soft text-urgent",
+    tone: "border-line bg-surface text-ink",
     message:
       "Barangay ID not approved. The resident sees your reason in the app and can send a new photo.",
   },
@@ -65,12 +65,12 @@ export default async function ResidentsPage({ searchParams }: PageProps<"/reside
 
       <div className="px-8 py-6">
         {reviewed && (
-          <p role="status" className={`mb-5 rounded-xl border px-4 py-3 text-[15px] font-semibold ${reviewed.tone}`}>
+          <p role="status" className={`mb-5 rounded-lg border px-4 py-3 text-[15px] font-semibold ${reviewed.tone}`}>
             {reviewed.message}
           </p>
         )}
         {residents.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-line bg-surface px-6 py-16 text-center">
+          <div className="rounded-lg border border-dashed border-line bg-surface px-6 py-16 text-center">
             <p className="text-lg font-bold">{EMPTY[filter]}</p>
             <p className="mt-1 text-[15px] text-muted">
               Residents send their Barangay ID from the Profile tab in the app.
@@ -90,7 +90,7 @@ export default async function ResidentsPage({ searchParams }: PageProps<"/reside
 
 function ResidentCard({ resident }: { resident: ResidentForReview }) {
   return (
-    <li className="grid gap-5 rounded-2xl border border-line bg-surface p-5 md:grid-cols-[260px_minmax(0,1fr)]">
+    <li className="grid gap-5 rounded-lg border border-line bg-surface p-5 md:grid-cols-[260px_minmax(0,1fr)]">
       <div>
         {resident.idPhotoUrl ? (
           <a href={resident.idPhotoUrl} target="_blank" rel="noreferrer" title="Open the full-size photo">
@@ -99,11 +99,11 @@ function ResidentCard({ resident }: { resident: ResidentForReview }) {
             <img
               src={resident.idPhotoUrl}
               alt={`Barangay ID sent by ${resident.name ?? "the resident"}`}
-              className="aspect-[4/3] w-full rounded-xl bg-page object-contain"
+              className="aspect-[4/3] w-full rounded-lg bg-page object-contain"
             />
           </a>
         ) : (
-          <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-page px-4 text-center text-sm text-muted">
+          <div className="flex aspect-[4/3] items-center justify-center rounded-lg bg-page px-4 text-center text-sm text-muted">
             No ID photo sent yet
           </div>
         )}
@@ -111,7 +111,7 @@ function ResidentCard({ resident }: { resident: ResidentForReview }) {
 
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-lg font-extrabold">{resident.name ?? "No name"}</h2>
+          <h2 className="text-lg font-bold">{resident.name ?? "No name"}</h2>
           <VerificationBadge status={resident.verification} />
         </div>
         <dl className="mt-3 grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-[15px]">
@@ -129,7 +129,7 @@ function ResidentCard({ resident }: { resident: ResidentForReview }) {
           )}
         </dl>
         {resident.verification === "rejected" && resident.note && (
-          <p className="mt-3 rounded-lg bg-urgent-soft px-3 py-2 text-sm text-urgent">
+          <p className="mt-3 rounded-lg border border-line bg-page px-3 py-2 text-sm text-ink">
             Reason given: {resident.note}
           </p>
         )}

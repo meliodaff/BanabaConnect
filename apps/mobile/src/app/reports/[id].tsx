@@ -80,14 +80,16 @@ function ReportDetail({ report, sending }: { report: QueuedReport; sending: bool
           </View>
         </View>
 
-        <View style={[styles.status, { backgroundColor: status.background }]}>
+        <View
+          style={[styles.status, { backgroundColor: status.background, borderColor: status.border }]}
+        >
           {sending ? (
-            <ActivityIndicator color={status.color} />
+            <ActivityIndicator color={status.iconColor} />
           ) : (
-            <Icon name={status.icon} size={24} color={status.color} />
+            <Icon name={status.icon} size={24} color={status.iconColor} />
           )}
           <View style={styles.flex}>
-            <Text style={[styles.statusTitle, { color: status.color }]}>{status.label}</Text>
+            <Text style={[styles.statusTitle, { color: status.textColor }]}>{status.label}</Text>
             <Text style={styles.statusText}>{deliveryStatusDetail(report)}</Text>
           </View>
           {!sent && !sending && (
@@ -268,6 +270,7 @@ function createStyles(colors: ThemeColors) {
       alignItems: 'center',
       gap: 12,
       borderRadius: radius.lg,
+      borderWidth: 1,
       padding: 14,
     },
     statusTitle: {

@@ -24,6 +24,8 @@
   --color-muted: #4d5668;
 
   --font-sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  /* Headings only; loaded in app/layout.tsx with next/font. */
+  --font-display: var(--font-public-sans), "Segoe UI", system-ui, sans-serif;
 }
 
 html {
@@ -34,6 +36,26 @@ body {
   background: var(--color-page);
   color: var(--color-ink);
   font-family: var(--font-sans);
+}
+
+/* Page and section titles use the display face; everything else stays in the body font. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Respect the operating system's "reduce motion" setting everywhere (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* A clear focus ring on everything, so the whole dashboard works from the keyboard. */

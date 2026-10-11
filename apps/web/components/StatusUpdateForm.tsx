@@ -31,7 +31,7 @@ export function StatusUpdateForm({ reportId, current }: { reportId: string; curr
             return (
               <label
                 key={status}
-                className={`cursor-pointer rounded-xl border-2 px-3 py-2.5 transition has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand ${
+                className={`cursor-pointer rounded-lg border-2 px-3 py-2.5 transition has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand ${
                   selected ? "border-brand bg-brand-soft" : "border-line hover:border-brand/50"
                 }`}
               >
@@ -70,7 +70,7 @@ export function StatusUpdateForm({ reportId, current }: { reportId: string; curr
           placeholder={
             invalid ? "e.g. Same incident as an earlier report." : "e.g. Responders are on the way."
           }
-          className="w-full rounded-lg border border-line px-3 py-2 text-[15px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+          className="w-full rounded-md border border-line px-3 py-2 text-[15px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
         />
       </div>
 
@@ -88,7 +88,7 @@ export function StatusUpdateForm({ reportId, current }: { reportId: string; curr
       <button
         type="submit"
         disabled={pending || unchanged}
-        className="w-full rounded-lg bg-brand px-4 py-3 text-base font-bold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-muted/40"
+        className="w-full rounded-md bg-brand px-4 py-3 text-base font-bold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-muted/40"
       >
         {pending ? "Saving…" : unchanged ? "Choose a new status" : `Set to ${STAFF_STATUS_LABELS[choice]}`}
       </button>

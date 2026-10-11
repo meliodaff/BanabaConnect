@@ -46,7 +46,7 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
       <div className="mt-3 flex flex-wrap items-center gap-4">
         <PriorityBadge score={report.priority} size="lg" />
         <div>
-          <h1 className="text-2xl font-extrabold">{CATEGORY_LABELS[report.category]}</h1>
+          <h1 className="text-2xl font-bold">{CATEGORY_LABELS[report.category]}</h1>
           <p className="text-[15px] text-muted">
             Reported {timeAgo(report.createdAt)} · {formatDateTime(report.createdAt)}
           </p>
@@ -63,10 +63,10 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
               <img
                 src={report.photoUrl}
                 alt={`Photo of the ${CATEGORY_LABELS[report.category].toLowerCase()} report`}
-                className="max-h-[480px] w-full rounded-xl bg-page object-contain"
+                className="max-h-[480px] w-full rounded-lg bg-page object-contain"
               />
             ) : (
-              <p className="rounded-xl bg-page px-4 py-6 text-center text-[15px] text-muted">
+              <p className="rounded-lg bg-page px-4 py-6 text-center text-[15px] text-muted">
                 {report.hasPhoto ? "The photo couldn't be loaded." : "No photo was sent."}
               </p>
             )}
@@ -227,7 +227,7 @@ function ScoreBreakdown({ report }: { report: ReportDetail }) {
           );
         })}
       </ul>
-      <div className="mt-4 flex items-center justify-between border-t border-line pt-3 text-base font-extrabold">
+      <div className="mt-4 flex items-center justify-between border-t border-line pt-3 text-base font-bold">
         <span>Priority</span>
         <span className="tabular-nums">{scoreOutOf100(report.priority)} / 100</span>
       </div>
@@ -270,8 +270,8 @@ function LinkedReports({ report, from }: { report: ReportDetail; from: string })
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-line bg-surface p-5">
-      <h2 className="mb-4 text-base font-extrabold">{title}</h2>
+    <section className="rounded-lg border border-line bg-surface p-5">
+      <h2 className="mb-4 text-base font-bold">{title}</h2>
       {children}
     </section>
   );

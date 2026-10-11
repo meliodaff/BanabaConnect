@@ -89,13 +89,14 @@ export function useLiveReports({ onNewReport, shouldHold }: LiveReportsOptions =
 /** "Live" dot, so staff know the list updates by itself (or that it's reconnecting). */
 export function LiveIndicator({ connected }: { connected: boolean }) {
   return (
+    // Settled (live) is a calm neutral pill with a green dot; reconnecting needs attention.
     <span
-      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-bold ${
-        connected ? "bg-success-soft text-success" : "bg-warning-soft text-warning"
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-bold ${
+        connected ? "border-line bg-surface text-ink" : "border-warning/40 bg-warning-soft text-warning"
       }`}
       aria-live="polite"
     >
-      <span className={`h-2.5 w-2.5 rounded-full ${connected ? "animate-pulse bg-success" : "bg-warning"}`} />
+      <span className={`h-2.5 w-2.5 rounded-full ${connected ? "bg-success" : "bg-warning"}`} />
       {connected ? "Live: updates automatically" : "Connecting…"}
     </span>
   );

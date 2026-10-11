@@ -42,21 +42,23 @@ export const PRIORITY_BAND_LABELS: Record<PriorityBand, string> = {
   low: "Low",
 };
 
-/** Bright fills for map pins and the map legend (no text sits on them). */
+/**
+ * Priority is one ordered scale, so it's one hue from light to dark (darker = more urgent),
+ * never a traffic-light rainbow. Passes the dataviz validator's ordinal checks
+ * (`validate_palette.js --ordinal`). Used for map pins and the map legend.
+ * See .claude/skills/anti-slop-status-colors.
+ */
 export const PRIORITY_BAND_COLORS: Record<PriorityBand, string> = {
-  critical: "#D7141A",
-  high: "#F26B0F",
-  medium: "#E8A400",
-  low: "#2F6FDE",
+  critical: "#730910",
+  high: "#B5111A",
+  medium: "#D9464E",
+  low: "#E98A8F",
 };
 
-/**
- * Darker shades of the same bands for anything with text: the priority badge (white numbers on
- * it) and the band name. Each is at least 4.5:1 against white, the page and the new-row yellow.
- */
-export const PRIORITY_BAND_INK: Record<PriorityBand, string> = {
-  critical: "#C8101A",
-  high: "#B84A00",
-  medium: "#8C5E00",
-  low: "#1F5BC7",
+/** The priority badge on each step; every number is at least 4.5:1 against its fill. */
+export const PRIORITY_BADGES: Record<PriorityBand, { fill: string; border: string; number: string }> = {
+  critical: { fill: "#730910", border: "#730910", number: "#FFFFFF" },
+  high: { fill: "#B5111A", border: "#B5111A", number: "#FFFFFF" },
+  medium: { fill: "#FBE3E4", border: "#E98A8F", number: "#8E0B12" },
+  low: { fill: "#FFFFFF", border: "#E98A8F", number: "#4D5668" },
 };

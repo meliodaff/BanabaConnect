@@ -5,7 +5,7 @@ export default function DashboardLoading() {
       <p className="mb-4 text-[15px] font-semibold text-muted">Loading…</p>
       <div className="space-y-3" aria-hidden>
         {[0, 1, 2, 3].map((row) => (
-          <div key={row} className="h-[72px] animate-pulse rounded-xl border border-line bg-surface" />
+          <div key={row} className="h-[72px] animate-pulse rounded-lg border border-line bg-surface" />
         ))}
       </div>
     </div>

@@ -23,8 +23,8 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
   if (profile?.role !== "admin") {
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-7 text-center shadow-sm">
-          <h1 className="text-xl font-extrabold">This account isn&apos;t barangay staff</h1>
+        <div className="w-full max-w-md rounded-lg border border-line bg-surface p-7 text-center shadow-sm">
+          <h1 className="text-xl font-bold">This account isn&apos;t barangay staff</h1>
           <p className="mt-2 text-[15px] text-muted">
             The Command Dashboard is only for barangay staff. Residents use the BanabaConnect mobile
             app.
@@ -32,7 +32,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
           <form action={signOut} className="mt-6">
             <button
               type="submit"
-              className="w-full rounded-lg bg-brand px-4 py-3 font-bold text-white hover:bg-brand-dark"
+              className="w-full rounded-md bg-brand px-4 py-3 font-bold text-white hover:bg-brand-dark"
             >
               Sign out
             </button>

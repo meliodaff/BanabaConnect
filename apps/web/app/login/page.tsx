@@ -19,15 +19,15 @@ export default function LoginPage() {
               priority
               className="mx-auto mb-4 h-22 w-22 rounded-full"
             />
-            <p className="text-sm font-bold uppercase tracking-wider text-brand">
+            <p className="text-[15px] font-semibold text-muted">
               Barangay Banaba, San Mateo, Rizal
             </p>
-            <h1 className="mt-2 text-3xl font-extrabold">
+            <h1 className="mt-2 text-3xl font-bold">
               Banaba<span className="text-brand">Connect</span>
             </h1>
             <p className="mt-2 text-[15px] text-muted">Command Dashboard for barangay staff</p>
           </div>
-          <div className="rounded-2xl border border-line bg-surface p-7 shadow-sm">
+          <div className="rounded-lg border border-line bg-surface p-7 shadow-sm">
             <LoginForm />
           </div>
           <p className="mt-6 text-center text-sm text-muted">

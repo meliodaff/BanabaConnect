@@ -7,7 +7,7 @@ import type { MapPoint } from "./ReportsMap";
 const ReportsMap = dynamic(() => import("./ReportsMap"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full min-h-60 items-center justify-center rounded-2xl border border-line bg-surface text-muted">
+    <div className="flex h-full min-h-60 items-center justify-center rounded-lg border border-line bg-surface text-muted">
       Loading map…
     </div>
   ),

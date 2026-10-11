@@ -3,11 +3,18 @@ import { icons, type IconName } from '@/components/Icon';
 import type { ThemeColors } from '@/theme';
 import type { QueuedReport } from './types';
 
+/**
+ * How a report's status looks. Follows .claude/skills/anti-slop-status-colors: color shows
+ * attention, not identity. Settled states are neutral (only the icon may carry a small
+ * accent); "in motion" uses the primary color; only "not delivered yet" asks for attention.
+ */
 export interface DeliveryStatus {
   label: string;
   icon: IconName;
-  color: string;
+  iconColor: string;
+  textColor: string;
   background: string;
+  border: string;
 }
 
 const OFFLINE_ERROR_MESSAGE = 'No connection';
@@ -29,67 +36,52 @@ export function deliveryStatusOf(
   sending: boolean,
   colors: ThemeColors,
 ): DeliveryStatus {
+  // Not delivered yet: the one state the resident must notice.
+  const attention = (label: string): DeliveryStatus => ({
+    label,
+    icon: icons.queued,
+    iconColor: colors.warning,
+    textColor: colors.warning,
+    background: colors.warningSoft,
+    border: colors.warningBorder,
+  });
+  // Someone or something is working on it.
+  const inMotion = (label: string, icon: IconName): DeliveryStatus => ({
+    label,
+    icon,
+    iconColor: colors.primary,
+    textColor: colors.primary,
+    background: colors.primarySoft,
+    border: colors.primarySoft,
+  });
+  // Settled: calm and neutral; the icon alone may carry a small accent.
+  const settled = (label: string, icon: IconName, iconColor: string, muted = false): DeliveryStatus => ({
+    label,
+    icon,
+    iconColor,
+    textColor: muted ? colors.textMuted : colors.text,
+    background: colors.background,
+    border: colors.border,
+  });
+
   if (sending) {
-    return {
-      label: 'Sending…',
-      icon: icons.sending,
-      color: colors.primary,
-      background: colors.primarySoft,
-    };
+    return inMotion('Sending…', icons.sending);
   }
   if (report.syncStatus === 'sent') {
     switch (report.serverStatus) {
       case 'in_progress':
-        return {
-          label: REPORT_STATUS_LABELS.in_progress,
-          icon: icons.pending,
-          color: colors.warning,
-          background: colors.warningSoft,
-        };
+        return inMotion(REPORT_STATUS_LABELS.in_progress, icons.pending);
       case 'resolved':
-        return {
-          label: REPORT_STATUS_LABELS.resolved,
-          icon: icons.check,
-          color: colors.success,
-          background: colors.successSoft,
-        };
+        return settled(REPORT_STATUS_LABELS.resolved, icons.check, colors.success);
       case 'invalid':
-        return {
-          label: REPORT_STATUS_LABELS.invalid,
-          icon: icons.info,
-          color: colors.textMuted,
-          background: colors.highlightSoft,
-        };
+        return settled(REPORT_STATUS_LABELS.invalid, icons.closed, colors.textMuted, true);
       case 'received':
-        return {
-          label: REPORT_STATUS_LABELS.received,
-          icon: icons.sent,
-          color: colors.success,
-          background: colors.successSoft,
-        };
+        return settled(REPORT_STATUS_LABELS.received, icons.sent, colors.primary);
       default:
-        return {
-          label: 'Sent',
-          icon: icons.sent,
-          color: colors.success,
-          background: colors.successSoft,
-        };
+        return settled('Sent', icons.sent, colors.primary);
     }
   }
-  if (isRetryingAfterError(report)) {
-    return {
-      label: 'Not sent yet',
-      icon: icons.queued,
-      color: colors.warning,
-      background: colors.warningSoft,
-    };
-  }
-  return {
-    label: 'Waiting for signal',
-    icon: icons.queued,
-    color: colors.warning,
-    background: colors.warningSoft,
-  };
+  return attention(isRetryingAfterError(report) ? 'Not sent yet' : 'Waiting for signal');
 }
 
 /** The sentence under the status on the report details screen. */

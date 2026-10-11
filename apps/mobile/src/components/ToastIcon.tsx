@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import {
-  AccessibilityInfo,
   ActivityIndicator,
   Animated,
   Easing,
@@ -11,28 +10,11 @@ import {
 import { Icon, type IconName } from '@/components/Icon';
 import type { ToastTone } from '@/features/toast/toastStore';
 import { radius } from '@/theme';
+import { useReduceMotion } from './useReduceMotion';
 
 const SIZE = 36;
 const useNativeDriver = Platform.OS !== 'web';
 
-/** True when the phone asks apps to cut down on motion (an accessibility setting). */
-function useReduceMotion() {
-  const [reduce, setReduce] = useState(false);
-  useEffect(() => {
-    let active = true;
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (active) {
-        setReduce(enabled);
-      }
-    });
-    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduce);
-    return () => {
-      active = false;
-      subscription.remove();
-    };
-  }, []);
-  return reduce;
-}
 
 /**
  * The toast's icon, animated to match what the toast means:

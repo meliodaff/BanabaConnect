@@ -19,6 +19,15 @@ Decide every screen against this person:
 - Reads English and Tagalog; may not read long text at all in the moment.
 - Has one job on most visits: report what is happening, or check that the report went through.
 
+
+## Related skills
+
+Also apply **`anti-ai-slop`** (the general slop filter) and **`component-reference-design`**
+(what good mobile UI patterns look like), installed from github.com/Vanszs/Anti-AI-UI. Where they
+conflict with a decision recorded in this skill (the eGovPH look, the system font, the colors and
+layout the user chose), this skill wins, because those were the user's explicit choices. Status
+colors follow `anti-slop-status-colors`.
+
 ## House style: keep it
 
 The user chose an eGovPH-inspired look and asked to keep it after a stripped-down redesign.
@@ -95,6 +104,10 @@ part of the design. Keep short friendly Tagalog touches the user already accepte
 
 ## Color rules
 
+Report status, sync status and verification badges follow the **`anti-slop-status-colors`**
+skill: neutral pills, the icon carries the state, and only "not delivered yet" (amber) and "in
+motion" (primary) are colored. Never a green pill for Sent or Resolved, never red for Not approved.
+
 The palette follows the bright pink-magenta banaba flower (Lagerstroemia speciosa) that the
 barangay is named after, with light and dark versions. The user found the earlier muted rose
 dull, so keep tints saturated rather than washing them out.
@@ -110,8 +123,8 @@ never hard-code a hex value elsewhere. Read colors with `useTheme()` and build s
 | `emergency` (red) | Not from the tree, on purpose | Fill of report and 911 buttons (same red in both modes) |
 | `emergencyText` | | Red text, icons, and outlines on a surface or soft tint |
 | `primary` (magenta) | Banaba flowers | Navigation, links, tabs, service and category icons |
-| `success` / `brandAccent` (leaf green) | Banaba leaves | Sent, location found, callable hotlines, "Connect" in the wordmark |
-| `warning` (deep amber) | | Offline, waiting for signal, approximate location |
+| `success` / `brandAccent` (leaf green) | Banaba leaves | Location found, callable hotlines, "Connect" in the wordmark, the check icon on Resolved and Verified |
+| `warning` (deep amber) | | Offline, waiting for signal / not sent yet, approximate location |
 | `highlight` (stamen gold) | Yellow stamens | Decoration only: step icon circles, the banner halo. Never a status, never text |
 | `background`, `text` (blush, plum-brown) | Petals and bark | Page backgrounds and text |
 | Grays (`disabled`, `border`) | | "Soon" badges, inactive controls |

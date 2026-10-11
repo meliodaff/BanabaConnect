@@ -60,13 +60,13 @@ export function Sidebar({
             className="h-12 w-12 shrink-0 rounded-full"
           />
           <div className="min-w-0">
-            <p className="text-[15px] font-extrabold leading-tight text-ink">Barangay Banaba</p>
+            <p className="font-display text-[15px] font-bold leading-tight text-ink">Barangay Banaba</p>
             <p className="text-sm leading-tight text-muted">San Mateo, Rizal</p>
           </div>
         </div>
         {/* Its own full-width line, so the product name is never cut off. */}
         <div className="mt-3 rounded-lg bg-brand-soft px-3 py-2">
-          <p className="text-[15px] font-extrabold leading-tight text-ink">
+          <p className="font-display text-[15px] font-bold leading-tight text-ink">
             Banaba<span className="text-brand">Connect</span>
           </p>
           <p className="text-[13px] font-semibold leading-tight text-brand">Command Dashboard</p>
@@ -86,17 +86,17 @@ export function Sidebar({
                     <Link
                       href={link.href}
                       aria-current={active ? "page" : undefined}
-                      className={`flex items-center gap-3 rounded-lg border-l-4 px-3 py-2.5 text-[15px] font-semibold transition ${
+                      className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-[15px] transition ${
                         active
-                          ? "border-brand bg-brand-soft text-brand"
-                          : "border-transparent text-ink hover:bg-page hover:text-brand"
+                          ? "bg-brand-soft font-bold text-brand"
+                          : "font-semibold text-ink hover:bg-page hover:text-brand"
                       }`}
                     >
                       <LinkIcon />
                       <span className="flex-1">{link.label}</span>
                       {link.href === "/residents" && pendingVerifications > 0 && (
                         <span
-                          className="rounded-full bg-sun px-2 py-0.5 text-xs font-extrabold text-ink"
+                          className="rounded-full bg-sun px-2 py-0.5 text-xs font-bold text-ink"
                           aria-label={`${pendingVerifications} Barangay IDs waiting for review`}
                           title="Barangay IDs waiting for review"
                         >
@@ -115,7 +115,7 @@ export function Sidebar({
       <div className="border-t border-line p-3">
         <div className="flex items-center gap-3 px-2 py-2">
           <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-extrabold text-brand"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-bold text-brand"
             aria-hidden
           >
             {initials(staffName)}
@@ -130,7 +130,7 @@ export function Sidebar({
         <form action={signOutAction} className="mt-1">
           <button
             type="submit"
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-semibold text-muted transition hover:bg-page hover:text-ink"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-[15px] font-semibold text-muted transition hover:bg-page hover:text-ink"
           >
             <SignOutIcon />
             Sign out

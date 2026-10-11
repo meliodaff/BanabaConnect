@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { icons, type IconName } from '@/components/Icon';
 import { ToastIcon } from '@/components/ToastIcon';
+import { useReduceMotion } from '@/components/useReduceMotion';
 import {
   hideToast,
   useCurrentToast,
@@ -78,27 +79,39 @@ function ToastCard({ toast }: { toast: Toast }) {
   const [drag] = useState(() => new Animated.Value(0));
 
   // Safe to call more than once: it restarts the same fade, and hideToast ignores old ids.
+  const reduceMotion = useReduceMotion();
+
   const dismiss = useCallback(() => {
+    if (reduceMotion) {
+      progress.setValue(0);
+      hideToast(toast.id);
+      return;
+    }
     Animated.timing(progress, {
       toValue: 0,
       duration: 180,
       easing: Easing.in(Easing.cubic),
       useNativeDriver,
     }).start(() => hideToast(toast.id));
-  }, [progress, toast.id]);
+  }, [progress, reduceMotion, toast.id]);
 
   useEffect(() => {
-    Animated.spring(progress, {
-      toValue: 1,
-      damping: 18,
-      stiffness: 220,
-      mass: 0.9,
-      useNativeDriver,
-    }).start();
+    // With "reduce motion" on, the toast appears in place instead of sliding in.
+    if (reduceMotion) {
+      progress.setValue(1);
+    } else {
+      Animated.spring(progress, {
+        toValue: 1,
+        damping: 18,
+        stiffness: 220,
+        mass: 0.9,
+        useNativeDriver,
+      }).start();
+    }
     AccessibilityInfo.announceForAccessibility(toast.message);
     const timer = setTimeout(dismiss, visibleMs);
     return () => clearTimeout(timer);
-  }, [dismiss, progress, toast.message, visibleMs]);
+  }, [dismiss, progress, reduceMotion, toast.message, visibleMs]);
 
   const panResponder = useMemo(
     () =>
