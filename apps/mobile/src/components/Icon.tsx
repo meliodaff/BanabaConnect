@@ -61,4 +61,13 @@ export const icons = {
   phoneSetting: { ios: 'iphone', android: 'smartphone' },
   lightMode: { ios: 'sun.max.fill', android: 'light_mode' },
   darkMode: { ios: 'moon.fill', android: 'dark_mode' },
+  mail: { ios: 'envelope.fill', android: 'mail' },
+  lock: { ios: 'lock.fill', android: 'lock' },
+  show: { ios: 'eye', android: 'visibility' },
+  hide: { ios: 'eye.slash', android: 'visibility_off' },
+  personAdd: { ios: 'person.badge.plus', android: 'person_add' },
+  verified: { ios: 'checkmark.seal.fill', android: 'verified' },
+  idCard: { ios: 'person.text.rectangle', android: 'badge' },
+  logout: { ios: 'rectangle.portrait.and.arrow.right', android: 'logout' },
+  pending: { ios: 'hourglass', android: 'hourglass_top' },
 } as const satisfies Record<string, IconName>;

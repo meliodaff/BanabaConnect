@@ -1,0 +1,119 @@
+# Builds an unsigned BanabaConnect.ipa for AltStore Classic and publishes it as a GitHub Release,
+# together with the AltStore source. AltStore signs the app with each person's own Apple ID, so no
+# Apple Developer account is needed.
+#
+# Testers add this source in AltStore once and get every new release:
+#   https://github.com/<owner>/<repo>/releases/latest/download/source.json
+#
+# Before the first run, add these repository secrets (Settings → Secrets and variables → Actions):
+#   EXPO_PUBLIC_SUPABASE_URL
+#   EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+# See apps/mobile/altstore/README.md.
+name: iOS build for AltStore
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: What's new in this version (shown in AltStore)
+        required: false
+        default: Bug fixes and improvements.
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ios-altstore
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: apps/mobile
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      RELEASE_NOTES: ${{ inputs.release_notes }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fail in seconds rather than after a 20-minute build.
+      - name: Check secrets and version
+        run: |
+          if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY under Settings → Secrets and variables → Actions. Without them, sign-in won't work in the built app."
+            exit 1
+          fi
+          VERSION=$(node -p "require('./app.json').expo.version")
+          if gh release view "v$VERSION" > /dev/null 2>&1; then
+            echo "::error::Release v$VERSION already exists. Raise \"version\" in apps/mobile/app.json (e.g. to the next number), commit it, and run again."
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Building BanabaConnect $VERSION"
+
+      # Expo SDK 57 needs Xcode 26.4 or newer.
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        working-directory: .
+        run: npm ci
+
+      - name: Generate the iOS project
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Build the app without signing
+        run: |
+          WORKSPACE=$(ls -d ios/*.xcworkspace | head -n 1)
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Building $SCHEME with $(xcodebuild -version | head -n 1)"
+          xcodebuild build \
+            -quiet \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package the .ipa and AltStore source
+        run: |
+          APP=$(ls -d build/Build/Products/Release-iphoneos/*.app | head -n 1)
+          rm -rf dist && mkdir -p dist/Payload
+          cp -R "$APP" dist/Payload/
+          (cd dist && zip -qry BanabaConnect.ipa Payload && rm -rf Payload)
+          plutil -convert json -o "$RUNNER_TEMP/Info.json" "$APP/Info.plist"
+          cp assets/icon.png dist/icon.png
+          node scripts/altstore-source.js \
+            --info "$RUNNER_TEMP/Info.json" \
+            --ipa dist/BanabaConnect.ipa \
+            --hosting-url "https://github.com/$GITHUB_REPOSITORY/releases/download/v$VERSION" \
+            --notes "$RELEASE_NOTES" \
+            --out dist/source.json
+          ls -la dist
+
+      - name: Publish the GitHub Release
+        run: |
+          gh release create "v$VERSION" \
+            dist/BanabaConnect.ipa dist/source.json dist/icon.png \
+            --target "$GITHUB_SHA" \
+            --title "BanabaConnect $VERSION" \
+            --notes "$RELEASE_NOTES" \
+            --latest
+          echo "### BanabaConnect $VERSION is published" >> "$GITHUB_STEP_SUMMARY"
+          echo "AltStore source: https://github.com/$GITHUB_REPOSITORY/releases/latest/download/source.json" >> "$GITHUB_STEP_SUMMARY"
