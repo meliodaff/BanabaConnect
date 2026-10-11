@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 
 const DATABASE_NAME = 'banabaconnect.db';
-const DATABASE_VERSION = 3;
+const DATABASE_VERSION = 4;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -88,6 +88,12 @@ async function migrate(db: SQLite.SQLiteDatabase) {
     // are NULL and move to whoever signs in next.
     await db.execAsync('ALTER TABLE reports ADD COLUMN owner_id TEXT;');
     version = 3;
+  }
+
+  if (version === 3) {
+    // What barangay staff wrote with the current status, e.g. why a report is invalid.
+    await db.execAsync('ALTER TABLE reports ADD COLUMN server_note TEXT;');
+    version = 4;
   }
 
   await db.execAsync(`PRAGMA user_version = ${version}`);

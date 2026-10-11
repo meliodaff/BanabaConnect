@@ -10,6 +10,27 @@ const MIN_INTERVAL_MS = 60_000;
 // Keeps each request URL short; the ids go in the query string.
 const CHUNK_SIZE = 50;
 
+/** The report's status plus its history, for the note staff wrote with the current status. */
+export const STATUS_COLUMNS =
+  'id, status, status_updated_at, history:report_status_history(to_status, note, changed_at)';
+
+interface HistoryRow {
+  to_status: string;
+  note: string | null;
+  changed_at: string;
+}
+
+/**
+ * What staff wrote when they set the report's current status (e.g. why it's invalid), or null.
+ * Earlier notes belong to earlier statuses, so they aren't shown.
+ */
+export function noteForCurrentStatus(history: HistoryRow[] | null | undefined, status: string): string | null {
+  const latest = (history ?? [])
+    .filter((change) => change.to_status === status)
+    .sort((a, b) => b.changed_at.localeCompare(a.changed_at))[0];
+  return latest?.note?.trim() || null;
+}
+
 let lastCheckedAt = 0;
 let running: Promise<void> | null = null;
 
@@ -58,14 +79,19 @@ async function fetchStatuses() {
   for (let start = 0; start < sentIds.length; start += CHUNK_SIZE) {
     const { data, error } = await supabase
       .from('reports')
-      .select('id, status, status_updated_at')
+      .select(STATUS_COLUMNS)
       .in('id', sentIds.slice(start, start + CHUNK_SIZE));
     if (error) {
       throw error;
     }
     for (const row of data ?? []) {
       if (isReportStatus(row.status)) {
-        statuses.push({ id: row.id, status: row.status, statusAt: row.status_updated_at });
+        statuses.push({
+          id: row.id,
+          status: row.status,
+          statusAt: row.status_updated_at,
+          note: noteForCurrentStatus(row.history, row.status),
+        });
       }
     }
   }

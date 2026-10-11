@@ -114,7 +114,9 @@ function ReportCard({ report, sending }: { report: QueuedReport; sending: boolea
       onPress={() => router.push({ pathname: '/reports/[id]', params: { id: submission.id } })}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
       accessibilityRole="button"
-      accessibilityLabel={`${CATEGORY_LABELS[submission.category]} report, ${status.label}`}
+      accessibilityLabel={`${CATEGORY_LABELS[submission.category]} report, ${status.label}${
+        report.syncStatus === 'sent' && report.serverNote ? ', has a note from barangay staff' : ''
+      }`}
       accessibilityHint="Opens the report details"
     >
       {photo ? (
@@ -143,6 +145,12 @@ function ReportCard({ report, sending }: { report: QueuedReport; sending: boolea
           </View>
           {photoWaiting && <Text style={styles.photoNote}>Photo still uploading</Text>}
         </View>
+        {report.syncStatus === 'sent' && report.serverNote && (
+          <View style={styles.noteHint}>
+            <Icon name={icons.staffNote} size={14} color={colors.primary} />
+            <Text style={styles.noteHintText}>Note from barangay staff</Text>
+          </View>
+        )}
       </View>
       <View style={styles.chevron}>
         <Icon name={icons.chevron} size={22} color={colors.textMuted} />
@@ -284,8 +292,19 @@ function createStyles(colors: ThemeColors) {
       fontWeight: '700',
     },
     photoNote: {
-      fontSize: 12,
+      fontSize: 13,
       color: colors.textMuted,
+    },
+    noteHint: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      marginTop: 6,
+    },
+    noteHintText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: colors.primary,
     },
     empty: {
       flex: 1,

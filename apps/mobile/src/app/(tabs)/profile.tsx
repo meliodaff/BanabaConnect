@@ -17,6 +17,7 @@ import {
 } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
+import { StaffNote } from '@/components/StaffNote';
 import { avatarUrl, useAuth } from '@/features/auth/authStore';
 import { signOut } from '@/features/auth/residentProfile';
 import { isPhotoWaiting } from '@/features/queue/deliveryStatus';
@@ -102,10 +103,10 @@ export default function ProfileScreen() {
             title={status === 'rejected' ? 'Send your ID again' : 'Verify with your Barangay ID'}
             text={
               status === 'rejected'
-                ? profile?.verification_note ||
-                  'Your last ID photo was not approved. Send a clearer photo.'
+                ? 'Your last Barangay ID photo wasn’t approved. Send a new photo.'
                 : 'Verified residents’ reports are given higher priority. Takes a minute.'
             }
+            staffNote={status === 'rejected' ? profile?.verification_note : null}
             actions={[
               { label: 'Verify my ID', onPress: () => router.push('/verify-id'), primary: true },
             ]}
@@ -150,11 +151,14 @@ function ActionCard({
   icon,
   title,
   text,
+  staffNote,
   actions,
 }: {
   icon: IconName;
   title: string;
   text: string;
+  /** Words from barangay staff, shown in a labeled box under the card's own text. */
+  staffNote?: string | null;
   actions: { label: string; onPress: () => void; primary?: boolean }[];
 }) {
   const { colors } = useTheme();
@@ -166,6 +170,7 @@ function ActionCard({
         <View style={styles.flex}>
           <Text style={styles.infoTitle}>{title}</Text>
           <Text style={styles.infoText}>{text}</Text>
+          {staffNote?.trim() ? <StaffNote note={staffNote.trim()} /> : null}
         </View>
       </View>
       <View style={styles.actionRow}>

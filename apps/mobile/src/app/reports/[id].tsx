@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CATEGORY_LABELS } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
+import { StaffNote } from '@/components/StaffNote';
 import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
 import {
   deliveryStatusDetail,
@@ -99,6 +100,8 @@ function ReportDetail({ report, sending }: { report: QueuedReport; sending: bool
             </Pressable>
           )}
         </View>
+
+        {sent && report.serverNote && <StaffNote note={report.serverNote} />}
 
         {!sent && (
           <Pressable

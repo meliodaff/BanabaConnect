@@ -8,6 +8,7 @@ import {
   localReportIds,
 } from './reportRepository';
 import { reportsStore } from './reportsStore';
+import { noteForCurrentStatus } from './statusSync';
 import { requestSync } from './syncEngine';
 
 /**
@@ -44,7 +45,7 @@ async function downloadAccountReports(ownerId: string) {
   const { data, error } = await supabase
     .from('reports')
     .select(
-      'id, category, latitude, longitude, location_accuracy_m, description, incident_at, created_at, received_at, status, status_updated_at, photo_path, photo_width, photo_height',
+      'id, category, latitude, longitude, location_accuracy_m, description, incident_at, created_at, received_at, status, status_updated_at, photo_path, photo_width, photo_height, history:report_status_history(to_status, note, changed_at)',
     )
     .eq('reporter_id', ownerId)
     .order('created_at', { ascending: false })
@@ -74,6 +75,7 @@ async function downloadAccountReports(ownerId: string) {
         sentAt: row.received_at,
         serverStatus: row.status,
         serverStatusAt: row.status_updated_at,
+        serverNote: noteForCurrentStatus(row.history, row.status),
         photo: await downloadPhoto(row),
       },
       ownerId,

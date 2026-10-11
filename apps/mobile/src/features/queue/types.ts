@@ -25,6 +25,8 @@ export interface QueuedReport {
   /** The barangay's status once the report is sent; null until the app has checked. */
   serverStatus: ReportStatus | null;
   serverStatusAt: string | null;
+  /** What barangay staff wrote with the current status, if anything. */
+  serverNote: string | null;
 }
 
 /** A report the account sent earlier, downloaded from Supabase. */
@@ -33,6 +35,7 @@ export interface DownloadedReport {
   sentAt: string;
   serverStatus: ReportStatus;
   serverStatusAt: string;
+  serverNote: string | null;
   photo: PhotoToSave | null;
 }
 
@@ -41,6 +44,8 @@ export interface ServerStatus {
   id: string;
   status: ReportStatus;
   statusAt: string;
+  /** Staff's note for this status (e.g. why it's invalid), or null. */
+  note: string | null;
 }
 
 export interface PhotoToSave {

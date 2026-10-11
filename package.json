@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "mobile": "npm run start --workspace @banabaconnect/mobile",
+    "web": "npm run dev --workspace @banabaconnect/web",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "overrides": {

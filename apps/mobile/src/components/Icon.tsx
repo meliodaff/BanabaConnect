@@ -70,4 +70,5 @@ export const icons = {
   idCard: { ios: 'person.text.rectangle', android: 'badge' },
   logout: { ios: 'rectangle.portrait.and.arrow.right', android: 'logout' },
   pending: { ios: 'hourglass', android: 'hourglass_top' },
+  staffNote: { ios: 'text.bubble.fill', android: 'chat' },
 } as const satisfies Record<string, IconName>;
