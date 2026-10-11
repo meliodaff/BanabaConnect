@@ -5,7 +5,7 @@ import {
   type ReportCategory,
   type ReportSubmission,
 } from '@banabaconnect/shared';
-import { getDb } from './db';
+import { getDb, withWriteLock } from './db';
 import type { DownloadedReport, PhotoToSave, QueuedReport, ServerStatus } from './types';
 
 interface ReportRow {
@@ -99,35 +99,36 @@ export async function saveReport(
   photo: PhotoToSave | null,
   ownerId: string | null,
 ) {
-  const db = await getDb();
   const photoFile = photo ? await persistPhoto(submission.id, photo) : null;
 
   try {
-    await db.withTransactionAsync(async () => {
-      await db.runAsync(
-        `INSERT INTO reports
-          (id, category, latitude, longitude, location_accuracy, description, incident_at, created_at, owner_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        submission.id,
-        submission.category,
-        submission.latitude,
-        submission.longitude,
-        submission.locationAccuracy,
-        submission.description,
-        submission.incidentAt,
-        submission.createdAt,
-        ownerId,
-      );
-      if (photo && photoFile) {
+    await withWriteLock((db) =>
+      db.withTransactionAsync(async () => {
         await db.runAsync(
-          'INSERT INTO report_photos (report_id, uri, width, height) VALUES (?, ?, ?, ?)',
+          `INSERT INTO reports
+            (id, category, latitude, longitude, location_accuracy, description, incident_at, created_at, owner_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           submission.id,
-          photoFile.uri,
-          photo.width,
-          photo.height,
+          submission.category,
+          submission.latitude,
+          submission.longitude,
+          submission.locationAccuracy,
+          submission.description,
+          submission.incidentAt,
+          submission.createdAt,
+          ownerId,
         );
-      }
-    });
+        if (photo && photoFile) {
+          await db.runAsync(
+            'INSERT INTO report_photos (report_id, uri, width, height) VALUES (?, ?, ?, ?)',
+            submission.id,
+            photoFile.uri,
+            photo.width,
+            photo.height,
+          );
+        }
+      }),
+    );
   } catch (error) {
     if (photoFile?.exists) {
       photoFile.delete();
@@ -182,30 +183,33 @@ export async function duePhotos(
 }
 
 export async function markReportSent(id: string, sentAt: string) {
-  const db = await getDb();
-  await db.runAsync(
-    "UPDATE reports SET sync_status = 'sent', sent_at = ?, last_error = NULL WHERE id = ?",
-    sentAt,
-    id,
+  await withWriteLock((db) =>
+    db.runAsync(
+      "UPDATE reports SET sync_status = 'sent', sent_at = ?, last_error = NULL WHERE id = ?",
+      sentAt,
+      id,
+    ),
   );
 }
 
 export async function markReportRetry(id: string, attempts: number, nextAttemptAt: number, error: string) {
-  const db = await getDb();
-  await db.runAsync(
-    'UPDATE reports SET attempts = ?, next_attempt_at = ?, last_error = ? WHERE id = ?',
-    attempts,
-    nextAttemptAt,
-    error,
-    id,
+  await withWriteLock((db) =>
+    db.runAsync(
+      'UPDATE reports SET attempts = ?, next_attempt_at = ?, last_error = ? WHERE id = ?',
+      attempts,
+      nextAttemptAt,
+      error,
+      id,
+    ),
   );
 }
 
 export async function markPhotoSent(reportId: string) {
-  const db = await getDb();
-  await db.runAsync(
-    "UPDATE report_photos SET sync_status = 'sent', last_error = NULL WHERE report_id = ?",
-    reportId,
+  await withWriteLock((db) =>
+    db.runAsync(
+      "UPDATE report_photos SET sync_status = 'sent', last_error = NULL WHERE report_id = ?",
+      reportId,
+    ),
   );
 }
 
@@ -215,13 +219,14 @@ export async function markPhotoRetry(
   nextAttemptAt: number,
   error: string,
 ) {
-  const db = await getDb();
-  await db.runAsync(
-    'UPDATE report_photos SET attempts = ?, next_attempt_at = ?, last_error = ? WHERE report_id = ?',
-    attempts,
-    nextAttemptAt,
-    error,
-    reportId,
+  await withWriteLock((db) =>
+    db.runAsync(
+      'UPDATE report_photos SET attempts = ?, next_attempt_at = ?, last_error = ? WHERE report_id = ?',
+      attempts,
+      nextAttemptAt,
+      error,
+      reportId,
+    ),
   );
 }
 
@@ -230,23 +235,25 @@ export async function saveServerStatuses(statuses: ServerStatus[]) {
   if (statuses.length === 0) {
     return;
   }
-  const db = await getDb();
-  await db.withTransactionAsync(async () => {
-    for (const { id, status, statusAt } of statuses) {
-      await db.runAsync(
-        'UPDATE reports SET server_status = ?, server_status_at = ? WHERE id = ?',
-        status,
-        statusAt,
-        id,
-      );
-    }
-  });
+  await withWriteLock((db) =>
+    db.withTransactionAsync(async () => {
+      for (const { id, status, statusAt } of statuses) {
+        await db.runAsync(
+          'UPDATE reports SET server_status = ?, server_status_at = ? WHERE id = ?',
+          status,
+          statusAt,
+          id,
+        );
+      }
+    }),
+  );
 }
 
 /** Guest reports on this phone move to the account the guest signs into. */
 export async function adoptGuestReports(ownerId: string) {
-  const db = await getDb();
-  await db.runAsync('UPDATE reports SET owner_id = ? WHERE owner_id IS NULL', ownerId);
+  await withWriteLock((db) =>
+    db.runAsync('UPDATE reports SET owner_id = ? WHERE owner_id IS NULL', ownerId),
+  );
 }
 
 /** Ids of every report saved on this phone, whoever owns it. */
@@ -264,53 +271,56 @@ export async function downloadReportPhoto(reportId: string, url: string): Promis
 
 /** Saves a report that the account sent earlier (e.g. from another phone) as already sent. */
 export async function insertDownloadedReport(report: DownloadedReport, ownerId: string) {
-  const db = await getDb();
   const { submission, photo } = report;
-  await db.withTransactionAsync(async () => {
-    await db.runAsync(
-      `INSERT OR IGNORE INTO reports
-        (id, category, latitude, longitude, location_accuracy, description, incident_at, created_at,
-         owner_id, sync_status, sent_at, server_status, server_status_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'sent', ?, ?, ?)`,
-      submission.id,
-      submission.category,
-      submission.latitude,
-      submission.longitude,
-      submission.locationAccuracy,
-      submission.description,
-      submission.incidentAt,
-      submission.createdAt,
-      ownerId,
-      report.sentAt,
-      report.serverStatus,
-      report.serverStatusAt,
-    );
-    if (photo) {
+  await withWriteLock((db) =>
+    db.withTransactionAsync(async () => {
       await db.runAsync(
-        `INSERT OR IGNORE INTO report_photos (report_id, uri, width, height, sync_status)
-         VALUES (?, ?, ?, ?, 'sent')`,
+        `INSERT OR IGNORE INTO reports
+          (id, category, latitude, longitude, location_accuracy, description, incident_at, created_at,
+           owner_id, sync_status, sent_at, server_status, server_status_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'sent', ?, ?, ?)`,
         submission.id,
-        photo.uri,
-        photo.width,
-        photo.height,
+        submission.category,
+        submission.latitude,
+        submission.longitude,
+        submission.locationAccuracy,
+        submission.description,
+        submission.incidentAt,
+        submission.createdAt,
+        ownerId,
+        report.sentAt,
+        report.serverStatus,
+        report.serverStatusAt,
       );
-    }
-  });
+      if (photo) {
+        await db.runAsync(
+          `INSERT OR IGNORE INTO report_photos (report_id, uri, width, height, sync_status)
+           VALUES (?, ?, ?, ?, 'sent')`,
+          submission.id,
+          photo.uri,
+          photo.width,
+          photo.height,
+        );
+      }
+    }),
+  );
 }
 
 /** Erases an account's reports and photos from this phone (they stay on the server). */
 export async function deleteOwnerReports(ownerId: string) {
-  const db = await getDb();
-  const photos = await db.getAllAsync<{ uri: string }>(
-    `SELECT p.uri FROM report_photos p JOIN reports r ON r.id = p.report_id WHERE r.owner_id = ?`,
-    ownerId,
-  );
-  await db.withTransactionAsync(async () => {
-    await db.runAsync(
-      'DELETE FROM report_photos WHERE report_id IN (SELECT id FROM reports WHERE owner_id = ?)',
+  const photos = await withWriteLock(async (db) => {
+    const rows = await db.getAllAsync<{ uri: string }>(
+      'SELECT p.uri FROM report_photos p JOIN reports r ON r.id = p.report_id WHERE r.owner_id = ?',
       ownerId,
     );
-    await db.runAsync('DELETE FROM reports WHERE owner_id = ?', ownerId);
+    await db.withTransactionAsync(async () => {
+      await db.runAsync(
+        'DELETE FROM report_photos WHERE report_id IN (SELECT id FROM reports WHERE owner_id = ?)',
+        ownerId,
+      );
+      await db.runAsync('DELETE FROM reports WHERE owner_id = ?', ownerId);
+    });
+    return rows;
   });
   for (const { uri } of photos) {
     try {

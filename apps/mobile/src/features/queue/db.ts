@@ -20,6 +20,21 @@ export function getDb(): Promise<SQLite.SQLiteDatabase> {
   return dbPromise;
 }
 
+let writeQueue: Promise<unknown> = Promise.resolve();
+
+/**
+ * Runs a database write after any write already in progress. withTransactionAsync isn't
+ * isolated: a query that runs while a transaction is open becomes part of it, and a second
+ * transaction at the same time fails ("cannot start a transaction within a transaction").
+ * That happened when signing in downloaded reports while statuses were being saved.
+ * Don't call another write function from inside `task`: it would wait for itself.
+ */
+export function withWriteLock<T>(task: (db: SQLite.SQLiteDatabase) => Promise<T>): Promise<T> {
+  const run = writeQueue.then(async () => task(await getDb()));
+  writeQueue = run.catch(() => undefined);
+  return run;
+}
+
 async function migrate(db: SQLite.SQLiteDatabase) {
   const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
   let version = row?.user_version ?? 0;
