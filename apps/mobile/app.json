@@ -27,7 +27,24 @@
       "expo-router",
       "expo-status-bar",
       "expo-sqlite",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "BanabaConnect uses the camera to take a photo of an incident or of your Barangay ID.",
+          "photosPermission": "BanabaConnect uses your photos so you can attach a picture of an incident or of your Barangay ID.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "BanabaConnect uses your location while you make a report, so responders know where to go.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "motionUsagePermission": false
+        }
+      ]
     ],
     "scheme": "banabaconnect"
   }

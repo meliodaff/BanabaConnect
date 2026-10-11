@@ -1,0 +1,17 @@
+{
+  "name": "BanabaConnect",
+  "subtitle": "Incident reporting for Barangay Banaba",
+  "description": "Install BanabaConnect, the incident reporting app for Barangay Banaba, San Mateo, Rizal.",
+  "website": "https://github.com/meliodaff/BanabaConnect",
+  "tintColor": "#C2185B",
+  "apps": [
+    {
+      "name": "BanabaConnect",
+      "developerName": "BanabaConnect",
+      "subtitle": "Report incidents in Barangay Banaba",
+      "localizedDescription": "Report floods, fires, accidents and other incidents to Barangay Banaba, San Mateo, Rizal. Reports include your location and an optional photo, and are saved on your phone and sent automatically when you have no signal. Create a resident account with Google or email, and verify with your Barangay ID so your reports get higher priority.",
+      "tintColor": "#C2185B",
+      "category": "utilities"
+    }
+  ]
+}
