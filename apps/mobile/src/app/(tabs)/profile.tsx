@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,7 +16,9 @@ import {
   VERIFICATION_LABELS,
   type VerificationStatus,
 } from '@banabaconnect/shared';
+import { BarangaySeal } from '@/components/BarangaySeal';
 import { Icon, icons, type IconName } from '@/components/Icon';
+import { PlainStatusBar } from '@/components/PlainStatusBar';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
 import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
 import { StaffNote } from '@/components/StaffNote';
@@ -220,11 +223,18 @@ function SignOutButton() {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const [checking, setChecking] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
+  // The loading screen stays up until the Profile tab switches to Guest, which removes this
+  // button (and the screen with it).
   function signOutNow() {
+    setSigningOut(true);
     signOut()
       .then(() => showToast({ message: 'Signed out. Your reports are saved to your account.' }))
-      .catch(() => showToast({ tone: 'error', message: 'Could not sign out. Please try again.' }));
+      .catch(() => {
+        setSigningOut(false);
+        showToast({ tone: 'error', message: 'Could not sign out. Please try again.' });
+      });
   }
 
   // Signing out erases this account's reports from the phone, so anything unsent would be lost.
@@ -262,20 +272,48 @@ function SignOutButton() {
   }
 
   return (
-    <Pressable
-      onPress={handlePress}
-      disabled={checking}
-      style={({ pressed }) => [styles.signOut, pressed && styles.pressed]}
-      accessibilityRole="button"
-      accessibilityState={{ busy: checking }}
-    >
-      {checking ? (
-        <ActivityIndicator color={colors.emergencyText} />
-      ) : (
-        <Icon name={icons.logout} size={20} color={colors.emergencyText} />
-      )}
-      <Text style={styles.signOutText}>{checking ? 'Sending your reports…' : 'Sign out'}</Text>
-    </Pressable>
+    <>
+      <Pressable
+        onPress={handlePress}
+        disabled={checking || signingOut}
+        style={({ pressed }) => [styles.signOut, pressed && styles.pressed]}
+        accessibilityRole="button"
+        accessibilityState={{ busy: checking }}
+      >
+        {checking ? (
+          <ActivityIndicator color={colors.emergencyText} />
+        ) : (
+          <Icon name={icons.logout} size={20} color={colors.emergencyText} />
+        )}
+        <Text style={styles.signOutText}>{checking ? 'Sending your reports…' : 'Sign out'}</Text>
+      </Pressable>
+
+      {/* Covers the whole app, so nothing on the old account can be tapped while it signs out. */}
+      <Modal
+        visible={signingOut}
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => {}}
+      >
+        <View
+          style={styles.signingOut}
+          accessible
+          accessibilityViewIsModal
+          accessibilityLiveRegion="polite"
+          accessibilityLabel="Signing out. Removing your reports from this phone."
+        >
+          <PlainStatusBar />
+          <BarangaySeal size={120} />
+          <View style={styles.signingOutRow}>
+            <ActivityIndicator color={colors.primary} />
+            <Text style={styles.signingOutTitle}>Signing out…</Text>
+          </View>
+          <Text style={styles.signingOutText}>
+            Removing your reports from this phone. They stay saved to your account.
+          </Text>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -423,6 +461,32 @@ function createStyles(colors: ThemeColors) {
       marginTop: 16,
       borderRadius: radius.lg,
       backgroundColor: colors.surface,
+    },
+    signingOut: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+      padding: 32,
+      backgroundColor: colors.background,
+    },
+    signingOutRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginTop: 12,
+    },
+    signingOutTitle: {
+      fontSize: 20,
+      fontWeight: '800',
+      color: colors.text,
+    },
+    signingOutText: {
+      fontSize: 15,
+      lineHeight: 21,
+      color: colors.textMuted,
+      textAlign: 'center',
+      maxWidth: 300,
     },
     signOutText: {
       fontSize: 16,

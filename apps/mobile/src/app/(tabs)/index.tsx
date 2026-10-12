@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
 import { setThemePreference } from '@/features/appearance/themePreference';
+import { BarangaySeal } from '@/components/BarangaySeal';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
 import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
 import { avatarUrl, firstName, useAuth } from '@/features/auth/authStore';
@@ -63,9 +64,12 @@ export default function HomeScreen() {
     // The header color fills the status bar area too; the page scrolls under the fixed top bar.
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.topBar}>
-        <Text style={styles.wordmark}>
-          Banaba<Text style={styles.wordmarkAccent}>Connect</Text>
-        </Text>
+        <View style={styles.brand}>
+          <BarangaySeal size={36} />
+          <Text style={styles.wordmark}>
+            Banaba<Text style={styles.wordmarkAccent}>Connect</Text>
+          </Text>
+        </View>
         <View style={styles.topActions}>
           <Pressable
             onPress={() => setThemePreference(scheme === 'dark' ? 'light' : 'dark')}
@@ -259,6 +263,12 @@ function createStyles(colors: ThemeColors) {
       paddingTop: 8,
       paddingBottom: 12,
       backgroundColor: colors.headerBg,
+    },
+    brand: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      flexShrink: 1,
     },
     wordmark: {
       fontSize: 22,
