@@ -43,16 +43,17 @@ export const PRIORITY_BAND_LABELS: Record<PriorityBand, string> = {
 };
 
 /**
- * Priority is one ordered scale, so it's one hue from light to dark (darker = more urgent),
- * never a traffic-light rainbow. Passes the dataviz validator's ordinal checks
- * (`validate_palette.js --ordinal`). Used for map pins and the map legend.
- * See .claude/skills/anti-slop-status-colors.
+ * Map pin and map legend colors: a clearly different color per level, so staff can tell levels
+ * apart on a busy map at a glance. The project owner chose this over the single red ramp in
+ * .claude/skills/anti-slop-status-colors (still used for the priority badges below). Ordered
+ * dark red → orange → yellow → gray, so urgency still reads from strong to quiet; pins also get
+ * a dark outline so yellow and gray show on the light map.
  */
 export const PRIORITY_BAND_COLORS: Record<PriorityBand, string> = {
   critical: "#730910",
-  high: "#B5111A",
-  medium: "#D9464E",
-  low: "#E98A8F",
+  high: "#E65100",
+  medium: "#F5B800",
+  low: "#8C95A3",
 };
 
 /** The priority badge on each step; every number is at least 4.5:1 against its fill. */

@@ -74,3 +74,9 @@ h3 {
   border-radius: 12px;
   padding: 12px 14px;
 }
+
+/* A group's hover card has nothing to click, so clicks go through it to the group underneath. */
+.map-card-passive,
+.map-card-passive .maplibregl-popup-content {
+  pointer-events: none;
+}

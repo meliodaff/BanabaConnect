@@ -19,11 +19,13 @@ import {
   DESCRIPTION_MAX_LENGTH,
   REPORT_CATEGORIES,
   type ReportCategory,
+  type ReportSubmission,
 } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { useIsOffline } from '@/features/network/useIsOffline';
 import { buildSubmission, INCIDENT_TIME_OPTIONS } from '@/features/report/buildSubmission';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
+import { findRecentDuplicate } from '@/features/report/recentDuplicate';
 import { currentReportOwner } from '@/features/auth/guestSession';
 import { saveReport } from '@/features/queue/reportRepository';
 import { reportsStore } from '@/features/queue/reportsStore';
@@ -93,7 +95,7 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
     });
   }
 
-  async function handleSend() {
+  function handleSend() {
     if (location.coords === null) {
       return;
     }
@@ -104,6 +106,34 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
       minutesAgo,
     });
 
+    // Ask before a likely accidental repeat, but never block it: a second report can carry news.
+    const duplicate = findRecentDuplicate(submission, reportsStore.getState().reports);
+    if (!duplicate) {
+      void saveAndSend(submission);
+      return;
+    }
+    const minutes = Math.max(1, Math.round(duplicate.minutesAgo));
+    Alert.alert(
+      'You already reported this',
+      `You sent a report near here ${minutes === 1 ? '1 minute' : `${minutes} minutes`} ago (${
+        CATEGORY_LABELS[category]
+      }). Send another one only if there's something new, like it's getting worse.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'See my report',
+          onPress: () =>
+            router.replace({
+              pathname: '/reports/[id]',
+              params: { id: duplicate.report.submission.id },
+            }),
+        },
+        { text: 'Send anyway', onPress: () => void saveAndSend(submission) },
+      ],
+    );
+  }
+
+  async function saveAndSend(submission: ReportSubmission) {
     setSaving(true);
     try {
       // Save on the phone first, so the report survives no signal, app closes, and restarts.

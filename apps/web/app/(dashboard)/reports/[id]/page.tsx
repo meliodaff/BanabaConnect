@@ -173,6 +173,17 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
   );
 }
 
+/**
+ * Volume counts different people, not reports, and leaves out reports marked Invalid
+ * (supabase/migrations/20261016000000_volume_counts_people.sql). Say so when the two differ.
+ */
+function volumeReason(people: number, reports: number): string {
+  const who = people === 1 ? "1 person has" : `${people} people have`;
+  if (people <= 1 && reports <= 1) return "Only report of this incident so far";
+  if (people === reports) return `${who} reported this incident`;
+  return `${who} reported this incident · ${reports} reports, but repeats from one person and Invalid reports don't add`;
+}
+
 function ScoreBreakdown({ report }: { report: ReportDetail }) {
   const reporter = report.reporter;
   const credibilityReason =
@@ -186,10 +197,7 @@ function ScoreBreakdown({ report }: { report: ReportDetail }) {
     },
     {
       label: "Nearby reports",
-      reason:
-        report.clusterCount > 1
-          ? `${report.clusterCount} reports of this incident nearby`
-          : "Only report of this incident so far",
+      reason: volumeReason(report.clusterPeople, report.clusterCount),
       value: report.volume,
       weight: MCPS_WEIGHTS.volume,
     },

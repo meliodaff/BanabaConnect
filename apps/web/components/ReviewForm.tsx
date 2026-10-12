@@ -5,29 +5,92 @@ import { reviewResident, type ActionState } from "@/app/(dashboard)/actions";
 
 const initialState: ActionState = { error: null, done: false };
 
+/**
+ * The usual reasons a Barangay ID photo isn't approved. One click writes the note for the
+ * resident; staff can still edit it before rejecting. Each note says what to do next, because
+ * the resident reads it in the app.
+ */
+const REJECT_REASONS = [
+  {
+    label: "Blurry photo",
+    note: "The photo is blurry. Please take it again in good light and hold the phone steady.",
+  },
+  {
+    label: "ID is cut off",
+    note: "Part of your ID is cut off. Please fit the whole ID in the photo.",
+  },
+  {
+    label: "Glare or too dark",
+    note: "We can't read your ID because of glare or poor lighting. Please take it again in even light.",
+  },
+  {
+    label: "Not a Barangay Banaba ID",
+    note: "This isn't a Barangay Banaba ID. Please send a photo of your Barangay Banaba ID.",
+  },
+  {
+    label: "Name doesn't match",
+    note: "The name on the ID doesn't match the name on your account. Please send your own Barangay ID.",
+  },
+  {
+    label: "Expired ID",
+    note: "This ID has expired. Please renew it at the Barangay Banaba hall, then send a new photo.",
+  },
+] as const;
+
 /** Approve, or reject with a reason the resident will see. */
 export function ReviewForm({ profileId, hasIdPhoto }: { profileId: string; hasIdPhoto: boolean }) {
   const [state, formAction, pending] = useActionState(reviewResident, initialState);
   const [rejecting, setRejecting] = useState(false);
+  const [note, setNote] = useState("");
 
   return (
     <form action={formAction} className="space-y-3">
       <input type="hidden" name="profileId" value={profileId} />
 
       {rejecting && (
-        <div>
-          <label htmlFor={`note-${profileId}`} className="mb-1.5 block text-sm font-semibold">
-            Why isn&apos;t it approved? <span className="font-normal text-muted">(the resident sees this)</span>
-          </label>
-          <textarea
-            id={`note-${profileId}`}
-            name="note"
-            rows={2}
-            maxLength={300}
-            required
-            placeholder="e.g. The photo is blurry. Please take it again in good light."
-            className="w-full rounded-md border border-line px-3 py-2 text-[15px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
-          />
+        <div className="space-y-3">
+          <fieldset>
+            <legend className="mb-1.5 text-sm font-semibold">
+              Common reasons <span className="font-normal text-muted">(click one to fill in the note)</span>
+            </legend>
+            <div className="flex flex-wrap gap-2">
+              {REJECT_REASONS.map((reason) => {
+                const selected = note === reason.note;
+                return (
+                  <button
+                    key={reason.label}
+                    type="button"
+                    onClick={() => setNote(reason.note)}
+                    aria-pressed={selected}
+                    className={`rounded-md border px-3 py-1.5 text-sm font-semibold ${
+                      selected
+                        ? "border-brand bg-brand-soft text-brand"
+                        : "border-line bg-surface text-ink hover:border-brand hover:text-brand"
+                    }`}
+                  >
+                    {reason.label}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <div>
+            <label htmlFor={`note-${profileId}`} className="mb-1.5 block text-sm font-semibold">
+              Why isn&apos;t it approved? <span className="font-normal text-muted">(the resident sees this)</span>
+            </label>
+            <textarea
+              id={`note-${profileId}`}
+              name="note"
+              rows={3}
+              maxLength={300}
+              required
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder="Pick a reason above, or write your own."
+              className="w-full rounded-md border border-line px-3 py-2 text-[15px] outline-none focus:border-brand focus:ring-2 focus:ring-brand/25"
+            />
+          </div>
         </div>
       )}
 
@@ -44,15 +107,19 @@ export function ReviewForm({ profileId, hasIdPhoto }: { profileId: string; hasId
               type="submit"
               name="decision"
               value="reject"
-              disabled={pending}
-              className="rounded-md bg-urgent px-4 py-2.5 text-[15px] font-bold text-white hover:opacity-90 disabled:opacity-60"
+              disabled={pending || note.trim() === ""}
+              title={note.trim() === "" ? "Pick or write a reason first" : undefined}
+              className="rounded-md bg-urgent px-4 py-2.5 text-[15px] font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pending ? "Saving…" : "Reject ID"}
             </button>
             <button
               type="button"
-              onClick={() => setRejecting(false)}
-              className="rounded-lg border border-line px-4 py-2.5 text-[15px] font-bold hover:border-brand hover:text-brand"
+              onClick={() => {
+                setRejecting(false);
+                setNote("");
+              }}
+              className="rounded-md border border-line px-4 py-2.5 text-[15px] font-bold hover:border-brand hover:text-brand"
             >
               Cancel
             </button>
@@ -72,13 +139,16 @@ export function ReviewForm({ profileId, hasIdPhoto }: { profileId: string; hasId
             <button
               type="button"
               onClick={() => setRejecting(true)}
-              className="rounded-lg border border-urgent px-4 py-2.5 text-[15px] font-bold text-urgent hover:bg-urgent-soft"
+              className="rounded-md border border-urgent px-4 py-2.5 text-[15px] font-bold text-urgent hover:bg-urgent-soft"
             >
               Reject ID…
             </button>
           </>
         )}
       </div>
+      {rejecting && note.trim() === "" && (
+        <p className="text-sm text-muted">Reject is off until there&apos;s a reason for the resident.</p>
+      )}
       {!hasIdPhoto && !rejecting && (
         <p className="text-sm text-muted">Approve is off because there&apos;s no ID photo to check.</p>
       )}

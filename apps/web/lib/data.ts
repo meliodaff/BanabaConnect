@@ -42,6 +42,8 @@ export interface ReportSummary {
   clusterId: string | null;
   /** Reports about the same incident, including this one. */
   clusterCount: number;
+  /** Different residents who reported it, not counting Invalid reports. Drives volume. */
+  clusterPeople: number;
   hasPhoto: boolean;
   reporter: Reporter | null;
 }
@@ -50,7 +52,7 @@ const SUMMARY_COLUMNS = `
   id, category, status, priority_score, severity_score, volume_score, credibility_score,
   description, latitude, longitude, location_accuracy_m, created_at, received_at, incident_at,
   status_updated_at, photo_path, cluster_id,
-  cluster:incident_clusters(report_count),
+  cluster:incident_clusters(report_count, reporter_count),
   reporter:profiles!reports_reporter_id_fkey(id, full_name, is_guest, verification_status, phone, area, address)
 `;
 
@@ -92,6 +94,7 @@ function toSummary(row: any): ReportSummary | null {
     statusUpdatedAt: row.status_updated_at,
     clusterId: row.cluster_id,
     clusterCount: row.cluster?.report_count ?? 1,
+    clusterPeople: row.cluster?.reporter_count ?? 1,
     hasPhoto: Boolean(row.photo_path),
     reporter: toReporter(row.reporter),
   };

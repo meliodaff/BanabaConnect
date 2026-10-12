@@ -17,6 +17,16 @@ while the app is only tested by the team (emulator and AltStore), to keep testin
   if residents should confirm their email address. It was turned off for testing.
 - [ ] **Publish the Google sign-in consent screen.** In Google Cloud → Google Auth Platform →
   Audience, it's in "Testing" mode, which only lets the listed test users sign in.
+- [ ] **Stop one guest from faking "many people" on a report.** Clearing the app's data (or
+  reinstalling) starts a new hidden guest account, so the same person counts as a new reporter
+  each time. Four repeats push a fake fire from High (0.60) to Critical (0.78). Do both:
+  - **Cap guests' share of volume.** In a group, all guest reports together count as at most
+    2 people; signed-in residents count fully. Server only, in `rescore_cluster_volume`
+    (`supabase/migrations/20261016000000_volume_counts_people.sql`); no privacy impact.
+  - **Count phones, not accounts.** Send a phone ID that survives clearing app data (Android
+    ID via `expo-application`, which lasts until a factory reset; on iPhone, an ID kept in the
+    Keychain, which survives reinstalling). Send only a hashed version, count different phones
+    for guest volume, and mention it in the privacy policy.
 - [ ] **Clean up empty hidden guest accounts.** After a guest's reports move to their real
   account, the guest account owns nothing. Remove these periodically, or add an automatic cleanup.
 
@@ -40,7 +50,9 @@ while the app is only tested by the team (emulator and AltStore), to keep testin
   North Libis, South Libis and Dama de Noche.
 - [ ] **Replace the draft MCPS values** once the expert panel defines them:
   - severities in `category_severity`;
-  - credibility per verification status, the 150 m / 2 hour grouping, and the "5 reports = full
-    volume" rule in `supabase/migrations/20261012000000_report_submission.sql`.
+  - credibility per verification status and the 150 m / 2 hour grouping in
+    `supabase/migrations/20261012000000_report_submission.sql`, and the "5 people = full volume"
+    rule in `supabase/migrations/20261016000000_volume_counts_people.sql` (volume counts
+    different residents and leaves out reports marked Invalid).
 - [ ] Optional: **recalculate credibility and priority** when a guest's reports move to a
   verified account. Today they keep the guest score they got when they arrived.
