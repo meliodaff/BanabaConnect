@@ -68,7 +68,7 @@ function toQueuedReport(row: ReportRow): QueuedReport {
       row.photo_uri === null
         ? null
         : {
-            uri: row.photo_uri,
+            uri: photoUriFor(row.id),
             width: row.photo_width ?? 0,
             height: row.photo_height ?? 0,
             syncStatus: (row.photo_sync_status ?? 'queued') as LocalSyncStatus,
@@ -78,9 +78,20 @@ function toQueuedReport(row: ReportRow): QueuedReport {
   };
 }
 
-/** Where a report's photo lives on the phone. */
+const PHOTO_DIRECTORY = 'report-photos';
+
+/**
+ * Where a report's photo lives on the phone, worked out fresh each time. The `uri` column keeps
+ * the full path from when it was saved, but on iOS the app's folder moves when the app is
+ * reinstalled or updated (e.g. every AltStore build), so that saved path goes stale.
+ */
+function photoUriFor(reportId: string): string {
+  return new File(new Directory(Paths.document, PHOTO_DIRECTORY), `${reportId}.jpg`).uri;
+}
+
+/** The photo's file, creating its folder if needed, for saving into. */
 function photoFileFor(reportId: string): File {
-  const directory = new Directory(Paths.document, 'report-photos');
+  const directory = new Directory(Paths.document, PHOTO_DIRECTORY);
   directory.create({ intermediates: true, idempotent: true });
   return new File(directory, `${reportId}.jpg`);
 }
@@ -313,8 +324,8 @@ export async function insertDownloadedReport(report: DownloadedReport, ownerId: 
 /** Erases an account's reports and photos from this phone (they stay on the server). */
 export async function deleteOwnerReports(ownerId: string) {
   const photos = await withWriteLock(async (db) => {
-    const rows = await db.getAllAsync<{ uri: string }>(
-      'SELECT p.uri FROM report_photos p JOIN reports r ON r.id = p.report_id WHERE r.owner_id = ?',
+    const rows = await db.getAllAsync<{ report_id: string }>(
+      'SELECT p.report_id FROM report_photos p JOIN reports r ON r.id = p.report_id WHERE r.owner_id = ?',
       ownerId,
     );
     await db.withTransactionAsync(async () => {
@@ -326,9 +337,9 @@ export async function deleteOwnerReports(ownerId: string) {
     });
     return rows;
   });
-  for (const { uri } of photos) {
+  for (const { report_id } of photos) {
     try {
-      const file = new File(uri);
+      const file = new File(photoUriFor(report_id));
       if (file.exists) {
         file.delete();
       }
