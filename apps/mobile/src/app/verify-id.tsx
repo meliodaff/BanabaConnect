@@ -125,7 +125,7 @@ export default function VerifyIdScreen() {
               </View>
             </View>
             {profile.verification_note?.trim() ? (
-              <StaffNote note={profile.verification_note.trim()} actionNeeded />
+              <StaffNote note={profile.verification_note.trim()} attention="Action needed" />
             ) : null}
           </>
         )}

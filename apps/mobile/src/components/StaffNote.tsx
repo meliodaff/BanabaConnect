@@ -6,23 +6,24 @@ import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
  * Words written by barangay staff, shown as an official notice: a solid title band, the message,
  * and a signature with the staff avatar.
  * - Brand blue for information (e.g. a note on a resolved report).
- * - Amber when the resident has to do something (e.g. send a new ID photo), matching the other
- *   "needs your attention" states. Never red: red means an emergency.
+ * - Amber with a label when the note needs the resident's attention (e.g. "Action needed" on a
+ *   rejected ID, "Report closed" on an invalid report), matching the other "needs your
+ *   attention" states. Never red: red means an emergency.
  */
 export function StaffNote({
   note,
   time,
-  actionNeeded = false,
+  attention,
 }: {
   note: string;
   /** When staff wrote it, already formatted. */
   time?: string | null;
-  /** The resident has to do something about it, e.g. send a new ID photo. */
-  actionNeeded?: boolean;
+  /** Shows the amber notice with this label on the band, e.g. "Action needed". */
+  attention?: string | null;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
-  const tone = actionNeeded
+  const tone = attention
     ? { main: colors.warning, onMain: colors.onWarning, body: colors.warningSoft }
     : { main: colors.primary, onMain: colors.onPrimary, body: colors.surface };
 
@@ -31,20 +32,20 @@ export function StaffNote({
       style={[styles.notice, { borderColor: tone.main, backgroundColor: tone.body }]}
       accessible
       accessibilityRole="summary"
-      accessibilityLabel={`${actionNeeded ? 'Action needed. ' : ''}Message from Barangay Banaba${
+      accessibilityLabel={`${attention ? `${attention}. ` : ''}Message from Barangay Banaba${
         time ? `, ${time}` : ''
       }: ${note}`}
     >
       <View style={[styles.band, { backgroundColor: tone.main }]}>
         <Icon name={icons.barangay} size={18} color={tone.onMain} />
         <Text style={[styles.bandText, { color: tone.onMain }]}>Message from Barangay Banaba</Text>
-        {actionNeeded && (
+        {attention ? (
           // Inverted from the band so it stands out on the amber.
           <View style={[styles.actionTag, { backgroundColor: tone.onMain }]}>
             <Icon name={icons.alert} size={13} color={tone.main} />
-            <Text style={[styles.actionTagText, { color: tone.main }]}>Action needed</Text>
+            <Text style={[styles.actionTagText, { color: tone.main }]}>{attention}</Text>
           </View>
-        )}
+        ) : null}
       </View>
       <View style={styles.body}>
         <Text style={styles.note}>{note}</Text>

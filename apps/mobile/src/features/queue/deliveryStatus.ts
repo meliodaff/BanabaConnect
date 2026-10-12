@@ -4,9 +4,12 @@ import type { ThemeColors } from '@/theme';
 import type { QueuedReport } from './types';
 
 /**
- * How a report's status looks. Follows .claude/skills/anti-slop-status-colors: color shows
- * attention, not identity. Settled states are neutral (only the icon may carry a small
- * accent); "in motion" uses the primary color; only "not delivered yet" asks for attention.
+ * How a report's status looks. Each stage has its own color so residents can scan My Reports at
+ * a glance (the project owner chose this over the all-neutral pills in
+ * .claude/skills/anti-slop-status-colors). Every pill still has an icon and a label, so color is
+ * never the only signal, and red stays reserved for emergencies:
+ * amber = waiting on the phone, blue = sending or received, violet = in progress,
+ * green = resolved, gray = closed.
  */
 export interface DeliveryStatus {
   label: string;
@@ -36,52 +39,62 @@ export function deliveryStatusOf(
   sending: boolean,
   colors: ThemeColors,
 ): DeliveryStatus {
-  // Not delivered yet: the one state the resident must notice.
-  const attention = (label: string): DeliveryStatus => ({
-    label,
-    icon: icons.queued,
-    iconColor: colors.warning,
-    textColor: colors.warning,
-    background: colors.warningSoft,
-    border: colors.warningBorder,
-  });
-  // Someone or something is working on it.
-  const inMotion = (label: string, icon: IconName): DeliveryStatus => ({
-    label,
-    icon,
-    iconColor: colors.primary,
-    textColor: colors.primary,
-    background: colors.primarySoft,
-    border: colors.primarySoft,
-  });
-  // Settled: calm and neutral; the icon alone may carry a small accent.
-  const settled = (label: string, icon: IconName, iconColor: string, muted = false): DeliveryStatus => ({
-    label,
-    icon,
-    iconColor,
-    textColor: muted ? colors.textMuted : colors.text,
-    background: colors.background,
-    border: colors.border,
-  });
+  // Text and icon in the stage's color, on a soft tint of it, with a matching border.
+  const pill = (
+    label: string,
+    icon: IconName,
+    color: string,
+    background: string,
+    border: string,
+  ): DeliveryStatus => ({ label, icon, iconColor: color, textColor: color, background, border });
+
+  const blue = (label: string, icon: IconName) =>
+    pill(label, icon, colors.primary, colors.primarySoft, colors.border);
 
   if (sending) {
-    return inMotion('Sending…', icons.sending);
+    return blue('Sending…', icons.sending);
   }
   if (report.syncStatus === 'sent') {
     switch (report.serverStatus) {
       case 'in_progress':
-        return inMotion(REPORT_STATUS_LABELS.in_progress, icons.pending);
+        return pill(
+          REPORT_STATUS_LABELS.in_progress,
+          icons.pending,
+          colors.progress,
+          colors.progressSoft,
+          colors.progressBorder,
+        );
       case 'resolved':
-        return settled(REPORT_STATUS_LABELS.resolved, icons.check, colors.success);
+        return pill(
+          REPORT_STATUS_LABELS.resolved,
+          icons.check,
+          colors.success,
+          colors.successSoft,
+          colors.successBorder,
+        );
       case 'invalid':
-        return settled(REPORT_STATUS_LABELS.invalid, icons.closed, colors.textMuted, true);
+        // Gray, not red: a closed report isn't an emergency.
+        return pill(
+          REPORT_STATUS_LABELS.invalid,
+          icons.closed,
+          colors.textMuted,
+          colors.background,
+          colors.border,
+        );
       case 'received':
-        return settled(REPORT_STATUS_LABELS.received, icons.sent, colors.primary);
+        return blue(REPORT_STATUS_LABELS.received, icons.sent);
       default:
-        return settled('Sent', icons.sent, colors.primary);
+        return blue('Sent', icons.sent);
     }
   }
-  return attention(isRetryingAfterError(report) ? 'Not sent yet' : 'Waiting for signal');
+  // Not delivered yet: still on the phone.
+  return pill(
+    isRetryingAfterError(report) ? 'Not sent yet' : 'Waiting for signal',
+    icons.queued,
+    colors.warning,
+    colors.warningSoft,
+    colors.warningBorder,
+  );
 }
 
 /** The sentence under the status on the report details screen. */

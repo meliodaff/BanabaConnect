@@ -321,6 +321,30 @@ export async function insertDownloadedReport(report: DownloadedReport, ownerId: 
   );
 }
 
+/** Ids of the reports that have a photo saved on this phone. */
+export async function localPhotoIds(): Promise<Set<string>> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<{ report_id: string }>('SELECT report_id FROM report_photos');
+  return new Set(rows.map((row) => row.report_id));
+}
+
+/** Attaches a photo downloaded after its report was saved (see downloadReportPhoto). */
+export async function attachDownloadedPhoto(
+  reportId: string,
+  photo: { uri: string; width: number; height: number },
+) {
+  await withWriteLock((db) =>
+    db.runAsync(
+      `INSERT OR IGNORE INTO report_photos (report_id, uri, width, height, sync_status)
+       VALUES (?, ?, ?, ?, 'sent')`,
+      reportId,
+      photo.uri,
+      photo.width,
+      photo.height,
+    ),
+  );
+}
+
 /** Erases an account's reports and photos from this phone (they stay on the server). */
 export async function deleteOwnerReports(ownerId: string) {
   const photos = await withWriteLock(async (db) => {

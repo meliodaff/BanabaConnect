@@ -2,9 +2,11 @@ import { isReportCategory, isReportStatus } from '@banabaconnect/shared';
 import { supabase, supabaseConfigured } from '@/features/auth/supabase';
 import {
   adoptGuestReports,
+  attachDownloadedPhoto,
   deleteOwnerReports,
   downloadReportPhoto,
   insertDownloadedReport,
+  localPhotoIds,
   localReportIds,
 } from './reportRepository';
 import { reportsStore } from './reportsStore';
@@ -54,9 +56,13 @@ async function downloadAccountReports(ownerId: string) {
     throw error;
   }
 
+  const rows = data ?? [];
+
+  // First save every new report without its photo and show the list right away. Waiting for all
+  // the photos first left My Reports empty for a long time after signing in.
   const known = await localReportIds();
   let added = 0;
-  for (const row of data ?? []) {
+  for (const row of rows) {
     if (known.has(row.id) || !isReportCategory(row.category) || !isReportStatus(row.status)) {
       continue;
     }
@@ -76,15 +82,47 @@ async function downloadAccountReports(ownerId: string) {
         serverStatus: row.status,
         serverStatusAt: row.status_updated_at,
         serverNote: noteForCurrentStatus(row.history, row.status),
-        photo: await downloadPhoto(row),
+        photo: null,
       },
       ownerId,
     );
     added += 1;
   }
 
+  // Then fetch the photos, each showing up as soon as it arrives. This also catches photos that
+  // failed or were cut off last time (e.g. the app was closed mid-download).
+  const saved = await localReportIds();
+  const withPhoto = await localPhotoIds();
+  const missing = rows.filter(
+    (row) => row.photo_path && saved.has(row.id) && !withPhoto.has(row.id),
+  );
+  // Marked before the list shows, so those reports show a spinner instead of looking photo-less.
+  reportsStore.setPhotosDownloading(
+    missing.map((row) => row.id),
+    true,
+  );
   if (added > 0) {
     await reportsStore.refresh();
+  }
+
+  try {
+    for (const row of missing) {
+      try {
+        const photo = await downloadPhoto(row);
+        if (photo) {
+          await attachDownloadedPhoto(row.id, photo);
+          await reportsStore.refresh();
+        }
+      } finally {
+        reportsStore.setPhotosDownloading([row.id], false);
+      }
+    }
+  } finally {
+    // If the loop stopped early, no spinner should be left turning.
+    reportsStore.setPhotosDownloading(
+      missing.map((row) => row.id),
+      false,
+    );
   }
 }
 

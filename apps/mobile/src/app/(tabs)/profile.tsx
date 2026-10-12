@@ -16,10 +16,9 @@ import {
   VERIFICATION_LABELS,
   type VerificationStatus,
 } from '@banabaconnect/shared';
-import { BarangaySeal } from '@/components/BarangaySeal';
 import { Icon, icons, type IconName } from '@/components/Icon';
-import { PlainStatusBar } from '@/components/PlainStatusBar';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
+import { SealLoadingScreen } from '@/components/SealLoadingScreen';
 import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
 import { StaffNote } from '@/components/StaffNote';
 import { avatarUrl, useAuth } from '@/features/auth/authStore';
@@ -190,7 +189,7 @@ function ActionCard({
         </View>
       </View>
       {/* Full card width, outside the text column, so it reads as a separate message. */}
-      {staffNote?.trim() ? <StaffNote note={staffNote.trim()} actionNeeded /> : null}
+      {staffNote?.trim() ? <StaffNote note={staffNote.trim()} attention="Action needed" /> : null}
       <View style={styles.actionRow}>
         {actions.map((action) => (
           <Pressable
@@ -295,23 +294,10 @@ function SignOutButton() {
         statusBarTranslucent
         onRequestClose={() => {}}
       >
-        <View
-          style={styles.signingOut}
-          accessible
-          accessibilityViewIsModal
-          accessibilityLiveRegion="polite"
-          accessibilityLabel="Signing out. Removing your reports from this phone."
-        >
-          <PlainStatusBar />
-          <BarangaySeal size={120} />
-          <View style={styles.signingOutRow}>
-            <ActivityIndicator color={colors.primary} />
-            <Text style={styles.signingOutTitle}>Signing out…</Text>
-          </View>
-          <Text style={styles.signingOutText}>
-            Removing your reports from this phone. They stay saved to your account.
-          </Text>
-        </View>
+        <SealLoadingScreen
+          title="Signing out…"
+          message="Removing your reports from this phone. They stay saved to your account."
+        />
       </Modal>
     </>
   );
@@ -461,32 +447,6 @@ function createStyles(colors: ThemeColors) {
       marginTop: 16,
       borderRadius: radius.lg,
       backgroundColor: colors.surface,
-    },
-    signingOut: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 12,
-      padding: 32,
-      backgroundColor: colors.background,
-    },
-    signingOutRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 10,
-      marginTop: 12,
-    },
-    signingOutTitle: {
-      fontSize: 20,
-      fontWeight: '800',
-      color: colors.text,
-    },
-    signingOutText: {
-      fontSize: 15,
-      lineHeight: 21,
-      color: colors.textMuted,
-      textAlign: 'center',
-      maxWidth: 300,
     },
     signOutText: {
       fontSize: 16,

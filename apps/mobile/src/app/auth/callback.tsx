@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { PlainStatusBar } from '@/components/PlainStatusBar';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { SealLoadingScreen } from '@/components/SealLoadingScreen';
 import { messageFor } from '@/features/auth/AuthParts';
 import { createAuthStyles } from '@/features/auth/authStyles';
 import {
@@ -11,7 +12,7 @@ import {
   exchangeAuthCode,
   isGoogleSignInInProgress,
 } from '@/features/auth/signIn';
-import { useTheme, useThemedStyles } from '@/theme';
+import { useThemedStyles } from '@/theme';
 
 // On the web, Google opens in a popup; this hands the result back to the page that opened it.
 const popupResult = Platform.OS === 'web' ? WebBrowser.maybeCompleteAuthSession() : null;
@@ -22,7 +23,6 @@ const popupResult = Platform.OS === 'web' ? WebBrowser.maybeCompleteAuthSession(
  * like the confirmation email.
  */
 export default function AuthCallbackScreen() {
-  const { colors } = useTheme();
   const styles = useThemedStyles(createAuthStyles);
   const { code, error_description: googleError } = useLocalSearchParams<{
     code?: string;
@@ -60,22 +60,17 @@ export default function AuthCallbackScreen() {
     );
   }
 
+  if (!error) {
+    return <SealLoadingScreen title="Signing you in…" />;
+  }
+
   return (
     <View style={styles.centered}>
       <PlainStatusBar />
-      {error ? (
-        <>
-          <Text style={[styles.infoTitle, { textAlign: 'center' }]}>{error}</Text>
-          <View style={{ alignSelf: 'stretch' }}>
-            <PrimaryButton label="Go to sign in" onPress={() => router.replace('/auth/sign-in')} />
-          </View>
-        </>
-      ) : (
-        <>
-          <ActivityIndicator size="large" color={colors.selected} />
-          <Text style={styles.infoText}>Signing you in…</Text>
-        </>
-      )}
+      <Text style={[styles.infoTitle, { textAlign: 'center' }]}>{error}</Text>
+      <View style={{ alignSelf: 'stretch' }}>
+        <PrimaryButton label="Go to sign in" onPress={() => router.replace('/auth/sign-in')} />
+      </View>
     </View>
   );
 }

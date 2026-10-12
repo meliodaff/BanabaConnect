@@ -8,9 +8,16 @@ export interface ReportsState {
   reports: QueuedReport[];
   /** Reports or photos currently being sent. */
   sendingIds: ReadonlySet<string>;
+  /** Reports whose photo is still downloading from the server (after signing in). */
+  photoDownloadIds: ReadonlySet<string>;
 }
 
-let state: ReportsState = { loaded: false, reports: [], sendingIds: new Set() };
+let state: ReportsState = {
+  loaded: false,
+  reports: [],
+  sendingIds: new Set(),
+  photoDownloadIds: new Set(),
+};
 const listeners = new Set<() => void>();
 
 function setState(next: ReportsState) {
@@ -33,8 +40,6 @@ export const reportsStore = {
   getState: getSnapshot,
   /** Reloads the signed-in account's (or the guest's) reports from the local database. */
   async refresh() {
-    // TEMP: slows loading so the skeleton is visible. Remove before committing.
-    await new Promise((resolve) => setTimeout(resolve, 2000));
     const reports = await listReports(await currentReportOwner());
     setState({ ...state, loaded: true, reports });
   },
@@ -46,6 +51,18 @@ export const reportsStore = {
       sendingIds.delete(id);
     }
     setState({ ...state, sendingIds });
+  },
+  /** Marks photos as downloading (`true`) or finished, whether it worked or not (`false`). */
+  setPhotosDownloading(ids: string[], downloading: boolean) {
+    const photoDownloadIds = new Set(state.photoDownloadIds);
+    for (const id of ids) {
+      if (downloading) {
+        photoDownloadIds.add(id);
+      } else {
+        photoDownloadIds.delete(id);
+      }
+    }
+    setState({ ...state, photoDownloadIds });
   },
 };
 

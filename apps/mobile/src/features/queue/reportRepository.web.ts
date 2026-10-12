@@ -117,6 +117,19 @@ export async function insertDownloadedReport(report: DownloadedReport, ownerId: 
   });
 }
 
+export async function localPhotoIds(): Promise<Set<string>> {
+  return new Set([...reports.values()].filter((r) => r.photo).map((r) => r.submission.id));
+}
+
+export async function attachDownloadedPhoto(
+  reportId: string,
+  photo: { uri: string; width: number; height: number },
+) {
+  update(reportId, (r) =>
+    r.photo ? r : { ...r, photo: { ...photo, syncStatus: 'sent', attempts: 0, nextAttemptAt: 0 } },
+  );
+}
+
 export async function deleteOwnerReports(ownerId: string) {
   for (const [id, report] of reports) {
     if (report.ownerId === ownerId) {

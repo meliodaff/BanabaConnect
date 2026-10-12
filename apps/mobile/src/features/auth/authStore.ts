@@ -51,8 +51,6 @@ function isGuestSession(session: Session | null): session is null {
 }
 
 async function applySession(session: Session | null, event: AuthChangeEvent) {
-  // TEMP: slows account loading so the skeleton is visible. Remove before committing.
-  await new Promise((resolve) => setTimeout(resolve, 5000));
   if (isGuestSession(session)) {
     setState({ status: 'guest', session: null, profile: null });
     // Show the guest's reports, not the account that just signed out.

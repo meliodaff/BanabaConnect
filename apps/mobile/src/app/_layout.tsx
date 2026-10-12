@@ -35,6 +35,9 @@ export default function RootLayout() {
           headerTintColor: colors.headerText,
           headerTitleStyle: { fontWeight: '700', color: colors.headerText },
           headerShadowVisible: false,
+          // iOS labels the back button with the previous screen's name, and the tab group's
+          // internal name is "(tabs)". "Back" reads right wherever the resident came from.
+          headerBackTitle: 'Back',
           contentStyle: { backgroundColor: colors.background },
         }}
       >

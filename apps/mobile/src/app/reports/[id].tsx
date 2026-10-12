@@ -2,7 +2,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Linking,
   Pressable,
   ScrollView,
@@ -13,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CATEGORY_LABELS } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
+import { LoadingImage, Spinner } from '@/components/LoadingImage';
 import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
 import { StaffNote } from '@/components/StaffNote';
 import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
@@ -32,7 +32,7 @@ import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 export default function ReportDetailScreen() {
   const styles = useThemedStyles(createStyles);
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const { loaded, reports, sendingIds } = useQueuedReports();
+  const { loaded, reports, sendingIds, photoDownloadIds } = useQueuedReports();
   const report = reports.find((r) => r.submission.id === id);
 
   if (!loaded) {
@@ -51,10 +51,25 @@ export default function ReportDetailScreen() {
     );
   }
 
-  return <ReportDetail report={report} sending={sendingIds.has(report.submission.id)} />;
+  return (
+    <ReportDetail
+      report={report}
+      sending={sendingIds.has(report.submission.id)}
+      photoDownloading={photoDownloadIds.has(report.submission.id)}
+    />
+  );
 }
 
-function ReportDetail({ report, sending }: { report: QueuedReport; sending: boolean }) {
+function ReportDetail({
+  report,
+  sending,
+  photoDownloading,
+}: {
+  report: QueuedReport;
+  sending: boolean;
+  /** The photo is still on its way from the server (right after signing in). */
+  photoDownloading: boolean;
+}) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { submission, photo } = report;
@@ -103,6 +118,7 @@ function ReportDetail({ report, sending }: { report: QueuedReport; sending: bool
           <StaffNote
             note={report.serverNote}
             time={report.serverStatusAt ? formatReportTime(report.serverStatusAt) : null}
+            attention={report.serverStatus === 'invalid' ? 'Report closed' : null}
           />
         )}
 
@@ -123,13 +139,28 @@ function ReportDetail({ report, sending }: { report: QueuedReport; sending: bool
           </Pressable>
         )}
 
+        {!photo && photoDownloading && (
+          <View style={styles.section}>
+            <SectionHeader icon={icons.camera} title="Photo" />
+            <View
+              style={[styles.photo, styles.photoPending]}
+              accessible
+              accessibilityLabel="Downloading photo"
+            >
+              <Spinner size="large" />
+            </View>
+            <Text style={styles.note}>Downloading photo…</Text>
+          </View>
+        )}
+
         {photo && (
           <View style={styles.section}>
             <SectionHeader icon={icons.camera} title="Photo" />
-            <Image
-              source={{ uri: photo.uri }}
+            <LoadingImage
+              uri={photo.uri}
               style={[styles.photo, { aspectRatio: photo.width / photo.height }]}
               accessibilityLabel="Photo of the incident"
+              fallback={<Text style={styles.muted}>This photo couldn’t be opened.</Text>}
             />
             {isPhotoWaiting(report) && (
               <Text style={styles.note}>
@@ -370,6 +401,10 @@ function createStyles(colors: ThemeColors) {
       width: '100%',
       borderRadius: radius.md,
       backgroundColor: colors.background,
+    },
+    /** The size isn't known until the photo arrives, so hold a typical phone-photo shape. */
+    photoPending: {
+      aspectRatio: 4 / 3,
     },
     note: {
       fontSize: 13,

@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon, icons } from '@/components/Icon';
 import { callNumber } from '@/features/hotlines/call';
 import { HOTLINES } from '@/features/hotlines/hotlines';
@@ -34,13 +34,30 @@ export default function HotlinesScreen() {
                   : `${hotline.name}, number not yet available`
               }
             >
-              <View style={[styles.phoneIcon, !number && styles.phoneIconMuted]}>
-                <Icon
-                  name={icons.phone}
-                  size={22}
-                  color={number ? colors.success : colors.disabled}
-                />
-              </View>
+              {hotline.badge ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText} maxFontSizeMultiplier={1.2}>
+                    {hotline.badge}
+                  </Text>
+                </View>
+              ) : hotline.logo ? (
+                <View style={styles.logoBox}>
+                  <Image
+                    source={hotline.logo.source}
+                    resizeMode="contain"
+                    style={[styles.logo, hotline.logo.round && styles.logoRound]}
+                    accessibilityLabel={`${hotline.name} seal`}
+                  />
+                </View>
+              ) : (
+                <View style={[styles.phoneIcon, !number && styles.phoneIconMuted]}>
+                  <Icon
+                    name={icons.phone}
+                    size={22}
+                    color={number ? colors.success : colors.disabled}
+                  />
+                </View>
+              )}
               <View style={styles.flex}>
                 <Text style={styles.name}>{hotline.name}</Text>
                 <Text style={styles.description}>{hotline.description}</Text>
@@ -106,6 +123,35 @@ function createStyles(colors: ThemeColors) {
     },
     phoneIconMuted: {
       backgroundColor: colors.background,
+    },
+    // Emergency red: 911 should be the first thing the eye lands on.
+    badge: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.pill,
+      backgroundColor: colors.emergency,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    badgeText: {
+      fontSize: 15,
+      fontWeight: '800',
+      letterSpacing: 0.3,
+      color: colors.onEmergency,
+    },
+    // Same footprint as the phone icon circle, so names line up down the list.
+    logoBox: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    logo: {
+      width: 44,
+      height: 44,
+    },
+    logoRound: {
+      borderRadius: radius.pill,
     },
     name: {
       fontSize: 16,

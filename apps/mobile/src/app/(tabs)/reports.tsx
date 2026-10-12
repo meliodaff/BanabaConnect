@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
 import {
-  Image,
   Pressable,
   RefreshControl,
   SectionList,
@@ -11,6 +10,7 @@ import {
 } from 'react-native';
 import { CATEGORY_LABELS } from '@banabaconnect/shared';
 import { Icon, icons } from '@/components/Icon';
+import { LoadingImage, Spinner } from '@/components/LoadingImage';
 import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
 import { useIsOffline } from '@/features/network/useIsOffline';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
@@ -29,7 +29,7 @@ import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 export default function MyReportsScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
-  const { loaded, reports, sendingIds } = useQueuedReports();
+  const { loaded, reports, sendingIds, photoDownloadIds } = useQueuedReports();
   const waiting = countWaiting(reports);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -87,7 +87,11 @@ export default function MyReportsScreen() {
       ListHeaderComponent={waiting > 0 ? <WaitingSummary count={waiting} /> : null}
       ListEmptyComponent={<EmptyState />}
       renderItem={({ item }) => (
-        <ReportCard report={item} sending={sendingIds.has(item.submission.id)} />
+        <ReportCard
+          report={item}
+          sending={sendingIds.has(item.submission.id)}
+          photoDownloading={photoDownloadIds.has(item.submission.id)}
+        />
       )}
     />
   );
@@ -142,13 +146,27 @@ function WaitingSummary({ count }: { count: number }) {
   );
 }
 
-function ReportCard({ report, sending }: { report: QueuedReport; sending: boolean }) {
+function ReportCard({
+  report,
+  sending,
+  photoDownloading,
+}: {
+  report: QueuedReport;
+  sending: boolean;
+  /** The photo is still on its way from the server (right after signing in). */
+  photoDownloading: boolean;
+}) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { submission, photo } = report;
   const look = CATEGORY_APPEARANCE[submission.category];
   const status = deliveryStatusOf(report, sending, colors);
   const photoWaiting = isPhotoWaiting(report);
+  const categoryThumbnail = (
+    <View style={[styles.thumbnail, styles.iconThumbnail, { backgroundColor: colors.categoryTint }]}>
+      <Icon name={look.icon} size={28} color={colors.categoryIcon} />
+    </View>
+  );
 
   return (
     <Pressable
@@ -157,15 +175,17 @@ function ReportCard({ report, sending }: { report: QueuedReport; sending: boolea
       accessibilityRole="button"
       accessibilityLabel={`${CATEGORY_LABELS[submission.category]} report, ${status.label}${
         report.syncStatus === 'sent' && report.serverNote ? ', has a note from barangay staff' : ''
-      }`}
+      }${!photo && photoDownloading ? ', photo downloading' : ''}`}
       accessibilityHint="Opens the report details"
     >
       {photo ? (
-        <Image source={{ uri: photo.uri }} style={styles.thumbnail} />
-      ) : (
-        <View style={[styles.thumbnail, styles.iconThumbnail, { backgroundColor: colors.categoryTint }]}>
-          <Icon name={look.icon} size={28} color={colors.categoryIcon} />
+        <LoadingImage uri={photo.uri} style={styles.thumbnail} fallback={categoryThumbnail} />
+      ) : photoDownloading ? (
+        <View style={[styles.thumbnail, { backgroundColor: colors.categoryTint }]}>
+          <Spinner />
         </View>
+      ) : (
+        categoryThumbnail
       )}
       <View style={styles.flex}>
         <View style={styles.cardTop}>
@@ -192,16 +212,42 @@ function ReportCard({ report, sending }: { report: QueuedReport; sending: boolea
           {photoWaiting && <Text style={styles.photoNote}>Photo still uploading</Text>}
         </View>
         {report.syncStatus === 'sent' && report.serverNote && (
-          <View style={styles.noteHint}>
-            <Icon name={icons.staffNote} size={14} color={colors.primary} />
-            <Text style={styles.noteHintText}>Note from barangay staff</Text>
-          </View>
+          <NotePreview note={report.serverNote} closed={report.serverStatus === 'invalid'} />
         )}
       </View>
       <View style={styles.chevron}>
         <Icon name={icons.chevron} size={22} color={colors.textMuted} />
       </View>
     </Pressable>
+  );
+}
+
+/**
+ * A quoted preview of the staff's message, shaped like a message (full width, accent bar, the
+ * words themselves) so it can't be mistaken for a status pill. Amber for a closed report and blue
+ * otherwise, matching the full notice on the details screen.
+ */
+function NotePreview({ note, closed }: { note: string; closed: boolean }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+  const accent = closed ? colors.warning : colors.primary;
+  return (
+    <View
+      style={[
+        styles.notePreview,
+        { borderLeftColor: accent, backgroundColor: closed ? colors.warningSoft : colors.background },
+      ]}
+    >
+      <View style={styles.notePreviewHeader}>
+        <Icon name={icons.barangay} size={13} color={accent} />
+        <Text style={[styles.notePreviewLabel, { color: accent }]}>
+          Message from Barangay Banaba
+        </Text>
+      </View>
+      <Text style={styles.notePreviewText} numberOfLines={2}>
+        {note}
+      </Text>
+    </View>
   );
 }
 
@@ -384,16 +430,29 @@ function createStyles(colors: ThemeColors) {
       fontSize: 13,
       color: colors.textMuted,
     },
-    noteHint: {
+    notePreview: {
+      marginTop: 10,
+      borderLeftWidth: 3,
+      borderRadius: radius.sm,
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+      gap: 3,
+    },
+    notePreviewHeader: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
-      marginTop: 6,
     },
-    noteHintText: {
+    notePreviewLabel: {
+      fontSize: 11,
+      fontWeight: '800',
+      letterSpacing: 0.4,
+      textTransform: 'uppercase',
+    },
+    notePreviewText: {
       fontSize: 13,
-      fontWeight: '700',
-      color: colors.primary,
+      lineHeight: 18,
+      color: colors.text,
     },
     empty: {
       flex: 1,
