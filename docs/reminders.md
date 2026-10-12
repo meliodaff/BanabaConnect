@@ -3,28 +3,28 @@
 Decisions already made, and work to come back to. For what must be done before releasing to
 residents, see [release-checklist.md](release-checklist.md).
 
-## Reject reports from outside Barangay Banaba
+## Reports from outside Barangay Banaba: flagged, not rejected
 
-**Decided:** reports from outside Banaba are not accepted at all.
-**Why not built yet:** the team tests from outside Banaba, so it couldn't be tested.
+**Decided 2026-10-12 (replaces the earlier "reject them" decision):** reports from outside
+Banaba are accepted and flagged "Outside Banaba" for staff to decide. Rejecting was riskier:
+GPS can be off by tens of meters near the border, an incident just outside can still affect
+Banaba, and a report that waited for signal shouldn't be turned away hours later.
 
-When building it:
+**Built** (`supabase/migrations/20261017000000_outside_banaba_flag.sql`):
 
-- **Boundary (found).** The official outline (PSA 2023, PSGC 0405811012) is already in
-  `apps/web/lib/banabaBoundary.ts`, with an `isInsideBanaba()` check that the dashboard map uses.
-  For rejecting reports, store the same polygon in a database table so `submit_report` can check
-  it with PostGIS, and it can be corrected without an app update.
-- **Server.** `submit_report` (`supabase/migrations/20261012000000_report_submission.sql`)
-  refuses a report whose location is outside the boundary, with its own error code.
-- **Allow for GPS error.** Accept a report if it's within its GPS accuracy of the border, plus
-  a small margin, so residents near the edge aren't wrongly blocked during an emergency.
-- **App, before sending.** If the phone's location is clearly outside, the report screen says so
-  right away. For example: "BanabaConnect only takes reports inside Barangay Banaba. For an
-  emergency here, call 911." The resident shouldn't find out after waiting.
-- **Queue.** A report the server rejects as outside must not retry forever (the sync engine
-  retries every error). Show it as "Not accepted: outside Banaba" instead of "Not sent yet".
-- **Testing from outside Banaba.** Keep an on/off switch for the check in the database (off
-  during development), or add a test area around the developer's location.
+- **Boundary in the database.** The official PSA 2023 outline is in `public.service_area`; the
+  app and dashboard use the same polygon from `packages/shared/src/banabaBoundary.ts`. Change both
+  together.
+- **Flag on arrival.** `submit_report` saves `reports.outside_banaba_m`: meters outside, or null
+  when inside or within the GPS margin (the report's accuracy, at least 50 m, at most 300 m).
+- **Dashboard.** An "Outside Banaba" tag in the Reports list, on Overview and on the report page
+  (with the distance and what to do), and in map pin cards. With equal priority, reports from
+  inside Banaba come first.
+- **App.** Before sending from clearly outside: "You seem to be outside Barangay Banaba", with
+  Call 911 and "Send to Banaba anyway".
+
+**Maybe later:** reject only reports far away (e.g. outside San Mateo), which can't be a Banaba
+emergency and GPS error can't explain.
 
 ## Improve the priority formula (MCPS)
 

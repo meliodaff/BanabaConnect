@@ -44,6 +44,11 @@ export interface ReportSummary {
   clusterCount: number;
   /** Different residents who reported it, not counting Invalid reports. Drives volume. */
   clusterPeople: number;
+  /**
+   * How far outside Barangay Banaba it was sent from, in meters, or null if inside (or close
+   * enough that GPS error could explain it). Flagged, never rejected.
+   */
+  outsideBanabaM: number | null;
   hasPhoto: boolean;
   reporter: Reporter | null;
 }
@@ -51,7 +56,7 @@ export interface ReportSummary {
 const SUMMARY_COLUMNS = `
   id, category, status, priority_score, severity_score, volume_score, credibility_score,
   description, latitude, longitude, location_accuracy_m, created_at, received_at, incident_at,
-  status_updated_at, photo_path, cluster_id,
+  status_updated_at, photo_path, cluster_id, outside_banaba_m,
   cluster:incident_clusters(report_count, reporter_count),
   reporter:profiles!reports_reporter_id_fkey(id, full_name, is_guest, verification_status, phone, area, address)
 `;
@@ -95,6 +100,7 @@ function toSummary(row: any): ReportSummary | null {
     clusterId: row.cluster_id,
     clusterCount: row.cluster?.report_count ?? 1,
     clusterPeople: row.cluster?.reporter_count ?? 1,
+    outsideBanabaM: toNumber(row.outside_banaba_m),
     hasPhoto: Boolean(row.photo_path),
     reporter: toReporter(row.reporter),
   };

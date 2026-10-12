@@ -1,7 +1,7 @@
 import { CATEGORY_LABELS, REPORT_CATEGORIES } from "@banabaconnect/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PriorityBadge, StatusPill } from "@/components/Badges";
+import { OutsideBanabaTag, PriorityBadge, StatusPill } from "@/components/Badges";
 import { BarList } from "@/components/BarList";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { PageHeader } from "@/components/PageHeader";
@@ -14,6 +14,7 @@ import {
 } from "@/lib/data";
 import { startOfTodayInManila, timeAgo, timeSince } from "@/lib/format";
 import { priorityBand } from "@/lib/labels";
+import { DEFAULT_SORT, sortReports } from "@/lib/reportSort";
 
 export const metadata: Metadata = { title: "Overview" };
 
@@ -55,7 +56,8 @@ export default async function OverviewPage() {
     null,
   );
   const inProgress = active.filter((r) => r.status === "in_progress").length;
-  const mostUrgent = active.slice(0, MOST_URGENT); // already sorted by priority
+  // Same order as the Reports list: highest priority, then reports from inside Banaba, then newest.
+  const mostUrgent = sortReports(active, DEFAULT_SORT).slice(0, MOST_URGENT);
   const incidents = multiReportIncidents(active);
   const byType = REPORT_CATEGORIES.map((category) => ({
     label: CATEGORY_LABELS[category],
@@ -132,7 +134,12 @@ export default async function OverviewPage() {
                     >
                       <PriorityBadge score={report.priority} />
                       <span className="min-w-0">
-                        <span className="block text-base font-bold">{CATEGORY_LABELS[report.category]}</span>
+                        <span className="flex flex-wrap items-center gap-2 text-base font-bold">
+                          {CATEGORY_LABELS[report.category]}
+                          {report.outsideBanabaM !== null && (
+                            <OutsideBanabaTag meters={report.outsideBanabaM} />
+                          )}
+                        </span>
                         <span className="block truncate text-sm text-muted">
                           {reporterLabel(report)} · {timeAgo(report.createdAt)}
                           {report.clusterCount > 1 && ` · ${report.clusterCount} reports nearby`}

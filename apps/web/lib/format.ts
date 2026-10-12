@@ -59,6 +59,12 @@ export function startOfTodayInManila(now = new Date()): string {
   return new Date(`${parts}T00:00:00+08:00`).toISOString();
 }
 
+/** 350 → "about 350 m", 1240 → "about 1.2 km". */
+export function formatDistance(meters: number): string {
+  if (meters < 1000) return `about ${Math.max(10, Math.round(meters / 10) * 10)} m`;
+  return `about ${(meters / 1000).toFixed(meters < 10_000 ? 1 : 0)} km`;
+}
+
 /** 0.873 → "87" (the queue shows priority out of 100). */
 export function scoreOutOf100(score: number | null): string {
   return score === null ? "–" : String(Math.round(score * 100));

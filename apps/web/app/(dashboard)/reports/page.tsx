@@ -6,6 +6,7 @@ import { QueueTable, type QueueRow } from "@/components/QueueTable";
 import { listReports } from "@/lib/data";
 import { formatDateTime, timeAgo, waitedForSignal } from "@/lib/format";
 import { STATUS_FILTERS, parseStatusFilter, type StatusFilter } from "@/lib/labels";
+import { parseSort, sortQuery, sortReports } from "@/lib/reportSort";
 
 export const metadata: Metadata = { title: "Reports" };
 
@@ -17,8 +18,10 @@ const EMPTY_MESSAGES: Record<StatusFilter, string> = {
 };
 
 export default async function ReportsPage({ searchParams }: PageProps<"/reports">) {
-  const filter = parseStatusFilter((await searchParams).status);
-  const reports = await listReports(STATUS_FILTERS[filter].statuses);
+  const params = await searchParams;
+  const filter = parseStatusFilter(params.status);
+  const sort = parseSort(params.sort, params.dir);
+  const reports = sortReports(await listReports(STATUS_FILTERS[filter].statuses), sort);
 
   const rows: QueueRow[] = reports.map((report) => ({
     id: report.id,
@@ -32,6 +35,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
     reporterVerification: report.reporter?.verification ?? null,
     reporterArea: report.reporter?.area ?? null,
     clusterCount: report.clusterCount,
+    outsideBanabaM: report.outsideBanabaM,
     reportedAgo: timeAgo(report.createdAt),
     reportedAt: formatDateTime(report.createdAt),
     waited: waitedForSignal(report.createdAt, report.receivedAt),
@@ -45,6 +49,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
           basePath="/reports"
           param="status"
           current={filter}
+          keepQuery={sortQuery(sort)}
           tabs={(Object.keys(STATUS_FILTERS) as StatusFilter[]).map((key) => ({
             key,
             label: STATUS_FILTERS[key].label,
@@ -52,7 +57,12 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
         />
       </PageHeader>
       <div className="px-8 py-6">
-        <QueueTable rows={rows} emptyMessage={EMPTY_MESSAGES[filter]} backTo={filter} />
+        <QueueTable
+          rows={rows}
+          emptyMessage={EMPTY_MESSAGES[filter]}
+          filter={filter}
+          sort={sort}
+        />
       </div>
     </>
   );

@@ -5,7 +5,7 @@ import { LiveMap } from "@/components/map/LiveMap";
 import type { MapPoint } from "@/components/map/MapLoader";
 import { PageHeader } from "@/components/PageHeader";
 import { listReports } from "@/lib/data";
-import { scoreOutOf100, timeAgo } from "@/lib/format";
+import { formatDistance, scoreOutOf100, timeAgo } from "@/lib/format";
 import {
   PRIORITY_BAND_COLORS,
   PRIORITY_BAND_LABELS,
@@ -37,7 +37,11 @@ export default async function MapPage({ searchParams }: PageProps<"/map">) {
       lines: [
         `${STAFF_STATUS_LABELS[report.status]} · ${timeAgo(report.createdAt)}`,
         report.clusterCount > 1 ? `${report.clusterCount} reports nearby` : "",
+        report.outsideBanabaM !== null
+          ? `Outside Banaba · ${formatDistance(report.outsideBanabaM)} away`
+          : "",
       ].filter(Boolean),
+      outside: report.outsideBanabaM !== null,
       href: `/reports/${report.id}?from=map`,
     };
   });

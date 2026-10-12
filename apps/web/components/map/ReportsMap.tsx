@@ -12,7 +12,7 @@ import {
 } from "maplibre-gl";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { BANABA_BOUNDARY, BANABA_BOUNDS, isInsideBanaba } from "@/lib/banabaBoundary";
+import { BANABA_BOUNDARY, BANABA_BOUNDS, isInsideBanaba } from "@banabaconnect/shared";
 import { PRIORITY_BAND_COLORS } from "@/lib/labels";
 
 // Served from public/maplibre by scripts/copy-maplibre-worker.mjs.
@@ -89,6 +89,8 @@ export interface MapPoint {
   color: string;
   /** How urgent, for grouped pins: 3 critical, 2 high, 1 medium, 0 low. */
   rank?: number;
+  /** Flagged "Outside Banaba" by the database (beyond GPS error). */
+  outside?: boolean;
   title: string;
   lines: string[];
   href?: string;
@@ -508,8 +510,11 @@ export default function ReportsMap({
     );
   };
 
+  // The database's flag when given (it allows for GPS error), so this matches the tags elsewhere.
   const outside =
-    focus === "banaba" ? points.filter((p) => !isInsideBanaba([p.longitude, p.latitude])).length : 0;
+    focus === "banaba"
+      ? points.filter((p) => p.outside ?? !isInsideBanaba([p.longitude, p.latitude])).length
+      : 0;
 
   if (failed) {
     return (

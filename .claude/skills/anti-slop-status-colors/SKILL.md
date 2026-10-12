@@ -23,8 +23,10 @@ Check every state indicator against these. Matching any of them is a defect.
    hues for four labels, none of them meaningful.
 2. **Pastel tint + same-hue text.** A soft-colored pill with darker text of the same hue for
    every state. It's the default look of generated UIs, and the text often fails contrast.
-3. **Traffic-light ordering.** Red/orange/yellow/green (or blue) for an ordered scale like
-   priority. Ordered magnitudes read as one scale only with **one hue, light to dark**.
+3. **Traffic-light ordering.** Red/orange/yellow/green (or blue) for an ordered scale. Ordered
+   magnitudes read as one scale best with **one hue, light to dark**. Exception: priority uses
+   dark red, orange, yellow and gray by the project owner's choice (see below); never add green
+   to it, since green means "resolved".
 4. **Green for "done".** Finished work glowing green competes for attention it no longer needs.
 5. **Red for anything negative.** Rejected, closed, invalid and cancelled aren't emergencies.
    Red is reserved for "act now".
@@ -52,27 +54,31 @@ state needs attention or is in motion.
 
 | Role | Color | Use for | Pill treatment |
 |---|---|---|---|
-| **Act now** | Red ramp (`urgent` / priority ramp) | Critical and High priority; the new-report alert; for residents, a report that **hasn't reached the barangay** (amber `warning` on mobile) | Glyph and text in the attention color; a soft tint is allowed only here |
+| **Act now** | Red (`urgent`; Critical priority's dark red) | Critical and High priority; the new-report alert; for residents, a report that **hasn't reached the barangay** (amber `warning` on mobile) | Glyph and text in the attention color; a soft tint is allowed only here |
 | **In motion** | Brand blue (`brand` / `primary`) | Received (new) dot; In progress; Sending | Glyph in brand; In progress may use the brand-soft fill |
 | **Settled** | Ink and muted gray | Resolved, Invalid/Closed, Not verified, Not approved, Sent | Neutral pill; muted text for closed states |
 
 The one exception: **Resolved and Verified** may use the success green **on the glyph only**
 (never a green pill), as a small confirmation.
 
-### Priority is one ordered scale
+### Priority: one color per level (owner's decision)
 
-Priority is a magnitude, so it uses **one hue from light to dark**, validated with the dataviz
-skill's checker (`validate_palette.js --ordinal`):
+On 2026-10-12 the project owner replaced the single red ramp with **a clearly different color
+per level**, so staff can tell levels apart at a glance on a busy map. Don't revert it to a ramp.
+The order still reads strong to quiet. The same colors are used everywhere (map pins, map
+legend, priority badges), from `PRIORITY_BAND_COLORS` / `PRIORITY_BADGES` in
+`apps/web/lib/labels.ts`:
 
 | Band | Map pin / legend | Badge |
 |---|---|---|
-| Critical | `#730910` | Solid `#730910`, white number |
-| High | `#B5111A` | Solid `#B5111A`, white number |
-| Medium | `#D9464E` | Soft `#FBE3E4` fill, `#E98A8F` border, `#8E0B12` number |
-| Low | `#E98A8F` | White fill, `#E98A8F` border, muted number |
+| Critical | dark red `#730910` | Solid fill, white number |
+| High | orange `#E65100` | Solid fill, ink number |
+| Medium | yellow `#F5B800` | Solid fill, ink number |
+| Low | gray `#8C95A3` | Solid fill, ink number |
 
-The band name next to the badge is **ink text**, never the band color (text wears text
-tokens). Darker means more urgent; nothing else changes hue.
+Map pins get a thin dark outline so yellow and gray show on the light map. The band name next to
+the badge is **ink text**, never the band color (text wears text tokens), and every number is at
+least 4.5:1 against its fill.
 
 ## Where the values live
 
@@ -97,7 +103,8 @@ the contrast and ordinal checks for any new color.
 1. Squint at a full screen: does the eye land on what needs action, and only there?
 2. Does any state have its own hue just to be different? Remove it.
 3. Is anything red that isn't urgent, or green that's merely finished?
-4. Is priority one hue, light to dark, and does it pass `validate_palette.js --ordinal`?
+4. Does priority use exactly the four level colors from `apps/web/lib/labels.ts`, the same on
+   pins, legend and badges, with each badge number at least 4.5:1?
 5. Does every state read in grayscale (label + glyph)?
 6. Is text at least 4.5:1 against its background, and pill text at least 13px?
 7. Same state, same treatment in the dashboard and the app (the audience may change the words,

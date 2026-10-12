@@ -58,6 +58,23 @@ h3 {
   }
 }
 
+/*
+ * Loading skeletons fade in after a short pause, so a page that loads quickly never flashes one
+ * (components/Skeleton.tsx). With reduced motion the fade is instant, but the pause stays.
+ */
+@keyframes skeleton-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.skeleton-in {
+  animation: skeleton-in 150ms ease-out 120ms both;
+}
+
 /* A clear focus ring on everything, so the whole dashboard works from the keyboard. */
 :focus-visible {
   outline: 3px solid var(--color-brand);

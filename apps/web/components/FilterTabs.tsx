@@ -10,6 +10,7 @@ export function FilterTabs<Key extends string>({
   param,
   tabs,
   current,
+  keepQuery = "",
 }: {
   /** What the filter chooses, for screen readers, e.g. "Report status". */
   label: string;
@@ -17,6 +18,8 @@ export function FilterTabs<Key extends string>({
   param: string;
   tabs: { key: Key; label: string }[];
   current: Key;
+  /** Other settings to keep when switching, e.g. "&sort=reported&dir=asc". */
+  keepQuery?: string;
 }) {
   return (
     <nav aria-label={label}>
@@ -26,7 +29,7 @@ export function FilterTabs<Key extends string>({
           return (
             <li key={tab.key}>
               <Link
-                href={`${basePath}?${param}=${tab.key}`}
+                href={`${basePath}?${param}=${tab.key}${keepQuery}`}
                 aria-current={selected ? "page" : undefined}
                 className={`inline-block rounded-full border px-4 py-2.5 text-sm font-bold transition ${
                   selected

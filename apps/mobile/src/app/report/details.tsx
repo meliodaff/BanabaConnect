@@ -17,11 +17,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   CATEGORY_LABELS,
   DESCRIPTION_MAX_LENGTH,
+  isOutsideBanaba,
   REPORT_CATEGORIES,
   type ReportCategory,
   type ReportSubmission,
 } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
+import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
 import { useIsOffline } from '@/features/network/useIsOffline';
 import { buildSubmission, INCIDENT_TIME_OPTIONS } from '@/features/report/buildSubmission';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
@@ -105,8 +107,34 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
       description,
       minutesAgo,
     });
+    confirmInsideBanaba(submission);
+  }
 
-    // Ask before a likely accidental repeat, but never block it: a second report can carry news.
+  // The barangay only handles Banaba, so say so before sending from somewhere else. Never block
+  // it: the GPS can be off, and the barangay can pass a nearby emergency on. The same rule flags
+  // the report "Outside Banaba" on the dashboard (submit_report).
+  function confirmInsideBanaba(submission: ReportSubmission) {
+    const point: [number, number] = [submission.longitude, submission.latitude];
+    if (!isOutsideBanaba(point, submission.locationAccuracy)) {
+      confirmNotDuplicate(submission);
+      return;
+    }
+    Alert.alert(
+      'You seem to be outside Barangay Banaba',
+      'BanabaConnect sends reports to the Barangay Banaba hall. If this emergency is somewhere else, call 911 instead.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: `Call ${NATIONAL_EMERGENCY_NUMBER}`,
+          onPress: () => callNumber(NATIONAL_EMERGENCY_NUMBER),
+        },
+        { text: 'Send to Banaba anyway', onPress: () => confirmNotDuplicate(submission) },
+      ],
+    );
+  }
+
+  // Ask before a likely accidental repeat, but never block it: a second report can carry news.
+  function confirmNotDuplicate(submission: ReportSubmission) {
     const duplicate = findRecentDuplicate(submission, reportsStore.getState().reports);
     if (!duplicate) {
       void saveAndSend(submission);

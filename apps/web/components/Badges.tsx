@@ -1,5 +1,5 @@
 import { VERIFICATION_LABELS, type ReportStatus, type VerificationStatus } from "@banabaconnect/shared";
-import { scoreOutOf100 } from "@/lib/format";
+import { formatDistance, scoreOutOf100 } from "@/lib/format";
 import { PRIORITY_BADGES, PRIORITY_BAND_LABELS, STAFF_STATUS_LABELS, priorityBand } from "@/lib/labels";
 
 /*
@@ -8,7 +8,7 @@ import { PRIORITY_BADGES, PRIORITY_BAND_LABELS, STAFF_STATUS_LABELS, priorityBan
  * need attention or are in motion color it.
  */
 
-type GlyphKind = "dot" | "half" | "check" | "slash" | "clock" | "ring";
+type GlyphKind = "dot" | "half" | "check" | "slash" | "clock" | "ring" | "pin";
 
 function Glyph({ kind, className }: { kind: GlyphKind; className: string }) {
   return (
@@ -35,6 +35,18 @@ function Glyph({ kind, className }: { kind: GlyphKind; className: string }) {
         <>
           <circle cx="6" cy="6" r="4.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
           <path d="M3 9l6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </>
+      )}
+      {kind === "pin" && (
+        <>
+          <path
+            d="M6 11s-3.5-3.1-3.5-5.75a3.5 3.5 0 0 1 7 0C9.5 7.9 6 11 6 11z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+          <circle cx="6" cy="5.25" r="1.25" fill="currentColor" />
         </>
       )}
       {kind === "clock" && (
@@ -72,7 +84,7 @@ function Pill({
   );
 }
 
-/** Priority out of 100 on one red scale (darker = more urgent), with the band name in ink. */
+/** Priority out of 100, filled with its level's color (as on the map), with the level name in ink. */
 export function PriorityBadge({ score, size = "md" }: { score: number | null; size?: "md" | "lg" }) {
   const band = priorityBand(score);
   const badge = PRIORITY_BADGES[band];
@@ -133,6 +145,20 @@ export function VerificationBadge({ status }: { status: VerificationStatus }) {
     <Pill glyph={style.glyph} glyphClass={style.glyphClass} textClass={style.textClass}>
       {VERIFICATION_LABELS[status]}
     </Pill>
+  );
+}
+
+/**
+ * A report sent from outside Barangay Banaba (beyond GPS error). Flagged, not rejected: it may
+ * be for a neighboring barangay, so staff decide. Orange glyph: worth a look, not urgent.
+ */
+export function OutsideBanabaTag({ meters }: { meters: number }) {
+  return (
+    <span title={`Sent from ${formatDistance(meters)} outside Barangay Banaba`}>
+      <Pill glyph="pin" glyphClass="text-warning">
+        Outside Banaba
+      </Pill>
+    </span>
   );
 }
 

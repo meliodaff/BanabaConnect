@@ -2,22 +2,32 @@ import { CATEGORY_LABELS, MCPS_WEIGHTS, VERIFICATION_LABELS } from "@banabaconne
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GuestBadge, PriorityBadge, StatusPill, VerificationBadge } from "@/components/Badges";
+import {
+  GuestBadge,
+  OutsideBanabaTag,
+  PriorityBadge,
+  StatusPill,
+  VerificationBadge,
+} from "@/components/Badges";
 import { MapLoader } from "@/components/map/MapLoader";
 import { StatusUpdateForm } from "@/components/StatusUpdateForm";
 import { getReport, type ReportDetail } from "@/lib/data";
-import { formatDateTime, scoreOutOf100, timeAgo, waitedForSignal } from "@/lib/format";
+import { formatDateTime, formatDistance, scoreOutOf100, timeAgo, waitedForSignal } from "@/lib/format";
 import {
   PRIORITY_BAND_COLORS,
   STAFF_STATUS_LABELS,
   parseStatusFilter,
   priorityBand,
 } from "@/lib/labels";
+import { parseSort, sortQuery, type ReportSort } from "@/lib/reportSort";
 
 export const metadata: Metadata = { title: "Report" };
 
-/** Back to where the staff member came from: Overview, the map, or the queue with its filter. */
-function backLink(from: string | string[] | undefined) {
+/**
+ * Back to where the staff member came from: Overview, the map, or the queue with its filter and
+ * sort. Links into a report carry them as ?from=active&sort=reported&dir=asc.
+ */
+function backLink(from: string | string[] | undefined, sort: ReportSort) {
   if (from === "overview") {
     return { href: "/", label: "← Back to overview", from: "overview" };
   }
@@ -25,12 +35,14 @@ function backLink(from: string | string[] | undefined) {
     return { href: "/map", label: "← Back to map", from: "map" };
   }
   const filter = parseStatusFilter(from);
-  return { href: `/reports?status=${filter}`, label: "← Back to reports", from: filter };
+  const sorted = `${filter}${sortQuery(sort)}`;
+  return { href: `/reports?status=${sorted}`, label: "← Back to reports", from: sorted };
 }
 
 export default async function ReportPage({ params, searchParams }: PageProps<"/reports/[id]">) {
   const { id } = await params;
-  const back = backLink((await searchParams).from);
+  const query = await searchParams;
+  const back = backLink(query.from, parseSort(query.sort, query.dir));
   const report = /^[0-9a-f-]{36}$/i.test(id) ? await getReport(id) : null;
   if (!report) {
     notFound();
@@ -52,6 +64,7 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
           </p>
         </div>
         <StatusPill status={report.status} />
+        {report.outsideBanabaM !== null && <OutsideBanabaTag meters={report.outsideBanabaM} />}
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
@@ -76,6 +89,15 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
           </Card>
 
           <Card title="Location">
+            {report.outsideBanabaM !== null && (
+              <p className="mb-4 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-[15px]">
+                <span className="font-bold">
+                  Sent from {formatDistance(report.outsideBanabaM)} outside Barangay Banaba.
+                </span>{" "}
+                It may be for a neighboring barangay. Pass it on to them or the San Mateo MDRRMO, or
+                mark it Invalid if it isn&apos;t a real emergency.
+              </p>
+            )}
             <MapLoader
               height="320px"
               points={[

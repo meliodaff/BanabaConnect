@@ -43,11 +43,11 @@ export const PRIORITY_BAND_LABELS: Record<PriorityBand, string> = {
 };
 
 /**
- * Map pin and map legend colors: a clearly different color per level, so staff can tell levels
- * apart on a busy map at a glance. The project owner chose this over the single red ramp in
- * .claude/skills/anti-slop-status-colors (still used for the priority badges below). Ordered
- * dark red → orange → yellow → gray, so urgency still reads from strong to quiet; pins also get
- * a dark outline so yellow and gray show on the light map.
+ * One color per priority level, used everywhere: map pins, the map legend, and the priority
+ * badges below. A clearly different color per level lets staff tell levels apart at a glance;
+ * the project owner chose this over the single red ramp in .claude/skills/anti-slop-status-colors.
+ * Ordered dark red → orange → yellow → gray, so urgency still reads from strong to quiet; pins
+ * also get a dark outline so yellow and gray show on the light map.
  */
 export const PRIORITY_BAND_COLORS: Record<PriorityBand, string> = {
   critical: "#730910",
@@ -56,10 +56,14 @@ export const PRIORITY_BAND_COLORS: Record<PriorityBand, string> = {
   low: "#8C95A3",
 };
 
-/** The priority badge on each step; every number is at least 4.5:1 against its fill. */
+/**
+ * The priority badge: filled with the level's map color, so a report looks the same on Overview,
+ * the Reports list, its own page and the map. Every number is at least 4.5:1 against its fill
+ * (white on dark red; ink, --color-ink, on the lighter orange, yellow and gray).
+ */
 export const PRIORITY_BADGES: Record<PriorityBand, { fill: string; border: string; number: string }> = {
-  critical: { fill: "#730910", border: "#730910", number: "#FFFFFF" },
-  high: { fill: "#B5111A", border: "#B5111A", number: "#FFFFFF" },
-  medium: { fill: "#FBE3E4", border: "#E98A8F", number: "#8E0B12" },
-  low: { fill: "#FFFFFF", border: "#E98A8F", number: "#4D5668" },
+  critical: { fill: PRIORITY_BAND_COLORS.critical, border: PRIORITY_BAND_COLORS.critical, number: "#FFFFFF" },
+  high: { fill: PRIORITY_BAND_COLORS.high, border: PRIORITY_BAND_COLORS.high, number: "#141A26" },
+  medium: { fill: PRIORITY_BAND_COLORS.medium, border: PRIORITY_BAND_COLORS.medium, number: "#141A26" },
+  low: { fill: PRIORITY_BAND_COLORS.low, border: PRIORITY_BAND_COLORS.low, number: "#141A26" },
 };

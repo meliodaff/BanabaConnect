@@ -3,8 +3,18 @@
 import type { ReportStatus, VerificationStatus } from "@banabaconnect/shared";
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
-import { PriorityBadge, StatusPill, VerificationBadge } from "@/components/Badges";
+import { OutsideBanabaTag, PriorityBadge, StatusPill, VerificationBadge } from "@/components/Badges";
 import { LiveIndicator, useLiveReports } from "@/components/LiveUpdates";
+import type { StatusFilter } from "@/lib/labels";
+import { QUEUE_COLUMNS } from "@/lib/queueLayout";
+import {
+  describeSort,
+  isDefaultSort,
+  nextSort,
+  sortQuery,
+  type ReportSort,
+  type SortKey,
+} from "@/lib/reportSort";
 
 /** A queue row, with times already formatted on the server (in Philippine time). */
 export interface QueueRow {
@@ -19,6 +29,8 @@ export interface QueueRow {
   reporterVerification: VerificationStatus | null;
   reporterArea: string | null;
   clusterCount: number;
+  /** Meters outside Barangay Banaba, or null if inside. */
+  outsideBanabaM: number | null;
   reportedAgo: string;
   reportedAt: string;
   waited: string | null;
@@ -26,19 +38,32 @@ export interface QueueRow {
 
 const HIGHLIGHT_MS = 20_000;
 const TOAST_MS = 6_000;
-const COLUMNS =
-  "lg:grid-cols-[150px_minmax(0,2fr)_minmax(0,1.3fr)_110px_150px_120px] lg:items-center lg:gap-4";
+const COLUMNS = QUEUE_COLUMNS;
+
+const SORT_COLUMNS: { key: SortKey; label: string }[] = [
+  { key: "priority", label: "Priority" },
+  { key: "report", label: "Report" },
+  { key: "reporter", label: "Reporter" },
+  { key: "nearby", label: "Nearby" },
+  { key: "reported", label: "Reported" },
+  { key: "status", label: "Status" },
+];
 
 export function QueueTable({
   rows,
   emptyMessage,
-  backTo,
+  filter,
+  sort,
 }: {
   rows: QueueRow[];
   emptyMessage: string;
-  /** The current filter, so "Back to reports" on a report returns to it. */
-  backTo: string;
+  /** The status filter, kept when the sort changes. */
+  filter: StatusFilter;
+  /** How the rows are already sorted (the page sorts them; the headers change it). */
+  sort: ReportSort;
 }) {
+  // "Back to reports" on a report returns to this filter and sort.
+  const backTo = `${filter}${sortQuery(sort)}`;
   const [fresh, setFresh] = useState<ReadonlySet<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
   const [heldNewReports, setHeldNewReports] = useState(0);
@@ -87,7 +112,21 @@ export function QueueTable({
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Highest priority first. Priority = 50% seriousness + 30% nearby reports + 20% verified reporter.
+          <span className="font-semibold text-ink">Sorted: {describeSort(sort)}.</span>{" "}
+          {!isDefaultSort(sort) && (
+            <>
+              <Link
+                href={`/reports?status=${filter}`}
+                scroll={false}
+                className="font-bold text-brand underline"
+              >
+                Back to highest priority first
+              </Link>
+              .{" "}
+            </>
+          )}
+          Click a column name to sort by it. Priority = 50% seriousness + 30% nearby reports + 20%
+          verified reporter.
         </p>
         <LiveIndicator connected={connected} />
       </div>
@@ -143,17 +182,14 @@ export function QueueTable({
             }
           }}
         >
-          <div
-            className={`hidden gap-4 border-b border-line bg-page px-5 py-3 text-xs font-bold uppercase tracking-wide text-muted lg:grid ${COLUMNS}`}
-            aria-hidden
+          <nav
+            aria-label="Sort reports"
+            className={`hidden gap-4 border-b border-line bg-page px-5 py-2 text-xs font-bold uppercase tracking-wide text-muted lg:grid ${COLUMNS}`}
           >
-            <span>Priority</span>
-            <span>Report</span>
-            <span>Reporter</span>
-            <span>Nearby</span>
-            <span>Reported</span>
-            <span>Status</span>
-          </div>
+            {SORT_COLUMNS.map((column) => (
+              <SortHeader key={column.key} column={column} current={sort} filter={filter} />
+            ))}
+          </nav>
           <ul>
             {rows.map((row) => (
               <li key={row.id} className="border-b border-line last:border-b-0">
@@ -165,8 +201,9 @@ export function QueueTable({
                 >
                   <PriorityBadge score={row.priority} />
                   <div className="min-w-0">
-                    <p className="flex items-center gap-2 text-base font-bold">
+                    <p className="flex flex-wrap items-center gap-2 text-base font-bold">
                       {row.categoryLabel}
+                      {row.outsideBanabaM !== null && <OutsideBanabaTag meters={row.outsideBanabaM} />}
                       {fresh.has(row.id) && (
                         <span className="rounded-full bg-urgent px-2 py-0.5 text-xs font-bold text-white">NEW</span>
                       )}
@@ -206,5 +243,63 @@ export function QueueTable({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * A column name that sorts by it: first click in the column's usual order, a second click
+ * reverses it. The sorted column is blue with an arrow; the others show a faint two-way arrow.
+ */
+function SortHeader({
+  column,
+  current,
+  filter,
+}: {
+  column: { key: SortKey; label: string };
+  current: ReportSort;
+  filter: StatusFilter;
+}) {
+  const active = current.key === column.key;
+  const next = nextSort(current, column.key);
+  return (
+    <Link
+      href={`/reports?status=${filter}${sortQuery(next)}`}
+      scroll={false}
+      aria-current={active ? "true" : undefined}
+      title={`Sort: ${describeSort(next)}`}
+      className={`-mx-1.5 inline-flex w-fit items-center gap-1 rounded-md px-1.5 py-1 uppercase hover:bg-surface hover:text-brand ${
+        active ? "text-brand" : ""
+      }`}
+    >
+      {column.label}
+      <SortArrow direction={active ? current.dir : null} />
+      <span className="sr-only">
+        {active ? `, sorted: ${describeSort(current)}. ` : ". "}
+        Sort {describeSort(next).toLowerCase()}
+      </span>
+    </Link>
+  );
+}
+
+function SortArrow({ direction }: { direction: "asc" | "desc" | null }) {
+  return (
+    <svg
+      viewBox="0 0 12 12"
+      aria-hidden
+      className={`h-3 w-3 ${direction ? "" : "opacity-40"}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {direction === "asc" ? (
+        <path d="M6 10V2M2.5 5.5 6 2l3.5 3.5" />
+      ) : direction === "desc" ? (
+        <path d="M6 2v8M2.5 6.5 6 10l3.5-3.5" />
+      ) : (
+        <path d="M3.5 4.5 6 2l2.5 2.5M3.5 7.5 6 10l2.5-2.5" />
+      )}
+    </svg>
   );
 }

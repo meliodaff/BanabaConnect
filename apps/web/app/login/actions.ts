@@ -20,7 +20,7 @@ export async function signIn(_previous: LoginState, formData: FormData): Promise
     return {
       error:
         error.code === "invalid_credentials"
-          ? "Wrong email or password."
+          ? "Wrong email or password. Check both and try again."
           : "Could not sign in. Check your internet connection and try again.",
     };
   }

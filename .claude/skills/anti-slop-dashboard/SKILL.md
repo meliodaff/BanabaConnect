@@ -180,5 +180,6 @@ another hex value in a component; use the Tailwind token classes (`bg-brand`, `t
 | `page`, `surface`, `line`, `ink`, `muted` | Backgrounds, cards, borders, text | |
 
 Status, priority and verification colors follow the **`anti-slop-status-colors`** skill: neutral
-pills with a shape glyph, color only for attention, and priority as one red ramp from light (Low)
-to dark (Critical). Categories don't get their own colors. Keep text contrast at least 4.5:1.
+pills with a shape glyph, and color only for attention. Priority is the exception the project
+owner chose: one color per level (dark red, orange, yellow, gray), the same on map pins, the
+legend and the badges. Categories don't get their own colors. Keep text contrast at least 4.5:1.
