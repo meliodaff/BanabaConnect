@@ -33,6 +33,8 @@ export const reportsStore = {
   getState: getSnapshot,
   /** Reloads the signed-in account's (or the guest's) reports from the local database. */
   async refresh() {
+    // TEMP: slows loading so the skeleton is visible. Remove before committing.
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     const reports = await listReports(await currentReportOwner());
     setState({ ...state, loaded: true, reports });
   },

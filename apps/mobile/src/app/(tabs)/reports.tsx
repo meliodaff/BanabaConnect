@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   Pressable,
@@ -12,6 +11,7 @@ import {
 } from 'react-native';
 import { CATEGORY_LABELS } from '@banabaconnect/shared';
 import { Icon, icons } from '@/components/Icon';
+import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
 import { useIsOffline } from '@/features/network/useIsOffline';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
 import {
@@ -46,8 +46,12 @@ export default function MyReportsScreen() {
 
   if (!loaded) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={colors.primary} />
+      <View style={styles.screen}>
+        <SkeletonGroup style={styles.listContent}>
+          {[0, 1, 2, 3].map((key) => (
+            <ReportCardSkeleton key={key} />
+          ))}
+        </SkeletonGroup>
       </View>
     );
   }
@@ -164,6 +168,28 @@ function ReportCard({ report, sending }: { report: QueuedReport; sending: boolea
   );
 }
 
+/** Same layout as ReportCard, shown while the reports load from the phone. */
+function ReportCardSkeleton() {
+  const styles = useThemedStyles(createStyles);
+  return (
+    <View style={styles.card}>
+      <SkeletonBlock width={64} height={64} radius={radius.md} />
+      <View style={styles.flex}>
+        <View style={styles.cardTop}>
+          <SkeletonBlock width="45%" height={18} />
+          <View style={styles.flex} />
+          <SkeletonBlock width={56} height={12} />
+        </View>
+        <SkeletonBlock width="100%" height={14} style={styles.skeletonLine} />
+        <SkeletonBlock width="70%" height={14} style={styles.skeletonLine} />
+        <View style={styles.statusRow}>
+          <SkeletonBlock width={96} height={26} radius={radius.pill} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function EmptyState() {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
@@ -191,12 +217,6 @@ function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     screen: {
       flex: 1,
-      backgroundColor: colors.background,
-    },
-    centered: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
       backgroundColor: colors.background,
     },
     listContent: {
@@ -296,6 +316,9 @@ function createStyles(colors: ThemeColors) {
     statusText: {
       fontSize: 13,
       fontWeight: '700',
+    },
+    skeletonLine: {
+      marginTop: 6,
     },
     photoNote: {
       fontSize: 13,

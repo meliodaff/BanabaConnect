@@ -17,6 +17,7 @@ import {
 } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
+import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
 import { StaffNote } from '@/components/StaffNote';
 import { avatarUrl, useAuth } from '@/features/auth/authStore';
 import { signOut } from '@/features/auth/residentProfile';
@@ -48,9 +49,14 @@ export default function ProfileScreen() {
           size={88}
           iconSize={56}
           backgroundColor={colors.selectedSoft}
+          loading={auth.status === 'loading'}
         />
         {auth.status === 'loading' ? (
-          <ActivityIndicator style={styles.name} color={colors.selected} />
+          <SkeletonGroup style={styles.skeleton}>
+            <SkeletonBlock width={160} height={22} />
+            <SkeletonBlock width={120} height={14} style={styles.skeletonSubline} />
+            <SkeletonBlock width={110} height={26} radius={radius.pill} style={styles.skeletonBadge} />
+          </SkeletonGroup>
         ) : auth.status === 'guest' ? (
           <>
             <Text style={styles.name}>Guest</Text>
@@ -341,6 +347,16 @@ function createStyles(colors: ThemeColors) {
       fontWeight: '800',
       color: colors.text,
       marginTop: 12,
+    },
+    skeleton: {
+      alignItems: 'center',
+      marginTop: 15,
+    },
+    skeletonSubline: {
+      marginTop: 6,
+    },
+    skeletonBadge: {
+      marginTop: 10,
     },
     subline: {
       fontSize: 15,

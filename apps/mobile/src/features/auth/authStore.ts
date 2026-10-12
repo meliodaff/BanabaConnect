@@ -51,12 +51,18 @@ function isGuestSession(session: Session | null): session is null {
 }
 
 async function applySession(session: Session | null, event: AuthChangeEvent) {
+  // TEMP: slows account loading so the skeleton is visible. Remove before committing.
+  await new Promise((resolve) => setTimeout(resolve, 5000));
   if (isGuestSession(session)) {
     setState({ status: 'guest', session: null, profile: null });
     // Show the guest's reports, not the account that just signed out.
     void reportsStore.refresh().catch((error) => console.warn('Could not load reports', error));
     return;
   }
+
+  // Show the reports already saved on this phone now, instead of waiting on the network below.
+  // This only reads; nothing on the phone changes until the account type is checked.
+  void reportsStore.refresh().catch((error) => console.warn('Could not load reports', error));
 
   // Check the account type before touching this phone's reports.
   const profile = await fetchProfile(session.user.id);

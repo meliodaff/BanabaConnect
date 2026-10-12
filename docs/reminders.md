@@ -26,6 +26,23 @@ When building it:
 - **Testing from outside Banaba.** Keep an on/off switch for the check in the database (off
   during development), or add a test area around the developer's location.
 
+## Remove the test delays that show the skeletons
+
+**Why they're there:** loading is so fast that the skeleton screens are hard to see, so two
+delays were added on purpose to keep them visible while the design is being checked.
+**Must go before release:** they slow down every app start and every sign-in and sign-out.
+
+Both are marked `// TEMP` in `apps/mobile/src/features/`:
+
+- `auth/authStore.ts`, at the top of `applySession`: **5 seconds** on account loading (Home
+  greeting and avatar, Profile name, badge and avatar).
+- `queue/reportsStore.ts`, at the top of `refresh()`: **2 seconds** on loading reports from the
+  phone (My Reports, Report details). This one also slows pull-to-refresh and the list update
+  after sending a report.
+
+Delete both `await new Promise(...)` lines and their `// TEMP` comments. Find them with
+`grep -rn "TEMP:" apps/mobile/src`.
+
 ## Test the Barangay ID upload end to end
 
 The database checks covered report photos but not Barangay IDs.

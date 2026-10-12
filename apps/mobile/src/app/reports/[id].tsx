@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CATEGORY_LABELS } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
+import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
 import { StaffNote } from '@/components/StaffNote';
 import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
 import {
@@ -29,18 +30,13 @@ import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
 import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
 export default function ReportDetailScreen() {
-  const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { loaded, reports, sendingIds } = useQueuedReports();
   const report = reports.find((r) => r.submission.id === id);
 
   if (!loaded) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={colors.primary} />
-      </View>
-    );
+    return <ReportDetailSkeleton />;
   }
 
   if (!report) {
@@ -178,6 +174,47 @@ function ReportDetail({ report, sending }: { report: QueuedReport; sending: bool
   );
 }
 
+/** Same layout as ReportDetail, shown while the reports load from the phone. */
+function ReportDetailSkeleton() {
+  const styles = useThemedStyles(createStyles);
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+      <SkeletonGroup style={styles.content}>
+        <View style={styles.categoryRow}>
+          <SkeletonBlock width={48} height={48} radius={radius.pill} />
+          <View style={styles.flex}>
+            <SkeletonBlock width="50%" height={20} />
+            <SkeletonBlock width="30%" height={13} style={styles.skeletonLine} />
+          </View>
+        </View>
+        <View style={[styles.status, styles.skeletonStatus]}>
+          <SkeletonBlock width={24} height={24} radius={radius.pill} />
+          <View style={styles.flex}>
+            <SkeletonBlock width="40%" height={16} />
+            <SkeletonBlock width="85%" height={14} style={styles.skeletonLine} />
+          </View>
+        </View>
+        {[3, 2].map((lines) => (
+          <View key={lines} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <SkeletonBlock width={20} height={20} radius={radius.pill} />
+              <SkeletonBlock width="35%" height={16} />
+            </View>
+            {Array.from({ length: lines }, (_, line) => (
+              <SkeletonBlock
+                key={line}
+                width={line === lines - 1 ? '60%' : '100%'}
+                height={15}
+                style={line > 0 && styles.skeletonLine}
+              />
+            ))}
+          </View>
+        ))}
+      </SkeletonGroup>
+    </SafeAreaView>
+  );
+}
+
 async function openInMaps(latitude: number, longitude: number) {
   try {
     await Linking.openURL(
@@ -282,6 +319,13 @@ function createStyles(colors: ThemeColors) {
       lineHeight: 19,
       color: colors.text,
       marginTop: 2,
+    },
+    skeletonStatus: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+    },
+    skeletonLine: {
+      marginTop: 8,
     },
     callTip: {
       flexDirection: 'row',

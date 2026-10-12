@@ -5,6 +5,7 @@ import { Icon, icons, type IconName } from '@/components/Icon';
 import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
 import { setThemePreference } from '@/features/appearance/themePreference';
 import { ProfileAvatar } from '@/components/ProfileAvatar';
+import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
 import { avatarUrl, firstName, useAuth } from '@/features/auth/authStore';
 import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
 import { showToast } from '@/features/toast/toastStore';
@@ -94,9 +95,16 @@ export default function HomeScreen() {
             size={52}
             iconSize={40}
             backgroundColor={colors.primarySoft}
+            loading={auth.status === 'loading'}
           />
           <View style={styles.flex}>
-            <Text style={styles.greeting}>Hi, {name ?? 'Guest'}!</Text>
+            {auth.status === 'loading' ? (
+              <SkeletonGroup style={styles.greetingSkeleton}>
+                <SkeletonBlock width={120} height={22} />
+              </SkeletonGroup>
+            ) : (
+              <Text style={styles.greeting}>Hi, {name ?? 'Guest'}!</Text>
+            )}
             <Text style={styles.greetingSub}>Barangay Banaba, San Mateo, Rizal</Text>
           </View>
         </View>
@@ -282,6 +290,10 @@ function createStyles(colors: ThemeColors) {
       fontSize: 18,
       fontWeight: '800',
       color: colors.text,
+    },
+    /** Same height as the greeting line, so the subline doesn't move when the name loads. */
+    greetingSkeleton: {
+      paddingVertical: 1,
     },
     greetingSub: {
       fontSize: 13,
