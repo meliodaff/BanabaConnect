@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
+import { PlainStatusBar } from '@/components/PlainStatusBar';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { messageFor } from '@/features/auth/AuthParts';
 import { createAuthStyles } from '@/features/auth/authStyles';
@@ -61,6 +62,7 @@ export default function AuthCallbackScreen() {
 
   return (
     <View style={styles.centered}>
+      <PlainStatusBar />
       {error ? (
         <>
           <Text style={[styles.infoTitle, { textAlign: 'center' }]}>{error}</Text>

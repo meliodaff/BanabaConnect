@@ -112,20 +112,22 @@ export default function VerifyIdScreen() {
         </Text>
 
         {profile.verification_status === 'rejected' && (
-          <View style={[styles.infoBanner, { backgroundColor: colors.warningSoft }]}>
-            <Icon name={icons.alert} size={22} color={colors.warning} />
-            <View style={styles.flex}>
-              <Text style={styles.infoTitle}>Your last ID was not approved</Text>
-              <Text style={styles.infoText}>
-                {profile.verification_note?.trim()
-                  ? 'Read the note below, then send a new photo.'
-                  : 'Send a clearer photo of your Barangay ID.'}
-              </Text>
-              {profile.verification_note?.trim() ? (
-                <StaffNote note={profile.verification_note.trim()} />
-              ) : null}
+          <>
+            <View style={[styles.infoBanner, { backgroundColor: colors.warningSoft }]}>
+              <Icon name={icons.alert} size={22} color={colors.warning} />
+              <View style={styles.flex}>
+                <Text style={styles.infoTitle}>Your last ID was not approved</Text>
+                <Text style={styles.infoText}>
+                  {profile.verification_note?.trim()
+                    ? 'Read the note below, then send a new photo.'
+                    : 'Send a clearer photo of your Barangay ID.'}
+                </Text>
+              </View>
             </View>
-          </View>
+            {profile.verification_note?.trim() ? (
+              <StaffNote note={profile.verification_note.trim()} actionNeeded />
+            ) : null}
+          </>
         )}
 
         <View style={styles.card}>

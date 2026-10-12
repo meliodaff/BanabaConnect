@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CATEGORY_LABELS } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
+import { PlainStatusBar } from '@/components/PlainStatusBar';
 import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call';
 import { useIsOffline } from '@/features/network/useIsOffline';
 import { useQueuedReports } from '@/features/queue/reportsStore';
@@ -48,6 +49,7 @@ export default function ReportSentScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <PlainStatusBar />
       <View style={styles.body}>
         <View style={[styles.statusCircle, { backgroundColor: tone.background }]}>
           {busy ? (

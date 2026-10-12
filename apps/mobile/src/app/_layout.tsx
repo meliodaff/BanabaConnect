@@ -4,7 +4,7 @@ import { ToastHost } from '@/components/ToastHost';
 import { startAuth } from '@/features/auth/authStore';
 import { useOfflineToasts } from '@/features/network/useOfflineToasts';
 import { useSyncTriggers } from '@/features/queue/useSyncTriggers';
-import { useTheme } from '@/theme';
+import { hasColoredHeader, useTheme } from '@/theme';
 
 startAuth();
 
@@ -31,9 +31,9 @@ export default function RootLayout() {
     >
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: colors.surface },
-          headerTintColor: colors.primary,
-          headerTitleStyle: { fontWeight: '700', color: colors.text },
+          headerStyle: { backgroundColor: colors.headerBg },
+          headerTintColor: colors.headerText,
+          headerTitleStyle: { fontWeight: '700', color: colors.headerText },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: colors.background },
         }}
@@ -53,7 +53,8 @@ export default function RootLayout() {
         <Stack.Screen name="verify-id" options={{ title: 'Verify your ID' }} />
       </Stack>
       <ToastHost />
-      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      {/* Screens without a header set their own (see PlainStatusBar). */}
+      <StatusBar style={scheme === 'dark' || hasColoredHeader(colors) ? 'light' : 'dark'} />
     </ThemeProvider>
   );
 }

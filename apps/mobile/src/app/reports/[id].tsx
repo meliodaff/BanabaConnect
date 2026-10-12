@@ -99,7 +99,12 @@ function ReportDetail({ report, sending }: { report: QueuedReport; sending: bool
           )}
         </View>
 
-        {sent && report.serverNote && <StaffNote note={report.serverNote} />}
+        {sent && report.serverNote && (
+          <StaffNote
+            note={report.serverNote}
+            time={report.serverStatusAt ? formatReportTime(report.serverStatusAt) : null}
+          />
+        )}
 
         {!sent && (
           <Pressable

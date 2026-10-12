@@ -9,7 +9,14 @@ import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
 import { avatarUrl, firstName, useAuth } from '@/features/auth/authStore';
 import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
 import { showToast } from '@/features/toast/toastStore';
-import { radius, cardShadow, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
+import {
+  radius,
+  cardShadow,
+  hasColoredHeader,
+  useTheme,
+  useThemedStyles,
+  type ThemeColors,
+} from '@/theme';
 
 interface Service {
   label: string;
@@ -53,42 +60,47 @@ export default function HomeScreen() {
   const name = auth.status === 'signedIn' ? firstName(auth.profile) : null;
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topBar}>
-          <Text style={styles.wordmark}>
-            Banaba<Text style={styles.wordmarkAccent}>Connect</Text>
-          </Text>
-          <View style={styles.topActions}>
-            <Pressable
-              onPress={() => setThemePreference(scheme === 'dark' ? 'light' : 'dark')}
-              style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-              hitSlop={8}
-              accessibilityRole="switch"
-              accessibilityLabel="Dark mode"
-              accessibilityState={{ checked: scheme === 'dark' }}
-            >
-              <Icon
-                name={scheme === 'dark' ? icons.lightMode : icons.darkMode}
-                size={22}
-                color={colors.primary}
-              />
-            </Pressable>
-            <Pressable
-              onPress={() => router.push('/reports')}
-              style={styles.iconButton}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={
-                waiting > 0 ? `Report updates, ${waiting} waiting for signal` : 'Report updates'
-              }
-            >
-              <Icon name={icons.bell} size={22} color={colors.primary} />
-              {waiting > 0 && <Text style={styles.bellBadge}>{waiting}</Text>}
-            </Pressable>
-          </View>
+    // The header color fills the status bar area too; the page scrolls under the fixed top bar.
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <View style={styles.topBar}>
+        <Text style={styles.wordmark}>
+          Banaba<Text style={styles.wordmarkAccent}>Connect</Text>
+        </Text>
+        <View style={styles.topActions}>
+          <Pressable
+            onPress={() => setThemePreference(scheme === 'dark' ? 'light' : 'dark')}
+            style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+            hitSlop={8}
+            accessibilityRole="switch"
+            accessibilityLabel="Dark mode"
+            accessibilityState={{ checked: scheme === 'dark' }}
+          >
+            <Icon
+              name={scheme === 'dark' ? icons.lightMode : icons.darkMode}
+              size={22}
+              color={colors.primary}
+            />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/reports')}
+            style={styles.iconButton}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={
+              waiting > 0 ? `Report updates, ${waiting} waiting for signal` : 'Report updates'
+            }
+          >
+            <Icon name={icons.bell} size={22} color={colors.primary} />
+            {waiting > 0 && <Text style={styles.bellBadge}>{waiting}</Text>}
+          </Pressable>
         </View>
+      </View>
 
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.greetingRow}>
           <ProfileAvatar
             uri={avatarUrl(auth)}
@@ -225,6 +237,10 @@ export default function HomeScreen() {
 
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.headerBg,
+    },
     screen: {
       flex: 1,
       backgroundColor: colors.surface,
@@ -241,15 +257,17 @@ function createStyles(colors: ThemeColors) {
       justifyContent: 'space-between',
       paddingHorizontal: 20,
       paddingTop: 8,
+      paddingBottom: 12,
+      backgroundColor: colors.headerBg,
     },
     wordmark: {
       fontSize: 22,
       fontWeight: '800',
-      color: colors.primary,
+      color: hasColoredHeader(colors) ? colors.headerText : colors.primary,
       letterSpacing: -0.3,
     },
     wordmarkAccent: {
-      color: colors.brandAccent,
+      color: colors.headerAccent,
     },
     topActions: {
       flexDirection: 'row',

@@ -72,4 +72,6 @@ export const icons = {
   pending: { ios: 'hourglass', android: 'hourglass_top' },
   closed: { ios: 'nosign', android: 'block' },
   staffNote: { ios: 'text.bubble.fill', android: 'chat' },
+  barangay: { ios: 'building.columns.fill', android: 'account_balance' },
+  person: { ios: 'person.fill', android: 'person' },
 } as const satisfies Record<string, IconName>;

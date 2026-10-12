@@ -114,7 +114,11 @@ export default function ProfileScreen() {
             }
             staffNote={status === 'rejected' ? profile?.verification_note : null}
             actions={[
-              { label: 'Verify my ID', onPress: () => router.push('/verify-id'), primary: true },
+              {
+                label: status === 'rejected' ? 'Re-verify my ID' : 'Verify my ID',
+                onPress: () => router.push('/verify-id'),
+                primary: true,
+              },
             ]}
           />
         )}
@@ -180,9 +184,10 @@ function ActionCard({
         <View style={styles.flex}>
           <Text style={styles.infoTitle}>{title}</Text>
           <Text style={styles.infoText}>{text}</Text>
-          {staffNote?.trim() ? <StaffNote note={staffNote.trim()} /> : null}
         </View>
       </View>
+      {/* Full card width, outside the text column, so it reads as a separate message. */}
+      {staffNote?.trim() ? <StaffNote note={staffNote.trim()} actionNeeded /> : null}
       <View style={styles.actionRow}>
         {actions.map((action) => (
           <Pressable

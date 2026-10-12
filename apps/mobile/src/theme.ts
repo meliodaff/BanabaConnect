@@ -4,7 +4,7 @@ import { useThemePreference } from '@/features/appearance/themePreference';
 // Every color in the app comes from here, so the palette can change in one place.
 // Each palette has a light and a dark version with the same token names, and every text pair
 // is at least 4.5:1 contrast. Red, green, and amber carry meaning (emergency, sent, waiting
-// for signal), so they stay the same across palettes.
+// for signal), so every palette keeps them red, green, and amber, and never uses them for branding.
 
 /** Plain grays, used while the final brand colors are decided. */
 const neutralLight = {
@@ -13,6 +13,12 @@ const neutralLight = {
   onPrimary: '#FFFFFF',
   /** The "Connect" in the wordmark. */
   brandAccent: '#6B7280',
+  /** Top bar and screen headers. Palettes without a colored bar use the surface color. */
+  headerBg: '#FFFFFF',
+  /** Titles, icons and back arrows on the header. */
+  headerText: '#18181B',
+  /** The "Connect" in the wordmark when it sits on the header. */
+  headerAccent: '#6B7280',
   background: '#F7F7F8',
   surface: '#FFFFFF',
   border: '#E4E4E7',
@@ -31,6 +37,8 @@ const neutralLight = {
   successSoft: '#E3F4E4',
   successBorder: '#B9DFBC',
   warning: '#A34A06',
+  /** Text and icons on a solid warning fill. */
+  onWarning: '#FFFFFF',
   warningSoft: '#FFEDD5',
   warningBorder: '#F8CF9F',
   /** Decoration only (icon circles, accents); never a status and never text. */
@@ -50,6 +58,9 @@ const neutralDark: ThemeColors = {
   primarySoft: '#2E2E33',
   onPrimary: '#18181B',
   brandAccent: '#A1A1AA',
+  headerBg: '#1C1C1F',
+  headerText: '#F4F4F5',
+  headerAccent: '#A1A1AA',
   background: '#121214',
   surface: '#1C1C1F',
   border: '#2E2E33',
@@ -66,6 +77,7 @@ const neutralDark: ThemeColors = {
   successSoft: '#1A2E1C',
   successBorder: '#34573A',
   warning: '#FFB74D',
+  onWarning: '#18181B',
   warningSoft: '#3A2810',
   warningBorder: '#6B4419',
   highlight: '#71717A',
@@ -84,6 +96,9 @@ const banabaPinkLight: ThemeColors = {
   onPrimary: '#FFFFFF',
   /** Banaba leaf green, used for the "Connect" in the wordmark. */
   brandAccent: '#27722B',
+  headerBg: '#FFFFFF',
+  headerText: '#2A1520',
+  headerAccent: '#27722B',
   background: '#FFF8F4',
   surface: '#FFFFFF',
   border: '#F3DFE4',
@@ -104,6 +119,7 @@ const banabaPinkLight: ThemeColors = {
   successBorder: '#B9DFBC',
   /** Deep amber, kept apart from the gold highlight so "waiting for signal" stays clear. */
   warning: '#A34A06',
+  onWarning: '#FFFFFF',
   warningSoft: '#FFEDD5',
   warningBorder: '#F8CF9F',
   /** Stamen gold. Decoration only (icon circles, accents); never a status and never text. */
@@ -121,6 +137,9 @@ const banabaPinkDark: ThemeColors = {
   primarySoft: '#4A1D33',
   onPrimary: '#1A1216',
   brandAccent: '#81C784',
+  headerBg: '#26191F',
+  headerText: '#FBEFF4',
+  headerAccent: '#81C784',
   background: '#1A1216',
   surface: '#26191F',
   border: '#43293A',
@@ -137,6 +156,7 @@ const banabaPinkDark: ThemeColors = {
   successSoft: '#1D3320',
   successBorder: '#34573A',
   warning: '#FFB74D',
+  onWarning: '#1A1216',
   warningSoft: '#43290F',
   warningBorder: '#6B4419',
   highlight: '#FFC94D',
@@ -147,13 +167,98 @@ const banabaPinkDark: ThemeColors = {
   shadow: '#000000',
 };
 
+// Denim: a faded denim blue with a filled blue header, soft gold accents and blue-gray surfaces.
+// Easy on the eyes and official-looking; red stays the loudest color on every screen.
+const denimLight: ThemeColors = {
+  primary: '#3A5F8F',
+  primarySoft: '#DFE6EE',
+  onPrimary: '#FFFFFF',
+  brandAccent: '#3A5F8F',
+  headerBg: '#3A5F8F',
+  headerText: '#FFFFFF',
+  /** Soft gold. */
+  headerAccent: '#F5DE9A',
+  background: '#EBEDF0',
+  surface: '#F8F9FA',
+  border: '#D5DAE0',
+  text: '#1E232B',
+  textMuted: '#555C68',
+  /** Fill for report and 911 buttons. Stays the same red in both modes. */
+  emergency: '#C2342E',
+  /** Red for text and icons sitting on a surface or a soft tint. */
+  emergencyText: '#B02E28',
+  emergencySoft: '#F8E3E1',
+  onEmergency: '#FFFFFF',
+  selected: '#3A5F8F',
+  selectedSoft: '#DFE6EE',
+  onSelected: '#FFFFFF',
+  success: '#2F6B33',
+  successSoft: '#E1EDE1',
+  successBorder: '#B7D2B8',
+  warning: '#9A4A12',
+  onWarning: '#FFFFFF',
+  warningSoft: '#F6E9DA',
+  warningBorder: '#E6C9A6',
+  /** Gold. Decoration only (icon circles, step markers); never a status and never text. */
+  highlight: '#D9AE45',
+  highlightSoft: '#F3E8C8',
+  disabled: '#A9B0BA',
+  /** Report category icons share one color; the icon and label tell them apart. */
+  categoryIcon: '#3A5F8F',
+  categoryTint: '#DFE6EE',
+  shadow: '#1E232B',
+};
+
+const denimDark: ThemeColors = {
+  primary: '#9BB6D8',
+  /** A faint blue, so icon circles keep the brand color instead of turning gray. */
+  primarySoft: '#253247',
+  onPrimary: '#14161A',
+  brandAccent: '#9BB6D8',
+  headerBg: '#22344D',
+  headerText: '#FFFFFF',
+  headerAccent: '#D9BD62',
+  background: '#14161A',
+  surface: '#1C1F24',
+  border: '#2D3138',
+  text: '#E3E5E9',
+  textMuted: '#9EA4AE',
+  /** Same red as light mode, so the Report button stays 3:1 against the tab bar. */
+  emergency: '#C2342E',
+  emergencyText: '#EE9088',
+  emergencySoft: '#3D2220',
+  onEmergency: '#FFFFFF',
+  selected: '#9BB6D8',
+  selectedSoft: '#253247',
+  onSelected: '#14161A',
+  success: '#8DBF8F',
+  successSoft: '#1E2E20',
+  successBorder: '#3A5A3C',
+  warning: '#E3AE62',
+  onWarning: '#14161A',
+  warningSoft: '#3A2A16',
+  warningBorder: '#5C4022',
+  highlight: '#D6AE45',
+  highlightSoft: '#3A3018',
+  disabled: '#4A5059',
+  categoryIcon: '#9BB6D8',
+  categoryTint: '#253247',
+  shadow: '#000000',
+};
+
 const PALETTES = {
   neutral: { light: neutralLight, dark: neutralDark },
   banabaPink: { light: banabaPinkLight, dark: banabaPinkDark },
+  denim: { light: denimLight, dark: denimDark },
 } satisfies Record<string, { light: ThemeColors; dark: ThemeColors }>;
 
-/** The palette in use. Set to 'banabaPink' to bring back the pink look. */
-const ACTIVE_PALETTE: keyof typeof PALETTES = 'neutral';
+/** The palette in use. 'neutral' and 'banabaPink' are kept to compare against. */
+const ACTIVE_PALETTE: keyof typeof PALETTES = 'denim';
+
+/** True when screen headers are filled with color, so the status bar needs light icons. */
+export function hasColoredHeader(colors: ThemeColors) {
+  return colors.headerBg !== colors.surface;
+}
 
 export const radius = {
   sm: 8,
