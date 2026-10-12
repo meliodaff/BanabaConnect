@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
 import {
-  FlatList,
   Image,
   Pressable,
   RefreshControl,
+  SectionList,
   StyleSheet,
   Text,
   View,
@@ -48,6 +48,7 @@ export default function MyReportsScreen() {
     return (
       <View style={styles.screen}>
         <SkeletonGroup style={styles.listContent}>
+          <SkeletonBlock width={110} height={15} style={styles.monthSkeleton} />
           {[0, 1, 2, 3].map((key) => (
             <ReportCardSkeleton key={key} />
           ))}
@@ -56,12 +57,25 @@ export default function MyReportsScreen() {
     );
   }
 
+  const sections = groupByMonth(reports);
+
   return (
-    <FlatList
+    <SectionList
       style={styles.screen}
       contentContainerStyle={reports.length === 0 ? styles.emptyContent : styles.listContent}
-      data={reports}
+      sections={sections}
       keyExtractor={(item) => item.submission.id}
+      stickySectionHeadersEnabled={false}
+      renderSectionHeader={({ section }) => (
+        <View style={[styles.monthHeader, section !== sections[0] && styles.monthHeaderSpaced]}>
+          <Text style={styles.monthTitle} accessibilityRole="header">
+            {section.title}
+          </Text>
+          <Text style={styles.monthCount}>
+            {section.data.length === 1 ? '1 report' : `${section.data.length} reports`}
+          </Text>
+        </View>
+      )}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -77,6 +91,29 @@ export default function MyReportsScreen() {
       )}
     />
   );
+}
+
+interface MonthSection {
+  title: string;
+  data: QueuedReport[];
+}
+
+/** Splits the newest-first list into one section per month, e.g. "October 2026". */
+function groupByMonth(reports: QueuedReport[]): MonthSection[] {
+  const sections: MonthSection[] = [];
+  for (const report of reports) {
+    const title = new Date(report.submission.createdAt).toLocaleString('en-PH', {
+      month: 'long',
+      year: 'numeric',
+    });
+    const last = sections[sections.length - 1];
+    if (last?.title === title) {
+      last.data.push(report);
+    } else {
+      sections.push({ title, data: [report] });
+    }
+  }
+  return sections;
 }
 
 function WaitingSummary({ count }: { count: number }) {
@@ -229,6 +266,29 @@ function createStyles(colors: ThemeColors) {
     },
     flex: {
       flex: 1,
+    },
+    monthHeader: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      paddingHorizontal: 4,
+    },
+    /** Extra room above every month after the first, so each group reads as its own block. */
+    monthHeaderSpaced: {
+      paddingTop: 12,
+    },
+    monthTitle: {
+      fontSize: 16,
+      fontWeight: '800',
+      color: colors.text,
+    },
+    monthCount: {
+      fontSize: 13,
+      color: colors.textMuted,
+    },
+    monthSkeleton: {
+      marginHorizontal: 4,
+      marginVertical: 2,
     },
     summary: {
       flexDirection: 'row',
