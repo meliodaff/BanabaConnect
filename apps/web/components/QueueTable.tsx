@@ -3,10 +3,16 @@
 import type { ReportStatus, VerificationStatus } from "@banabaconnect/shared";
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
-import { OutsideBanabaTag, PriorityBadge, StatusPill, VerificationBadge } from "@/components/Badges";
+import {
+  GuestBadge,
+  OutsideBanabaTag,
+  PriorityBadge,
+  StatusPill,
+  VerificationBadge,
+} from "@/components/Badges";
 import { LiveIndicator, useLiveReports } from "@/components/LiveUpdates";
 import type { StatusFilter } from "@/lib/labels";
-import { QUEUE_COLUMNS } from "@/lib/queueLayout";
+import { QUEUE_COLUMNS, QUEUE_STACKED } from "@/lib/queueLayout";
 import {
   describeSort,
   isDefaultSort,
@@ -40,11 +46,12 @@ const HIGHLIGHT_MS = 20_000;
 const TOAST_MS = 6_000;
 const COLUMNS = QUEUE_COLUMNS;
 
+// "Nearby" is shown inside the report cell rather than as its own column (it squeezed the report
+// text); priority already counts nearby reports. Old ?sort=nearby links still work.
 const SORT_COLUMNS: { key: SortKey; label: string }[] = [
   { key: "priority", label: "Priority" },
   { key: "report", label: "Report" },
   { key: "reporter", label: "Reporter" },
-  { key: "nearby", label: "Nearby" },
   { key: "reported", label: "Reported" },
   { key: "status", label: "Status" },
 ];
@@ -110,24 +117,29 @@ export function QueueTable({
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted">
-          <span className="font-semibold text-ink">Sorted: {describeSort(sort)}.</span>{" "}
-          {!isDefaultSort(sort) && (
-            <>
-              <Link
-                href={`/reports?status=${filter}`}
-                scroll={false}
-                className="font-bold text-brand underline"
-              >
-                Back to highest priority first
-              </Link>
-              .{" "}
-            </>
-          )}
-          Click a column name to sort by it. Priority = 50% seriousness + 30% nearby reports + 20%
-          verified reporter.
-        </p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-[15px]">
+            <span className="font-bold">{rows.length === 1 ? "1 report" : `${rows.length} reports`}</span>
+            <span className="text-muted"> · {describeSort(sort)}</span>
+            {!isDefaultSort(sort) && (
+              <>
+                {" · "}
+                <Link
+                  href={`/reports?status=${filter}`}
+                  scroll={false}
+                  className="font-bold text-brand hover:underline"
+                >
+                  Reset to highest priority first
+                </Link>
+              </>
+            )}
+          </p>
+          <p className="text-sm text-muted">
+            Priority = 50% seriousness + 30% nearby reports + 20% verified reporter. Click a column
+            name to sort.
+          </p>
+        </div>
         <LiveIndicator connected={connected} />
       </div>
 
@@ -184,56 +196,74 @@ export function QueueTable({
         >
           <nav
             aria-label="Sort reports"
-            className={`hidden gap-4 border-b border-line bg-page px-5 py-2 text-xs font-bold uppercase tracking-wide text-muted lg:grid ${COLUMNS}`}
+            className={`hidden border-b border-line bg-page px-6 py-2.5 text-xs font-bold uppercase tracking-wide text-muted lg:grid ${COLUMNS}`}
           >
             {SORT_COLUMNS.map((column) => (
               <SortHeader key={column.key} column={column} current={sort} filter={filter} />
             ))}
           </nav>
-          <ul>
+          <ul className="divide-y divide-line">
             {rows.map((row) => (
-              <li key={row.id} className="border-b border-line last:border-b-0">
+              <li key={row.id}>
                 <Link
                   href={`/reports/${row.id}?from=${backTo}`}
-                  className={`grid grid-cols-1 gap-3 px-5 py-4 transition hover:bg-brand-soft/60 ${COLUMNS} ${
+                  className={`grid px-6 py-5 transition hover:bg-brand-soft/50 ${COLUMNS} ${
                     fresh.has(row.id) ? "bg-sun-soft" : ""
                   }`}
                 >
                   <PriorityBadge score={row.priority} />
+
+                  {/* What happened: type, then the resident's words, then anything to note. */}
                   <div className="min-w-0">
-                    <p className="flex flex-wrap items-center gap-2 text-base font-bold">
+                    <p className="flex flex-wrap items-center gap-2 text-base font-bold leading-6">
                       {row.categoryLabel}
-                      {row.outsideBanabaM !== null && <OutsideBanabaTag meters={row.outsideBanabaM} />}
                       {fresh.has(row.id) && (
                         <span className="rounded-full bg-urgent px-2 py-0.5 text-xs font-bold text-white">NEW</span>
                       )}
-                      {row.hasPhoto && <span className="text-sm font-semibold text-muted">· Photo</span>}
                     </p>
-                    <p className="truncate text-sm text-muted">{row.description || "No description"}</p>
+                    <p
+                      className={`mt-1 line-clamp-2 text-[15px] leading-snug ${
+                        row.description ? "text-ink/85" : "text-muted italic"
+                      }`}
+                    >
+                      {row.description || "No description"}
+                    </p>
+                    {(row.outsideBanabaM !== null || row.clusterCount > 1 || row.hasPhoto) && (
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
+                        {row.outsideBanabaM !== null && <OutsideBanabaTag meters={row.outsideBanabaM} />}
+                        {row.clusterCount > 1 && <Chip>{row.clusterCount} reports nearby</Chip>}
+                        {row.hasPhoto && <Chip>Photo</Chip>}
+                      </div>
+                    )}
                   </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-[15px] font-semibold">
+
+                  <div className={`min-w-0 ${QUEUE_STACKED}`}>
+                    <p className="truncate text-[15px] font-semibold leading-6">
                       {row.reporterIsGuest ? "Guest reporter" : (row.reporterName ?? "Resident")}
                     </p>
-                    {!row.reporterIsGuest && (
-                      <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-muted">
-                        {row.reporterVerification && <VerificationBadge status={row.reporterVerification} />}
-                        {row.reporterArea}
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm text-muted">
+                      {row.reporterIsGuest ? (
+                        <GuestBadge />
+                      ) : (
+                        <>
+                          {row.reporterVerification && <VerificationBadge status={row.reporterVerification} />}
+                          {row.reporterArea && <span>{row.reporterArea}</span>}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={QUEUE_STACKED}>
+                    <p className="text-[15px] font-semibold leading-6">{row.reportedAgo}</p>
+                    <p className="mt-0.5 text-[13px] text-muted">{row.reportedAt}</p>
+                    {row.waited && (
+                      <p className="mt-1 text-[13px] font-semibold text-warning">
+                        Waited {row.waited} for signal
                       </p>
                     )}
                   </div>
-                  <p className={`text-[15px] ${row.clusterCount > 1 ? "font-bold" : "text-muted"}`}>
-                    {row.clusterCount > 1 ? `${row.clusterCount} reports` : "No others"}
-                  </p>
-                  <div>
-                    <p className="text-[15px] font-semibold" title={row.reportedAt}>
-                      {row.reportedAgo}
-                    </p>
-                    {row.waited && (
-                      <p className="text-sm font-semibold text-warning">Waited {row.waited} for signal</p>
-                    )}
-                  </div>
-                  <div>
+
+                  <div className={QUEUE_STACKED}>
                     <StatusPill status={row.status} />
                   </div>
                 </Link>
@@ -243,6 +273,15 @@ export function QueueTable({
         </div>
       )}
     </div>
+  );
+}
+
+/** A small neutral note under a report, like "3 reports nearby" (same size as the pills). */
+function Chip({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center whitespace-nowrap rounded-full border border-line bg-page px-2.5 py-1 text-[13px] font-semibold text-ink">
+      {children}
+    </span>
   );
 }
 
