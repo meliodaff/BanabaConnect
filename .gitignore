@@ -2,3 +2,6 @@ node_modules/
 .env*.local
 .DS_Store
 *.tsbuildinfo
+
+# Android bug reports (adb bugreport / emulator): large, and their logs can hold test account data.
+bugreport-*.zip
