@@ -1,18 +1,24 @@
 import { PageHeader } from "@/components/PageHeader";
-import {
-  Bone,
-  PriorityBadgeSkeleton,
-  SkeletonBody,
-  TabsSkeleton,
-} from "@/components/Skeleton";
+import { Bone, PriorityBadgeSkeleton, SkeletonBody } from "@/components/Skeleton";
+import { STATUS_FILTERS } from "@/lib/labels";
 import { QUEUE_COLUMNS, QUEUE_DETAILS } from "@/lib/queueLayout";
 
-/** The Reports list while it loads: its filters, column headers and rows, in the real layout. */
+/** The Reports list while it loads: its status cards, column headers and rows, in the real layout. */
 export default function ReportsLoading() {
   return (
     <>
       <PageHeader title="Reports" description="Incident reports from residents of Barangay Banaba.">
-        <TabsSkeleton widths={["w-20", "w-24", "w-20", "w-14"]} />
+        {/* The status cards (components/ReportStatusCards.tsx) with their real names; the selected
+            one isn't known yet. Same height as the real cards. */}
+        <div aria-hidden className="skeleton-in grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {Object.values(STATUS_FILTERS).map(({ label }) => (
+            <div key={label} className="h-[106px] rounded-lg border border-line bg-surface px-4 py-3">
+              <p className="text-[15px] font-bold leading-5">{label}</p>
+              <Bone className="mt-2 h-7 w-12" />
+              <Bone className="mt-[7px] h-3.5 w-32" />
+            </div>
+          ))}
+        </div>
       </PageHeader>
 
       <SkeletonBody label="reports" className="px-8 py-6">

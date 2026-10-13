@@ -5,13 +5,15 @@ import {
   type ReportStatus,
   type VerificationStatus,
 } from "@banabaconnect/shared";
+import { HIGH_PRIORITY_MIN } from "@/lib/labels";
 import { createClient } from "@/lib/supabase/server";
 
 // Every query runs as the signed-in staff member; row-level security lets admins read everything.
 
 // Signed photo links only need to last while the page is open.
 const PHOTO_LINK_SECONDS = 60 * 60;
-const QUEUE_LIMIT = 300;
+/** The most reports one list shows (the highest priority ones). Counts aren't limited. */
+export const QUEUE_LIMIT = 300;
 
 export interface Reporter {
   id: string;
@@ -263,6 +265,44 @@ export async function countReportsSince(sinceIso: string): Promise<{ received: n
   if (received.error) throw received.error;
   if (resolved.error) throw resolved.error;
   return { received: received.count ?? 0, resolved: resolved.count ?? 0 };
+}
+
+export interface ReportCounts {
+  byStatus: Record<ReportStatus, number>;
+  /** Critical or High priority, still Received: nobody has started on them. */
+  urgentWaiting: number;
+  /** Marked Resolved since `sinceIso`. */
+  resolvedSince: number;
+}
+
+/** For the status cards on the Reports page. Exact counts, unlike the list (QUEUE_LIMIT). */
+export async function countReportsByStatus(sinceIso: string): Promise<ReportCounts> {
+  const supabase = await createClient();
+  const count = () => supabase.from("reports").select("id", { count: "exact", head: true });
+  const results = await Promise.all([
+    count().eq("status", "received"),
+    count().eq("status", "in_progress"),
+    count().eq("status", "resolved"),
+    count().eq("status", "invalid"),
+    count().eq("status", "received").gte("priority_score", HIGH_PRIORITY_MIN),
+    count().eq("status", "resolved").gte("status_updated_at", sinceIso),
+  ]);
+  for (const result of results) {
+    if (result.error) throw result.error;
+  }
+  const [received, inProgress, resolved, invalid, urgentWaiting, resolvedSince] = results.map(
+    (result) => result.count ?? 0,
+  );
+  return {
+    byStatus: { received, in_progress: inProgress, resolved, invalid },
+    urgentWaiting,
+    resolvedSince,
+  };
+}
+
+/** How many reports have any of these statuses, e.g. a status filter's. */
+export function countWithStatus(counts: ReportCounts, statuses: readonly ReportStatus[]): number {
+  return statuses.reduce((sum, status) => sum + counts.byStatus[status], 0);
 }
 
 /** For the sidebar badge. */

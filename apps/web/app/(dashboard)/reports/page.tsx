@@ -1,10 +1,10 @@
 import { CATEGORY_LABELS } from "@banabaconnect/shared";
 import type { Metadata } from "next";
-import { FilterTabs } from "@/components/FilterTabs";
 import { PageHeader } from "@/components/PageHeader";
 import { QueueTable, type QueueRow } from "@/components/QueueTable";
-import { listReports } from "@/lib/data";
-import { formatDateTime, timeAgo, waitedForSignal } from "@/lib/format";
+import { ReportStatusCards } from "@/components/ReportStatusCards";
+import { QUEUE_LIMIT, countReportsByStatus, countWithStatus, listReports } from "@/lib/data";
+import { formatDateTime, startOfTodayInManila, timeAgo, waitedForSignal } from "@/lib/format";
 import { STATUS_FILTERS, parseStatusFilter, type StatusFilter } from "@/lib/labels";
 import { parseSort, sortQuery, sortReports } from "@/lib/reportSort";
 
@@ -21,7 +21,11 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
   const params = await searchParams;
   const filter = parseStatusFilter(params.status);
   const sort = parseSort(params.sort, params.dir);
-  const reports = sortReports(await listReports(STATUS_FILTERS[filter].statuses), sort);
+  const [listed, counts] = await Promise.all([
+    listReports(STATUS_FILTERS[filter].statuses),
+    countReportsByStatus(startOfTodayInManila()),
+  ]);
+  const reports = sortReports(listed, sort);
 
   const rows: QueueRow[] = reports.map((report) => ({
     id: report.id,
@@ -45,21 +49,15 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
   return (
     <>
       <PageHeader title="Reports" description="Incident reports from residents of Barangay Banaba.">
-        <FilterTabs
-          label="Report status"
-          basePath="/reports"
-          param="status"
-          current={filter}
-          keepQuery={sortQuery(sort)}
-          tabs={(Object.keys(STATUS_FILTERS) as StatusFilter[]).map((key) => ({
-            key,
-            label: STATUS_FILTERS[key].label,
-          }))}
-        />
+        <ReportStatusCards counts={counts} current={filter} keepQuery={sortQuery(sort)} />
       </PageHeader>
       <div className="px-8 py-6">
         <QueueTable
           rows={rows}
+          // The list stops at QUEUE_LIMIT while the cards count everything, so it says when it's cut short.
+          total={
+            listed.length >= QUEUE_LIMIT ? countWithStatus(counts, STATUS_FILTERS[filter].statuses) : undefined
+          }
           emptyMessage={EMPTY_MESSAGES[filter]}
           filter={filter}
           sort={sort}

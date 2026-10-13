@@ -61,11 +61,14 @@ const SORT_COLUMNS: { key: SortKey; label: string }[] = [
 
 export function QueueTable({
   rows,
+  total,
   emptyMessage,
   filter,
   sort,
 }: {
   rows: QueueRow[];
+  /** Set when the list was cut short: how many reports the filter has in all. */
+  total?: number;
   emptyMessage: string;
   /** The status filter, kept when the sort changes. */
   filter: StatusFilter;
@@ -123,7 +126,13 @@ export function QueueTable({
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-[15px]">
-            <span className="font-bold">{rows.length === 1 ? "1 report" : `${rows.length} reports`}</span>
+            <span className="font-bold">
+              {total !== undefined
+                ? `${rows.length} of ${total.toLocaleString("en-PH")} reports`
+                : rows.length === 1
+                  ? "1 report"
+                  : `${rows.length} reports`}
+            </span>
             <span className="text-muted"> · {describeSort(sort)}</span>
             {!isDefaultSort(sort) && (
               <>
@@ -140,6 +149,7 @@ export function QueueTable({
           </p>
           <p className="text-sm text-muted">
             Priority = 50% seriousness + 30% nearby reports + 20% verified reporter.
+            {total !== undefined && ` Only the ${rows.length} highest-priority reports are listed.`}
             {/* The column names only show on wide screens. */}
             <span className="hidden xl:inline"> Click a column name to sort.</span>
           </p>

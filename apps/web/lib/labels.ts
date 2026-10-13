@@ -42,6 +42,9 @@ export function groupedReportsHint(clusterPeople: number): string {
 
 export type PriorityBand = "critical" | "high" | "medium" | "low";
 
+/** Where High priority starts. Critical and High together are "urgent" on Overview and Reports. */
+export const HIGH_PRIORITY_MIN = 0.55;
+
 /**
  * Groups the 0–1 priority score so staff can scan the queue. For example, a fire from a verified
  * resident is critical; a single road-blockage report from a guest is low.
@@ -49,7 +52,7 @@ export type PriorityBand = "critical" | "high" | "medium" | "low";
 export function priorityBand(score: number | null): PriorityBand {
   if (score === null) return "low";
   if (score >= 0.75) return "critical";
-  if (score >= 0.55) return "high";
+  if (score >= HIGH_PRIORITY_MIN) return "high";
   if (score >= 0.4) return "medium";
   return "low";
 }
