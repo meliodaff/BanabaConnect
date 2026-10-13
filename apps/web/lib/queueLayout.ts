@@ -3,12 +3,18 @@
  * It lives here because values exported from a "use client" file can't be read by server
  * components.
  *
- * Wide screens: priority, report, reporter, reported, status. The report gets the most room
- * (about 400 px on a 1366 px laptop beside the sidebar). Narrow screens: the priority badge on
- * the left, everything else stacked beside it (cells after the report use QUEUE_STACKED).
+ * From 1280 px wide: one compact row per report in five columns (priority, report, reporter,
+ * reported, status). Only the report column stretches; the others stay just wide enough for
+ * their content, so a big monitor shows more of each description instead of spreading the row
+ * out. Narrower: the priority badge on the left, the report beside it, and the reporter, time
+ * and status on one line under the report (QUEUE_DETAILS).
  */
 export const QUEUE_COLUMNS =
-  "grid-cols-[120px_minmax(0,1fr)] items-start gap-x-4 gap-y-3 lg:grid-cols-[120px_minmax(0,2.4fr)_minmax(0,1.2fr)_150px_130px] lg:gap-x-6";
+  "grid-cols-[108px_minmax(0,1fr)] items-start gap-x-4 gap-y-2 xl:grid-cols-[108px_minmax(0,1fr)_224px_144px_112px] xl:gap-x-5";
 
-/** For cells after the report: stacked under it on narrow screens, own column on wide ones. */
-export const QUEUE_STACKED = "col-start-2 lg:col-start-auto";
+/**
+ * Wraps the reporter, reported and status cells: one line under the report, own columns from xl.
+ * The reporter and reported cells are w-56 and w-36 (the 224px and 144px columns above), so the
+ * times and statuses line up from row to row on the narrow layout too.
+ */
+export const QUEUE_DETAILS = "col-start-2 flex flex-wrap items-start gap-x-6 gap-y-2 xl:contents";
