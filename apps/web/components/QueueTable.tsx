@@ -11,7 +11,7 @@ import {
   VerificationBadge,
 } from "@/components/Badges";
 import { LiveIndicator, useLiveReports } from "@/components/LiveUpdates";
-import type { StatusFilter } from "@/lib/labels";
+import { groupedReportsHint, otherReportsLabel, type StatusFilter } from "@/lib/labels";
 import { QUEUE_COLUMNS, QUEUE_DETAILS } from "@/lib/queueLayout";
 import {
   describeSort,
@@ -34,7 +34,10 @@ export interface QueueRow {
   reporterIsGuest: boolean;
   reporterVerification: VerificationStatus | null;
   reporterArea: string | null;
+  /** Reports about the same incident, including this one. */
   clusterCount: number;
+  /** Different people who reported it, not counting Invalid reports. */
+  clusterPeople: number;
   /** Meters outside Barangay Banaba, or null if inside. */
   outsideBanabaM: number | null;
   reportedAgo: string;
@@ -223,7 +226,9 @@ export function QueueTable({
                         <span className="rounded-full bg-urgent px-2 py-0.5 text-xs font-bold text-white">NEW</span>
                       )}
                       {row.outsideBanabaM !== null && <OutsideBanabaTag meters={row.outsideBanabaM} />}
-                      {row.clusterCount > 1 && <Chip>{row.clusterCount} reports nearby</Chip>}
+                      {row.clusterCount > 1 && (
+                        <Chip title={groupedReportsHint(row.clusterPeople)}>{otherReportsLabel(row.clusterCount)}</Chip>
+                      )}
                       {row.hasPhoto && <Chip>Photo</Chip>}
                     </p>
                     <p
@@ -275,10 +280,13 @@ export function QueueTable({
   );
 }
 
-/** A small neutral note beside a report's type, like "3 reports nearby" (same size as the pills). */
-function Chip({ children }: { children: React.ReactNode }) {
+/** A small neutral note beside a report's type, like "2 other reports" (same size as the pills). */
+function Chip({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center whitespace-nowrap rounded-full border border-line bg-page px-2.5 py-1 text-[13px] font-semibold text-ink">
+    <span
+      title={title}
+      className="inline-flex items-center whitespace-nowrap rounded-full border border-line bg-page px-2.5 py-1 text-[13px] font-semibold text-ink"
+    >
       {children}
     </span>
   );

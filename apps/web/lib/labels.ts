@@ -21,6 +21,25 @@ export function parseStatusFilter(value: unknown): StatusFilter {
   return typeof value === "string" && value in STATUS_FILTERS ? (value as StatusFilter) : "active";
 }
 
+/**
+ * The reports grouped with this one as the same incident, not counting it: "2 other reports" when
+ * three were grouped. For reports with a clusterCount above 1 (which includes the report itself).
+ */
+export function otherReportsLabel(clusterCount: number): string {
+  const others = clusterCount - 1;
+  return others === 1 ? "1 other report" : `${others} other reports`;
+}
+
+/**
+ * Hover text for the label above: how reports are grouped, and by how many people. The 150 m and
+ * 2 hours are draft values from submit_report in supabase/migrations; change this with them.
+ */
+export function groupedReportsHint(clusterPeople: number): string {
+  const rule = "Same kind of incident within 150 m and 2 hours";
+  if (clusterPeople < 1) return rule;
+  return `${rule} · reported by ${clusterPeople === 1 ? "1 person" : `${clusterPeople} people`}`;
+}
+
 export type PriorityBand = "critical" | "high" | "medium" | "low";
 
 /**

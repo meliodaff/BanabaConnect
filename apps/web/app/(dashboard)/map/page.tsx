@@ -11,6 +11,7 @@ import {
   PRIORITY_BAND_LABELS,
   STAFF_STATUS_LABELS,
   STATUS_FILTERS,
+  otherReportsLabel,
   parseStatusFilter,
   priorityBand,
   type PriorityBand,
@@ -36,7 +37,7 @@ export default async function MapPage({ searchParams }: PageProps<"/map">) {
       title: `${CATEGORY_LABELS[report.category]} · ${scoreOutOf100(report.priority)} ${PRIORITY_BAND_LABELS[band]}`,
       lines: [
         `${STAFF_STATUS_LABELS[report.status]} · ${timeAgo(report.createdAt)}`,
-        report.clusterCount > 1 ? `${report.clusterCount} reports nearby` : "",
+        report.clusterCount > 1 ? otherReportsLabel(report.clusterCount) : "",
         report.outsideBanabaM !== null
           ? `Outside Banaba · ${formatDistance(report.outsideBanabaM)} away`
           : "",

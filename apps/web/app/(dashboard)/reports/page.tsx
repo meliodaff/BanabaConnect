@@ -35,6 +35,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
     reporterVerification: report.reporter?.verification ?? null,
     reporterArea: report.reporter?.area ?? null,
     clusterCount: report.clusterCount,
+    clusterPeople: report.clusterPeople,
     outsideBanabaM: report.outsideBanabaM,
     reportedAgo: timeAgo(report.createdAt),
     reportedAt: formatDateTime(report.createdAt),

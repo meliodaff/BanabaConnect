@@ -13,7 +13,7 @@ import {
   type ReportSummary,
 } from "@/lib/data";
 import { startOfTodayInManila, timeAgo, timeSince } from "@/lib/format";
-import { priorityBand } from "@/lib/labels";
+import { otherReportsLabel, priorityBand } from "@/lib/labels";
 import { DEFAULT_SORT, sortReports } from "@/lib/reportSort";
 
 export const metadata: Metadata = { title: "Overview" };
@@ -142,7 +142,7 @@ export default async function OverviewPage() {
                         </span>
                         <span className="block truncate text-sm text-muted">
                           {reporterLabel(report)} · {timeAgo(report.createdAt)}
-                          {report.clusterCount > 1 && ` · ${report.clusterCount} reports nearby`}
+                          {report.clusterCount > 1 && ` · ${otherReportsLabel(report.clusterCount)}`}
                         </span>
                       </span>
                       <StatusPill status={report.status} />
