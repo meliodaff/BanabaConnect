@@ -6,6 +6,7 @@ import {
   type VerificationStatus,
 } from "@banabaconnect/shared";
 import { HIGH_PRIORITY_MIN } from "@/lib/labels";
+import { PAGE_SIZE, pageCount } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
 
 // Every query runs as the signed-in staff member; row-level security lets admins read everything.
@@ -209,20 +210,41 @@ export interface ResidentForReview {
   idPhotoUrl: string | null;
 }
 
+/** One page of residents (PAGE_SIZE), most recently changed first, and how many there are in all. */
 export async function listResidents(
   statuses: readonly VerificationStatus[],
-): Promise<ResidentForReview[]> {
+  requestedPage: number,
+): Promise<{ residents: ResidentForReview[]; total: number; page: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select(
-      "id, full_name, phone, area, address, verification_status, verification_note, verified_at, updated_at, verification_document_path",
-    )
-    .eq("role", "resident")
-    .eq("is_guest", false)
-    .in("verification_status", [...statuses])
-    .order("updated_at", { ascending: false })
-    .limit(200);
+  const fetchPage = (page: number) =>
+    supabase
+      .from("profiles")
+      .select(
+        "id, full_name, phone, area, address, verification_status, verification_note, verified_at, updated_at, verification_document_path",
+      )
+      .eq("role", "resident")
+      .eq("is_guest", false)
+      .in("verification_status", [...statuses])
+      .order("updated_at", { ascending: false })
+      // Ties broken the same way every time, so nobody shows on two pages or on none.
+      .order("id")
+      .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+
+  // The count and the page together. A page past the end (the list got shorter, or an old link)
+  // is fetched again as the last page.
+  const [counted, requested] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "resident")
+      .eq("is_guest", false)
+      .in("verification_status", [...statuses]),
+    fetchPage(requestedPage),
+  ]);
+  if (counted.error) throw counted.error;
+  const total = counted.count ?? 0;
+  const page = Math.min(requestedPage, pageCount(total));
+  const { data, error } = page === requestedPage ? requested : await fetchPage(page);
   if (error) throw error;
 
   const rows = data ?? [];
@@ -237,7 +259,7 @@ export async function listResidents(
     }
   }
 
-  return rows.map((r) => ({
+  const residents = rows.map((r) => ({
     id: r.id,
     name: r.full_name?.trim() || null,
     phone: r.phone,
@@ -249,6 +271,7 @@ export async function listResidents(
     updatedAt: r.updated_at,
     idPhotoUrl: r.verification_document_path ? (urls.get(r.verification_document_path) ?? null) : null,
   }));
+  return { residents, total, page };
 }
 
 /** Reports that reached the barangay since `sinceIso`, and how many of those were resolved. */

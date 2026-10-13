@@ -11,7 +11,9 @@ import {
   VerificationBadge,
 } from "@/components/Badges";
 import { LiveIndicator, useLiveReports } from "@/components/LiveUpdates";
+import { Pagination } from "@/components/Pagination";
 import { groupedReportsHint, otherReportsLabel, type StatusFilter } from "@/lib/labels";
+import { pageQuery } from "@/lib/pagination";
 import { QUEUE_COLUMNS, QUEUE_DETAILS } from "@/lib/queueLayout";
 import {
   describeSort,
@@ -61,12 +63,19 @@ const SORT_COLUMNS: { key: SortKey; label: string }[] = [
 
 export function QueueTable({
   rows,
+  count,
+  page,
   total,
   emptyMessage,
   filter,
   sort,
 }: {
+  /** This page's rows. */
   rows: QueueRow[];
+  /** How many reports the list has, on all its pages. */
+  count: number;
+  /** The page shown, from 1. */
+  page: number;
   /** Set when the list was cut short: how many reports the filter has in all. */
   total?: number;
   emptyMessage: string;
@@ -75,8 +84,8 @@ export function QueueTable({
   /** How the rows are already sorted (the page sorts them; the headers change it). */
   sort: ReportSort;
 }) {
-  // "Back to reports" on a report returns to this filter and sort.
-  const backTo = `${filter}${sortQuery(sort)}`;
+  // "Back to reports" on a report returns to this filter, sort and page.
+  const backTo = `${filter}${sortQuery(sort)}${pageQuery(page)}`;
   const [fresh, setFresh] = useState<ReadonlySet<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
   const [heldNewReports, setHeldNewReports] = useState(0);
@@ -122,16 +131,17 @@ export function QueueTable({
   }, [held, isInUse, showUpdates]);
 
   return (
-    <div>
+    // The page links land here, at the top of the list.
+    <div id="reports-list" className="scroll-mt-4">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-[15px]">
             <span className="font-bold">
               {total !== undefined
-                ? `${rows.length} of ${total.toLocaleString("en-PH")} reports`
-                : rows.length === 1
+                ? `${count} of ${total.toLocaleString("en-PH")} reports`
+                : count === 1
                   ? "1 report"
-                  : `${rows.length} reports`}
+                  : `${count} reports`}
             </span>
             <span className="text-muted"> · {describeSort(sort)}</span>
             {!isDefaultSort(sort) && (
@@ -149,7 +159,7 @@ export function QueueTable({
           </p>
           <p className="text-sm text-muted">
             Priority = 50% seriousness + 30% nearby reports + 20% verified reporter.
-            {total !== undefined && ` Only the ${rows.length} highest-priority reports are listed.`}
+            {total !== undefined && ` Only the ${count} highest-priority reports are listed.`}
             {/* The column names only show on wide screens. */}
             <span className="hidden xl:inline"> Click a column name to sort.</span>
           </p>
@@ -284,6 +294,14 @@ export function QueueTable({
               </li>
             ))}
           </ul>
+          <Pagination
+            page={page}
+            total={count}
+            noun="reports"
+            hrefFor={(target) => `/reports?status=${filter}${sortQuery(sort)}${pageQuery(target)}`}
+            anchor="reports-list"
+            className="border-t border-line bg-page px-5 py-3"
+          />
         </div>
       )}
     </div>

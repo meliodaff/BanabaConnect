@@ -6,6 +6,7 @@ import { ReportStatusCards } from "@/components/ReportStatusCards";
 import { QUEUE_LIMIT, countReportsByStatus, countWithStatus, listReports } from "@/lib/data";
 import { formatDateTime, startOfTodayInManila, timeAgo, waitedForSignal } from "@/lib/format";
 import { STATUS_FILTERS, parseStatusFilter, type StatusFilter } from "@/lib/labels";
+import { PAGE_SIZE, pageCount, parsePage } from "@/lib/pagination";
 import { parseSort, sortQuery, sortReports } from "@/lib/reportSort";
 
 export const metadata: Metadata = { title: "Reports" };
@@ -26,8 +27,12 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
     countReportsByStatus(startOfTodayInManila()),
   ]);
   const reports = sortReports(listed, sort);
+  // Paged after sorting, so every column sort works across pages. A page past the end (the list
+  // got shorter, or an old link) shows the last page.
+  const page = Math.min(parsePage(params.page), pageCount(reports.length));
+  const onPage = reports.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const rows: QueueRow[] = reports.map((report) => ({
+  const rows: QueueRow[] = onPage.map((report) => ({
     id: report.id,
     categoryLabel: CATEGORY_LABELS[report.category],
     description: report.description,
@@ -54,6 +59,8 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
       <div className="px-8 py-6">
         <QueueTable
           rows={rows}
+          count={reports.length}
+          page={page}
           // The list stops at QUEUE_LIMIT while the cards count everything, so it says when it's cut short.
           total={
             listed.length >= QUEUE_LIMIT ? countWithStatus(counts, STATUS_FILTERS[filter].statuses) : undefined

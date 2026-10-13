@@ -19,15 +19,16 @@ import {
   parseStatusFilter,
   priorityBand,
 } from "@/lib/labels";
+import { pageQuery, parsePage } from "@/lib/pagination";
 import { parseSort, sortQuery, type ReportSort } from "@/lib/reportSort";
 
 export const metadata: Metadata = { title: "Report" };
 
 /**
- * Back to where the staff member came from: Overview, the map, or the queue with its filter and
- * sort. Links into a report carry them as ?from=active&sort=reported&dir=asc.
+ * Back to where the staff member came from: Overview, the map, or the queue with its filter, sort
+ * and page. Links into a report carry them as ?from=active&sort=reported&dir=asc&page=2.
  */
-function backLink(from: string | string[] | undefined, sort: ReportSort) {
+function backLink(from: string | string[] | undefined, sort: ReportSort, page: number) {
   if (from === "overview") {
     return { href: "/", label: "← Back to overview", from: "overview" };
   }
@@ -35,14 +36,14 @@ function backLink(from: string | string[] | undefined, sort: ReportSort) {
     return { href: "/map", label: "← Back to map", from: "map" };
   }
   const filter = parseStatusFilter(from);
-  const sorted = `${filter}${sortQuery(sort)}`;
+  const sorted = `${filter}${sortQuery(sort)}${pageQuery(page)}`;
   return { href: `/reports?status=${sorted}`, label: "← Back to reports", from: sorted };
 }
 
 export default async function ReportPage({ params, searchParams }: PageProps<"/reports/[id]">) {
   const { id } = await params;
   const query = await searchParams;
-  const back = backLink(query.from, parseSort(query.sort, query.dir));
+  const back = backLink(query.from, parseSort(query.sort, query.dir), parsePage(query.page));
   const report = /^[0-9a-f-]{36}$/i.test(id) ? await getReport(id) : null;
   if (!report) {
     notFound();

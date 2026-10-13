@@ -3,9 +3,11 @@ import type { Metadata } from "next";
 import { VerificationBadge } from "@/components/Badges";
 import { FilterTabs } from "@/components/FilterTabs";
 import { PageHeader } from "@/components/PageHeader";
+import { Pagination } from "@/components/Pagination";
 import { ReviewForm } from "@/components/ReviewForm";
 import { listResidents, type ResidentForReview } from "@/lib/data";
 import { formatDateTime } from "@/lib/format";
+import { pageQuery, parsePage } from "@/lib/pagination";
 
 export const metadata: Metadata = { title: "Residents" };
 
@@ -46,7 +48,7 @@ export default async function ResidentsPage({ searchParams }: PageProps<"/reside
   const params = await searchParams;
   const filter = parseFilter(params.show);
   const reviewed = typeof params.reviewed === "string" ? REVIEWED[params.reviewed] : undefined;
-  const residents = await listResidents(FILTERS[filter].statuses);
+  const { residents, total, page } = await listResidents(FILTERS[filter].statuses, parsePage(params.page));
 
   return (
     <>
@@ -63,7 +65,8 @@ export default async function ResidentsPage({ searchParams }: PageProps<"/reside
         />
       </PageHeader>
 
-      <div className="px-8 py-6">
+      {/* The page links land here, at the top of the list. */}
+      <div id="residents-list" className="scroll-mt-4 px-8 py-6">
         {reviewed && (
           <p role="status" className={`mb-5 rounded-lg border px-4 py-3 text-[15px] font-semibold ${reviewed.tone}`}>
             {reviewed.message}
@@ -83,6 +86,14 @@ export default async function ResidentsPage({ searchParams }: PageProps<"/reside
             ))}
           </ul>
         )}
+        <Pagination
+          page={page}
+          total={total}
+          noun="residents"
+          hrefFor={(target) => `/residents?show=${filter}${pageQuery(target)}`}
+          anchor="residents-list"
+          className="mt-6"
+        />
       </div>
     </>
   );
