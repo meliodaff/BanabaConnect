@@ -25,6 +25,15 @@
     "plugins": [
       "expo-router",
       "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain"
+        }
+      ],
       "expo-sqlite",
       "expo-web-browser",
       [
