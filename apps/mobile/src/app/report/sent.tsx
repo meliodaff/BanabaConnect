@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CATEGORY_LABELS } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
@@ -43,7 +43,9 @@ export default function ReportSentScreen() {
     tone = { color: colors.warning, background: colors.warningSoft };
     title = 'Saved on your phone';
     message = offline
-      ? 'No signal right now. Your report is queued and will be sent automatically as soon as you get even a little signal.'
+      ? Platform.OS === 'ios'
+        ? 'Your report is saved. Keep BanabaConnect in the app switcher so it can try sending when internet returns. If you swipe it away, reopen it to resume sending.'
+        : 'No signal right now. Your report is queued and will be sent automatically as soon as you get even a little signal.'
       : 'Your signal is weak, so the report is queued. We will keep trying and send it automatically.';
   }
 

@@ -1,8 +1,28 @@
 # Background report sending
 
-Version 1.0.6 adds native background sending through `expo-background-task` and
-`expo-task-manager`. Rebuild and install the app: the existing 1.0.5 binary and Expo Go cannot
-gain this native capability just by reloading JavaScript.
+Version 1.0.7 adds iOS file-backed background uploads for report text. The previous 1.0.6
+change only scheduled a worker through `expo-background-task` and `expo-task-manager`;
+that worker does not run immediately when Wi-Fi returns. Build and install 1.0.7 to test
+the new upload path.
+
+When a report is saved, iOS receives an authenticated JSON upload through
+`File.createUploadTask` with `sessionType: 'background'`, even if the phone is offline.
+The native background URLSession waits for connectivity and can transfer while JavaScript
+is suspended. Each report is handed off independently; a waiting upload does not block
+later reports. The report remains queued in SQLite until a successful HTTP response.
+Non-2xx responses and network errors retain it for retry.
+
+This requires a saved reporting session. Opening the app with internet prepares a guest
+session if necessary; simultaneous startup and Send share that authentication request.
+A first-ever offline launch cannot create an authenticated server request. An expired
+session or token that expires while waiting can require a later authenticated retry.
+Authentication credentials are sent in request headers, not in the temporary JSON file.
+
+Photo upload and attachment still run through the queue after the text is accepted.
+If JavaScript remains suspended when the native text transfer completes, the saved status
+and photos may wait for a subsequent execution window or reopening. This change does not
+provide independent background photo uploads or restore JS upload handles after process
+termination. SQLite and server UUID deduplication allow safe retry after relaunch.
 
 The task is defined in `apps/mobile/index.js` before Expo Router loads, so an OS launch can
 send saved reports without mounting screens. Opening the app registers the worker. The same
@@ -19,7 +39,8 @@ toasts, and status polling; returning to the app reloads the saved delivery stat
 The requested interval is 15 minutes, but the operating system decides when work actually runs.
 It is **not** a promise to send 15 minutes later or immediately when connection returns. iOS can
 delay work substantially depending on battery, network, and usage. Swiping the app away in the
-iPhone app switcher stops scheduled background work until the app is reopened. Android timing
+iPhone app switcher cancels native background transfers and stops scheduled background work
+until the app is reopened. Android timing
 also depends on battery restrictions and device vendor settings.
 
 The foreground queue still tries immediately on reconnect and when the app is reopened.
@@ -27,7 +48,10 @@ On Android, a reconnect event also tries sending while the app is backgrounded i
 process is still running. Android can suspend that process; the native worker provides a later
 opportunity to send in that case.
 
-Reference: https://docs.expo.dev/versions/v57.0.0/sdk/background-task/
+References:
+- https://docs.expo.dev/versions/v57.0.0/sdk/background-task/
+- https://docs.expo.dev/versions/latest/sdk/filesystem/
+- https://developer.apple.com/documentation/foundation/urlsessionconfiguration/background(withidentifier:)
 
 ## Android emulator
 
@@ -62,15 +86,17 @@ the development server.
 
 Run `npm run test:sync --workspace @banabaconnect/mobile`, typecheck, and mobile lint.
 These checks exercise queue behavior with mocked native APIs; they do not establish when a
-physical iPhone will schedule the worker.
+physical iPhone will perform native transfers or schedule the worker.
 
-1. Build version 1.0.6 with the existing **iOS build for AltStore** workflow and install it.
-   Open it once to register the worker; retain the existing install and its saved reports.
+1. Build version 1.0.7 with the existing **iOS build for AltStore** workflow and install it.
+   Open it with internet to prepare authentication and register the worker. Retain the
+   existing install and its saved reports.
 2. In airplane mode, save a report with a photo. Leave the app using the Home gesture, without
    swiping it away. Restore connection while using another app.
 3. Keep the dashboard open and record when the report text arrives and when its photo arrives.
-   Confirm exactly one report is created. Natural iOS scheduling can take much longer than
-   the requested interval; record elapsed time rather than treating 15 minutes as a deadline.
+   Confirm exactly one report is created. Record text and photo delivery separately and
+   record elapsed time. Text should use the native handoff rather than wait for the worker;
+   iOS still decides when the transfer executes. Photos can require a later execution window.
 4. Reopen the app and confirm the delivery state matches the dashboard. Repeat five times,
    including a guest report, a signed-in resident, and several queued reports.
 5. Repeat after swiping the app away. The report should remain saved and send when reopened;

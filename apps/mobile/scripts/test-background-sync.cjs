@@ -5,7 +5,7 @@ const test = require('node:test');
 const ts = require('typescript');
 
 // Exercise the actual TS modules with native APIs replaced; no phone or network is needed.
-function loadModule(file, dependencies) {
+function loadModule(file, dependencies, globals = {}) {
   const source = fs.readFileSync(path.join(__dirname, '../src/features/queue', file), 'utf8');
   const { outputText } = ts.transpileModule(source, {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
@@ -15,7 +15,8 @@ function loadModule(file, dependencies) {
     assert.ok(name in dependencies, `Unexpected dependency: ${name}`);
     return dependencies[name];
   };
-  new Function('require', 'module', 'exports', outputText)(requireMock, module, module.exports);
+  new Function('require', 'module', 'exports', ...Object.keys(globals), outputText)(
+    requireMock, module, module.exports, ...Object.values(globals));
   return module.exports;
 }
 
@@ -27,7 +28,7 @@ function report(id, category = 'fire', ownerId = 'resident') {
   };
 }
 
-function engineHarness(reports, send = async () => {}, owner = 'resident') {
+function engineHarness(reports, send = async () => {}, owner = 'resident', enqueue = async () => false) {
   const events = [];
   class OfflineError extends Error {}
   const repository = {
@@ -53,6 +54,7 @@ function engineHarness(reports, send = async () => {}, owner = 'resident') {
     } },
     './statusSync': { refreshStatuses: async () => events.push('status') },
     './syncFeedback': { notifyReportSent: () => events.push('toast') },
+    './nativeReportUpload': { enqueueNativeReport: enqueue },
     './transport': { OfflineError, transport: {
       sendReport: async (submission) => {
         events.push(`text:${submission.id}`);
@@ -207,8 +209,9 @@ test('worker reports success only when both reports and photos have left the que
   }
 });
 
-function triggersHarness(platform, initialState) {
+function triggersHarness(platform, initialState, configured = false) {
   const requests = [];
+  let prepared = 0;
   const appState = {
     currentState: initialState,
     addEventListener: (_, listener) => {
@@ -226,12 +229,14 @@ function triggersHarness(platform, initialState) {
       default: { addEventListener: (listener) => { network = listener; return () => {}; } },
     },
     './backgroundSync': { registerBackgroundSync: async () => {} },
+    '@/features/auth/guestSession': { ensureSession: async () => { prepared++; } },
+    '@/features/auth/supabase': { supabaseConfigured: configured },
     './reportsStore': { reportsStore: { refresh: async () => {} } },
     './syncEngine': { requestSync: (options) => { requests.push(options); return Promise.resolve(); } },
   });
   triggers.useSyncTriggers();
   return {
-    requests, appState, cleanup,
+    requests, appState, cleanup, get prepared() { return prepared; },
     network: (connected, reachable = connected) => network({ isConnected: connected, isInternetReachable: reachable }),
   };
 }
@@ -303,4 +308,173 @@ test('Android retries when a connected network finally regains internet access',
   } finally {
     hook.cleanup();
   }
+});
+
+const tick = () => new Promise((resolve) => setImmediate(resolve));
+
+function nativeHarness(session = { access_token: 'saved-token', user: { id: 'resident', is_anonymous: false } }) {
+  const tasks = [];
+  const files = [];
+  class File {
+    constructor(_, name) { this.name = name; files.push(this); }
+    create() { this.exists = true; }
+    write(body) { this.body = body; }
+    delete() { this.exists = false; }
+    createUploadTask(url, options) {
+      let resolve, reject;
+      const completion = new Promise((yes, no) => { resolve = yes; reject = no; });
+      const task = {
+        url, options, resolve, reject, released: false, started: false,
+        uploadAsync() { this.started = true; return completion; },
+        release() { this.released = true; },
+      };
+      tasks.push(task);
+      return task;
+    }
+  }
+  const native = loadModule('nativeReportUpload.ios.ts', {
+    'expo-file-system': {
+      Directory: class { create() {} }, File, Paths: { document: 'documents' },
+      UploadType: { BINARY_CONTENT: 0 },
+    },
+    '@/features/auth/supabase': {
+      supabaseConfigured: true,
+      supabase: { auth: { getSession: async () => ({ data: { session }, error: null }) } },
+    },
+    './reportPayload': loadModule('reportPayload.ts', {}),
+  }, { process: { env: {
+    EXPO_PUBLIC_SUPABASE_URL: 'https://example.invalid/',
+    EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'public-key',
+  } } });
+  return { ...native, tasks, files };
+}
+
+test('iOS hands off several offline reports without waiting for connectivity or duplicating active uploads', async () => {
+  const native = nativeHarness();
+  let sent = 0;
+  const handlers = { onSent: async () => { sent++; }, onFailed: async () => assert.fail('unexpected failure') };
+  const first = report('first');
+  Object.assign(first.submission, {
+    latitude: 14.7, longitude: 121.1, locationAccuracy: 8,
+    description: 'Test incident', incidentAt: '2026-10-14T00:00:00Z',
+  });
+  assert.equal(await native.enqueueNativeReport(first, handlers), true);
+  assert.equal(await native.enqueueNativeReport(first, handlers), true);
+  assert.equal(await native.enqueueNativeReport(report('second'), handlers), true);
+  assert.equal(native.tasks.length, 2);
+  assert.equal(sent, 0, 'native handoff must not claim server acceptance');
+  assert.ok(native.tasks.every((task) => task.started && !task.released));
+  assert.ok(native.files.every((file) => file.exists));
+  const task = native.tasks[0];
+  assert.equal(task.url, 'https://example.invalid/rest/v1/rpc/submit_report');
+  assert.deepEqual(task.options, {
+    httpMethod: 'POST', uploadType: 0, sessionType: 'background',
+    headers: { apikey: 'public-key', Authorization: 'Bearer saved-token', 'Content-Type': 'application/json' },
+  });
+  assert.deepEqual(JSON.parse(native.files[0].body), {
+    p_id: 'first', p_category: 'fire', p_latitude: 14.7, p_longitude: 121.1,
+    p_location_accuracy: 8, p_description: 'Test incident',
+    p_incident_at: '2026-10-14T00:00:00Z', p_created_at: '2026-10-14T00:00:00Z',
+  });
+  task.resolve({ status: 200 });
+  native.tasks[1].resolve({ status: 200 });
+  await tick();
+  assert.equal(sent, 2);
+  assert.ok(native.tasks.every((task) => task.released));
+  assert.ok(native.files.every((file) => !file.exists));
+});
+
+test('iOS failures preserve retry semantics and release native resources', async () => {
+  for (const failure of [401, 500, new Error('Network failure')]) {
+    const native = nativeHarness();
+    const failures = [];
+    let sent = 0;
+    const handlers = { onSent: async () => { sent++; }, onFailed: async (error) => failures.push(error) };
+    await native.enqueueNativeReport(report('retry'), handlers);
+    if (failure instanceof Error) native.tasks[0].reject(failure);
+    else native.tasks[0].resolve({ status: failure });
+    await tick();
+    assert.equal(sent, 0, 'rejected report marked sent');
+    assert.equal(failures.length, 1);
+    assert.equal(native.tasks[0].released, true);
+    assert.equal(native.files[0].exists, false);
+    assert.equal(await native.enqueueNativeReport(report('retry'), handlers), true);
+    assert.equal(native.tasks.length, 2, 'a failed task must not block later retries');
+    native.tasks[1].resolve({ status: 200 });
+    await tick();
+  }
+});
+
+test('iOS requires a matching saved session, including guest ownership', async () => {
+  const missing = nativeHarness(null);
+  assert.equal(await missing.enqueueNativeReport(report('missing'), {}), false);
+  assert.equal(missing.tasks.length, 0);
+  const mismatch = nativeHarness();
+  await assert.rejects(mismatch.enqueueNativeReport(report('private', 'fire', 'another-resident'), {}), /another account/);
+  assert.equal(mismatch.tasks.length, 0);
+  const guest = nativeHarness({ access_token: 'guest-token', user: { id: 'anonymous-id', is_anonymous: true } });
+  let sent = false;
+  await guest.enqueueNativeReport(report('guest', 'fire', null), {
+    onSent: async () => { sent = true; }, onFailed: async () => assert.fail('guest failed'),
+  });
+  guest.tasks[0].resolve({ status: 200 });
+  await tick();
+  assert.equal(sent, true);
+});
+
+test('queue persists native acceptance and only then sends photos; native failures remain queued', async () => {
+  const reports = [report('accepted'), report('rejected')];
+  const callbacks = new Map();
+  const engine = engineHarness(reports, async () => assert.fail('ordinary RPC used'), 'resident', async (item, handlers) => {
+    if (!callbacks.has(item.submission.id)) callbacks.set(item.submission.id, handlers);
+    return true;
+  });
+  await engine.requestSync({ background: true, ignoreBackoff: true });
+  assert.equal(callbacks.size, 2);
+  assert.ok(reports.every((item) => item.syncStatus === 'queued'));
+  assert.deepEqual(engine.events, []);
+  await callbacks.get('rejected').onFailed(new Error('HTTP 401'));
+  assert.equal(reports[1].syncStatus, 'queued');
+  assert.equal(reports[1].attempts, 2);
+  await callbacks.get('accepted').onSent();
+  await tick();
+  assert.equal(reports[0].syncStatus, 'sent');
+  assert.ok(engine.events.includes('photo:accepted'));
+  assert.ok(!engine.events.includes('photo:rejected'));
+});
+
+test('online startup prepares authentication for later offline reports', async () => {
+  const hook = triggersHarness('ios', 'active', true);
+  try {
+    await tick();
+    hook.network(true);
+    await tick();
+    assert.equal(hook.prepared, 1);
+    hook.appState.currentState = 'background';
+    hook.network(true);
+    await tick();
+    assert.equal(hook.prepared, 1, 'do not start guest sign-in while suspended');
+  } finally { hook.cleanup(); }
+});
+
+test('concurrent startup and Send share guest creation; a failure permits a later retry', async () => {
+  let creations = 0;
+  let fail = true;
+  const guest = loadModule('../auth/guestSession.ts', {
+    './supabase': { supabaseConfigured: true, supabase: { auth: {
+      getSession: async () => ({ data: { session: null } }),
+      signInAnonymously: async () => {
+        creations++;
+        return fail ? { data: {}, error: new Error('Offline') } : { data: { session: { user: { id: 'guest' } } } };
+      },
+    } } },
+  });
+  const first = guest.ensureSession();
+  const second = guest.ensureSession();
+  assert.equal(first, second);
+  await assert.rejects(first, /Offline/);
+  assert.equal(creations, 1);
+  fail = false;
+  assert.equal((await guest.ensureSession()).user.id, 'guest');
+  assert.equal(creations, 2);
 });

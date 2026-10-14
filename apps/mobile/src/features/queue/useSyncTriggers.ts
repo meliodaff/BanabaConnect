@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
+import { ensureSession } from '@/features/auth/guestSession';
+import { supabaseConfigured } from '@/features/auth/supabase';
 import { registerBackgroundSync } from './backgroundSync';
 import { reportsStore } from './reportsStore';
 import { requestSync } from './syncEngine';
@@ -26,6 +28,11 @@ export function useSyncTriggers() {
     let wasConnected: boolean | null = null;
     let wasReachable: boolean | null = null;
     const unsubscribeNetInfo = NetInfo.addEventListener((network) => {
+      // Prepare authentication while online, so a later offline report can be handed to iOS.
+      if (network.isConnected === true && AppState.currentState === 'active' && supabaseConfigured) {
+        void ensureSession().then(() => requestSync())
+          .catch((error) => console.warn('Could not prepare the reporting session', error));
+      }
       // Even a hint of signal is worth a try, so don't wait for internet reachability.
       // Try again if Wi-Fi connected before it actually had internet access.
       const internetRestored = network.isInternetReachable === true && wasReachable === false;

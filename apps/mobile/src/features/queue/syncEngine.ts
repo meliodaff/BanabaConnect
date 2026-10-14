@@ -11,6 +11,7 @@ import {
 } from './reportRepository';
 import { reportsStore } from './reportsStore';
 import { refreshStatuses } from './statusSync';
+import { enqueueNativeReport } from './nativeReportUpload';
 import { OfflineError, transport } from './transport';
 import type { QueuedReport } from './types';
 
@@ -100,13 +101,34 @@ async function syncOnce({ ignoreBackoff = false, background = false, shouldConti
   const owner = await currentReportOwner();
   const reports = (await dueReports(owner, Date.now(), ignoreBackoff)).sort(byPriority);
   let sentAny = false;
+  let handedOffAny = false;
   for (const report of reports) {
     if (shouldContinue && !shouldContinue()) {
       return;
     }
     const id = report.submission.id;
+    let handedOff = false;
     if (!background) reportsStore.setSending(id, true);
     try {
+      handedOff = await enqueueNativeReport(report, {
+        onSent: async () => {
+          await markReportSent(id, new Date().toISOString());
+          reportsStore.setSending(id, false);
+          if (AppState.currentState === 'active') await reportsStore.refresh();
+          // Pick up photos after the report exists. This also reconciles the UI on return.
+          void requestSync({ background: AppState.currentState !== 'active' });
+        },
+        onFailed: async (error) => {
+          const attempts = report.attempts + 1;
+          await markReportRetry(id, attempts, Date.now() + retryDelay(attempts), errorMessage(error));
+          reportsStore.setSending(id, false);
+          if (AppState.currentState === 'active') await reportsStore.refresh();
+        },
+      });
+      if (handedOff) {
+        handedOffAny = true;
+        continue;
+      }
       await transport.sendReport(report.submission);
       await markReportSent(id, new Date().toISOString());
       sentAny = true;
@@ -122,7 +144,7 @@ async function syncOnce({ ignoreBackoff = false, background = false, shouldConti
         return;
       }
     } finally {
-      if (!background) {
+      if (!background && !handedOff) {
         reportsStore.setSending(id, false);
         await reportsStore.refresh();
       }
@@ -159,6 +181,7 @@ async function syncOnce({ ignoreBackoff = false, background = false, shouldConti
   // Pick up the barangay's status changes; right away when something new was just sent.
   if (!background) {
     await reportsStore.refresh();
-    await refreshStatuses({ force: sentAny });
+    // Avoid an offline status request holding the queue while native uploads wait for signal.
+    if (!handedOffAny) await refreshStatuses({ force: sentAny });
   }
 }

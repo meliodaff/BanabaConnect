@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import type { ReportSubmission } from '@banabaconnect/shared';
 import { ensureSession } from '@/features/auth/guestSession';
 import { supabase, supabaseConfigured } from '@/features/auth/supabase';
+import { reportPayload } from './reportPayload';
 
 export interface PhotoToUpload {
   uri: string;
@@ -53,16 +54,7 @@ export const supabaseTransport: ReportTransport = {
   async sendReport(submission) {
     await requireConnection();
     await ensureSession();
-    const { error } = await supabase.rpc('submit_report', {
-      p_id: submission.id,
-      p_category: submission.category,
-      p_latitude: submission.latitude,
-      p_longitude: submission.longitude,
-      p_location_accuracy: submission.locationAccuracy,
-      p_description: submission.description,
-      p_incident_at: submission.incidentAt,
-      p_created_at: submission.createdAt,
-    });
+    const { error } = await supabase.rpc('submit_report', reportPayload(submission));
     if (error) {
       throw new Error(`Report not accepted: ${error.message}`);
     }

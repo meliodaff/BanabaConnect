@@ -23,8 +23,16 @@ export async function currentReportOwner(): Promise<string | null> {
   return session && !session.user.is_anonymous ? session.user.id : null;
 }
 
+let preparingSession: Promise<Session> | null = null;
+
+/** Share guest creation when startup and Send happen together. */
+export function ensureSession(): Promise<Session> {
+  preparingSession ??= loadOrCreateSession().finally(() => { preparingSession = null; });
+  return preparingSession;
+}
+
 /** The current session, starting a hidden guest account if nobody is signed in. */
-export async function ensureSession(): Promise<Session> {
+async function loadOrCreateSession(): Promise<Session> {
   if (!supabaseConfigured) {
     throw new Error('Supabase is not set up in this build');
   }
