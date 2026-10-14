@@ -23,8 +23,40 @@ iPhone app switcher stops scheduled background work until the app is reopened. A
 also depends on battery restrictions and device vendor settings.
 
 The foreground queue still tries immediately on reconnect and when the app is reopened.
+On Android, a reconnect event also tries sending while the app is backgrounded if its JavaScript
+process is still running. Android can suspend that process; the native worker provides a later
+opportunity to send in that case.
 
 Reference: https://docs.expo.dev/versions/v57.0.0/sdk/background-task/
+
+## Android emulator
+
+Expo Go (`host.exp.exponent`) cannot run this native background worker. Keeping Expo Go in the
+recent apps list does not enable background tasks. Install the actual BanabaConnect debug app
+(`ph.banabaconnect.app`) on the emulator first:
+
+```sh
+npm run android:build --workspace @banabaconnect/mobile
+npm run android --workspace @banabaconnect/mobile
+```
+
+The first command needs the Android SDK and Java; it generates the ignored native project and
+installs the app. Rebuild after native dependency or app configuration changes. The second starts
+the development server and explicitly targets the native app. To use Expo Go for foreground UI
+testing instead, pass `-- --go` to the second command.
+
+For a controlled background-worker test, leave BanabaConnect using Home, then inspect its job:
+
+```sh
+adb shell dumpsys jobscheduler
+adb shell cmd jobscheduler run -f ph.banabaconnect.app <JOB_ID>
+```
+
+Choose the job for `ph.banabaconnect.app` using WorkManager's `SystemJobService`, not a job for
+Expo Go. Forcing the job tests execution without waiting for the 15-minute minimum delay; it
+does not establish how soon Android will schedule it naturally. A native debug build still
+needs its development server for a fresh JavaScript launch. Use a release APK to test without
+the development server.
 
 ## Checks before accepting the iPhone build
 

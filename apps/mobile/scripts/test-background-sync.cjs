@@ -206,3 +206,101 @@ test('worker reports success only when both reports and photos have left the que
     assert.equal(task.cleanedUp, true);
   }
 });
+
+function triggersHarness(platform, initialState) {
+  const requests = [];
+  const appState = {
+    currentState: initialState,
+    addEventListener: (_, listener) => {
+      appState.change = listener;
+      return { remove() {} };
+    },
+  };
+  let network;
+  let cleanup;
+  const triggers = loadModule('useSyncTriggers.ts', {
+    react: { useEffect: (effect) => { cleanup = effect(); } },
+    'react-native': { AppState: appState, Platform: { OS: platform } },
+    '@react-native-community/netinfo': {
+      __esModule: true,
+      default: { addEventListener: (listener) => { network = listener; return () => {}; } },
+    },
+    './backgroundSync': { registerBackgroundSync: async () => {} },
+    './reportsStore': { reportsStore: { refresh: async () => {} } },
+    './syncEngine': { requestSync: (options) => { requests.push(options); return Promise.resolve(); } },
+  });
+  triggers.useSyncTriggers();
+  return {
+    requests, appState, cleanup,
+    network: (connected, reachable = connected) => network({ isConnected: connected, isInternetReachable: reachable }),
+  };
+}
+
+test('Android reconnect sends in the background without waiting for the user to reopen the app', async () => {
+  const hook = triggersHarness('android', 'active');
+  try {
+    // Let the initial queue refresh finish before observing only reconnect requests.
+    await new Promise((resolve) => setImmediate(resolve));
+    hook.requests.length = 0;
+    hook.network(false);
+    hook.appState.currentState = 'background';
+    hook.appState.change('background');
+    hook.network(true);
+    assert.deepEqual(hook.requests, [{ ignoreBackoff: true, background: true }]);
+    // Repeated connected notifications must not start another pass.
+    hook.network(true);
+    assert.equal(hook.requests.length, 1);
+  } finally {
+    hook.cleanup();
+  }
+});
+
+test('iOS and web leave background reconnects to their supported execution mechanisms', async () => {
+  for (const platform of ['ios', 'web']) {
+    const hook = triggersHarness(platform, 'background');
+    try {
+      await new Promise((resolve) => setImmediate(resolve));
+      hook.requests.length = 0;
+      hook.network(false);
+      hook.network(true);
+      assert.equal(hook.requests.length, 0);
+      hook.appState.currentState = 'active';
+      hook.appState.change('active');
+      assert.deepEqual(hook.requests, [{ ignoreBackoff: true }]);
+    } finally {
+      hook.cleanup();
+    }
+  }
+});
+
+test('foreground reconnect still sends immediately on every platform', async () => {
+  for (const platform of ['android', 'ios', 'web']) {
+    const hook = triggersHarness(platform, 'active');
+    try {
+      await new Promise((resolve) => setImmediate(resolve));
+      hook.requests.length = 0;
+      hook.network(false);
+      hook.network(true);
+      assert.deepEqual(hook.requests, [{ ignoreBackoff: true, background: false }]);
+    } finally {
+      hook.cleanup();
+    }
+  }
+});
+
+test('Android retries when a connected network finally regains internet access', async () => {
+  const hook = triggersHarness('android', 'background');
+  try {
+    await new Promise((resolve) => setImmediate(resolve));
+    hook.requests.length = 0;
+    hook.network(false, false);
+    hook.network(true, false);
+    hook.network(true, true);
+    assert.deepEqual(hook.requests, [
+      { ignoreBackoff: true, background: true },
+      { ignoreBackoff: true, background: true },
+    ]);
+  } finally {
+    hook.cleanup();
+  }
+});
