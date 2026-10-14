@@ -150,8 +150,10 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'See my report',
+          // Pushed, not replaced: Back returns to this form with everything still filled in,
+          // in case the resident decides there's something new to send after all.
           onPress: () =>
-            router.replace({
+            router.push({
               pathname: '/reports/[id]',
               params: { id: duplicate.report.submission.id },
             }),
