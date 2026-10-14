@@ -1,7 +1,7 @@
 import { REPORT_STATUSES } from "@banabaconnect/shared";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { StatusPill } from "@/components/Badges";
-import { SoundToggle } from "@/components/NewReportSound";
 import { PageHeader } from "@/components/PageHeader";
 import { PrintButton } from "@/components/PrintButton";
 import { getDictionary } from "@/lib/i18n-server";
@@ -25,7 +25,12 @@ export default async function HelpPage() {
     <>
       <div className="print:hidden">
         <PageHeader title={help.title} description={help.description}>
-          <PrintButton documentTitle={help.guideTitle} label={help.printGuide} primary />
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/settings" className="rounded-md border border-line px-4 py-2 text-[15px] font-bold hover:border-brand hover:text-brand">
+              {t.nav.settings}
+            </Link>
+            <PrintButton documentTitle={help.guideTitle} label={help.printGuide} primary />
+          </div>
         </PageHeader>
       </div>
 
@@ -70,10 +75,6 @@ export default async function HelpPage() {
 
           <HelpCard title={help.alerts.title}>
             <Paragraphs items={help.alerts.body} />
-            {/* Turn it on right here; on paper the paragraph above says where it is. */}
-            <div className="-mx-3 mt-3 rounded-lg border border-line print:hidden">
-              <SoundToggle />
-            </div>
           </HelpCard>
 
           <HelpCard title={help.printing.title}>

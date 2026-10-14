@@ -101,7 +101,7 @@ export function playAlert(context: BaseAudioContext) {
 
 /**
  * Plays a sound when a new report arrives, on every dashboard page, if staff turned it on
- * (SoundToggle in the sidebar). For staff who aren't watching the screen during a busy night.
+ * (SoundToggle in Settings). For staff who aren't watching the screen during a busy night.
  */
 export function NewReportSoundProvider({ children }: { children: React.ReactNode }) {
   const enabled = useSyncExternalStore(subscribe, readSaved, () => false);
@@ -176,7 +176,7 @@ export function NewReportSoundProvider({ children }: { children: React.ReactNode
 
 /**
  * The on/off switch for the new-report sound, with its state written out under the name. The
- * sidebar shows it `compact` (no explanation; the Help page has it).
+ * Settings page includes the explanation unless `compact` is requested.
  */
 export function SoundToggle({ compact = false }: { compact?: boolean }) {
   const sound = useContext(SoundContext);

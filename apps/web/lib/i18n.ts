@@ -4,7 +4,7 @@ import type { PriorityBand, StatusFilter } from "@/lib/labels";
 import type { SortDirection, SortKey } from "@/lib/reportSort";
 
 /**
- * The dashboard's words in English and Filipino. Staff pick the language in the sidebar; it's
+ * The dashboard's words in English and Filipino. Staff pick the language in Settings; it's
  * kept in a cookie, so server pages (getDictionary in lib/i18n-server.ts) and client components
  * (useDictionary in components/I18nProvider.tsx) agree. Printed documents stay in English, as
  * official records. The Filipino is everyday barangay Filipino, keeping English words staff
@@ -86,6 +86,7 @@ const en = {
     residentsGroup: "Residents",
     residents: "Residents",
     help: "Help",
+    settings: "Settings",
     commandDashboard: "Command Dashboard",
     sealAlt: "Seal of Barangay Banaba, San Mateo, Rizal",
     idsWaiting: (count: number) => `${count} Barangay IDs waiting for review`,
@@ -94,6 +95,14 @@ const en = {
     signOut: "Sign out",
   },
   language: { label: "Language" },
+  settings: {
+    description: "Sound, language, help, and your account.",
+    languageHint: "Choose the language used throughout the dashboard.",
+    helpHint: "Read the staff guide and troubleshooting steps.",
+    openHelp: "Open help",
+    account: "Account",
+    signOutHint: "Sign out of the dashboard on this browser.",
+  },
   sound: {
     label: "Sound for new reports",
     on: "On",
@@ -397,7 +406,7 @@ const en = {
       title: "Noticing new reports",
       body: [
         "The lists and the map update by themselves. A new report flashes yellow with a NEW tag.",
-        "To hear new reports, turn on Sound for new reports at the bottom of the sidebar. After opening the dashboard, click anywhere once so the browser allows sound.",
+        "To hear new reports, open Settings using the gear beside your name, then turn on Sound for new reports. After opening the dashboard, click anywhere once so the browser allows sound.",
       ],
     },
     printing: {
@@ -424,7 +433,7 @@ const en = {
       title: "Easier to read",
       items: [
         "Ctrl and + makes everything bigger, Ctrl and − smaller, and Ctrl and 0 goes back to normal.",
-        "To switch between English and Filipino, use Language at the bottom of the sidebar.",
+        "To switch between English and Filipino, open Settings using the gear beside your name, then choose Language.",
       ],
     },
   },
@@ -529,6 +538,7 @@ const fil: Dictionary = {
     residentsGroup: "Mga residente",
     residents: "Mga residente",
     help: "Tulong",
+    settings: "Mga setting",
     commandDashboard: "Command Dashboard",
     sealAlt: "Selyo ng Barangay Banaba, San Mateo, Rizal",
     idsWaiting: (count) => `${count} Barangay ID ang naghihintay ng pagsusuri`,
@@ -537,6 +547,14 @@ const fil: Dictionary = {
     signOut: "Mag-sign out",
   },
   language: { label: "Wika" },
+  settings: {
+    description: "Tunog, wika, tulong, at iyong account.",
+    languageHint: "Piliin ang wikang gagamitin sa buong dashboard.",
+    helpHint: "Basahin ang gabay at mga solusyon sa karaniwang problema.",
+    openHelp: "Buksan ang tulong",
+    account: "Account",
+    signOutHint: "Mag-sign out sa dashboard sa browser na ito.",
+  },
   sound: {
     label: "Tunog para sa bagong report",
     on: "Naka-on",
@@ -846,7 +864,7 @@ const fil: Dictionary = {
       title: "Para mapansin ang bagong report",
       body: [
         "Kusang nag-a-update ang mga listahan at ang mapa. Kumikislap nang dilaw ang bagong report at may tatak na BAGO.",
-        "Para marinig ang bagong report, i-on ang Tunog para sa bagong report sa ibaba ng sidebar. Pagkabukas ng dashboard, mag-click kahit saan para payagan ng browser ang tunog.",
+        "Para marinig ang bagong report, buksan ang Mga setting gamit ang gear sa tabi ng pangalan mo, tapos i-on ang Tunog para sa bagong report. Pagkabukas ng dashboard, mag-click kahit saan para payagan ng browser ang tunog.",
       ],
     },
     printing: {
@@ -879,7 +897,7 @@ const fil: Dictionary = {
       title: "Para mas madaling basahin",
       items: [
         "Pinapalaki ng Ctrl at + ang lahat, pinapaliit ng Ctrl at −, at ibinabalik sa dati ng Ctrl at 0.",
-        "Para lumipat sa English o Filipino, gamitin ang Wika sa ibaba ng sidebar.",
+        "Para lumipat sa English o Filipino, buksan ang Mga setting gamit ang gear sa tabi ng pangalan mo, tapos piliin ang Wika.",
       ],
     },
   },

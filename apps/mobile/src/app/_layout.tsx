@@ -1,4 +1,5 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { StartupScreen } from '@/components/StartupScreen';
@@ -10,9 +11,10 @@ import { hasColoredHeader, useTheme } from '@/theme';
 
 // Hold the native logo until the matching startup screen has been laid out.
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
-startAuth();
 
 export default function RootLayout() {
+  // Background launches run the queue from index.js without starting account/UI work.
+  useEffect(() => { startAuth(); }, []);
   useSyncTriggers();
   useOfflineToasts();
   const { scheme, colors } = useTheme();

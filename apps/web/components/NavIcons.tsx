@@ -78,3 +78,12 @@ export function SignOutIcon() {
     </Icon>
   );
 }
+
+export function SettingsIcon() {
+  return (
+    <Icon>
+      <path d="m9.7 3-.5 2.1-1.8 1-2.1-.6-2.2 3.8 1.6 1.5v2.1l-1.6 1.5 2.2 3.8 2.1-.6 1.8 1 .5 2.1h4.4l.5-2.1 1.8-1 2.1.6 2.2-3.8-1.6-1.5v-2.1l1.6-1.5-2.2-3.8-2.1.6-1.8-1-.5-2.1z" />
+      <circle cx="11.9" cy="11.7" r="3" />
+    </Icon>
+  );
+}

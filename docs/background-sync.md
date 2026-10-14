@@ -1,0 +1,50 @@
+# Background report sending
+
+Version 1.0.6 adds native background sending through `expo-background-task` and
+`expo-task-manager`. Rebuild and install the app: the existing 1.0.5 binary and Expo Go cannot
+gain this native capability just by reloading JavaScript.
+
+The task is defined in `apps/mobile/index.js` before Expo Router loads, so an OS launch can
+send saved reports without mounting screens. Opening the app registers the worker. The same
+queue sends urgent text reports first, then photos, using the current resident or guest session
+saved on the phone. Other accounts' saved reports wait for their owner to sign back in.
+
+Each success or retry is saved immediately. If iOS ends the task's execution window, it stops
+starting new uploads and the unfinished work remains queued. Repeated delivery uses the same
+report UUID and the existing server duplicate protection. Background work avoids navigation,
+toasts, and status polling; returning to the app reloads the saved delivery state.
+
+## Timing limits
+
+The requested interval is 15 minutes, but the operating system decides when work actually runs.
+It is **not** a promise to send 15 minutes later or immediately when connection returns. iOS can
+delay work substantially depending on battery, network, and usage. Swiping the app away in the
+iPhone app switcher stops scheduled background work until the app is reopened. Android timing
+also depends on battery restrictions and device vendor settings.
+
+The foreground queue still tries immediately on reconnect and when the app is reopened.
+
+Reference: https://docs.expo.dev/versions/v57.0.0/sdk/background-task/
+
+## Checks before accepting the iPhone build
+
+Run `npm run test:sync --workspace @banabaconnect/mobile`, typecheck, and mobile lint.
+These checks exercise queue behavior with mocked native APIs; they do not establish when a
+physical iPhone will schedule the worker.
+
+1. Build version 1.0.6 with the existing **iOS build for AltStore** workflow and install it.
+   Open it once to register the worker; retain the existing install and its saved reports.
+2. In airplane mode, save a report with a photo. Leave the app using the Home gesture, without
+   swiping it away. Restore connection while using another app.
+3. Keep the dashboard open and record when the report text arrives and when its photo arrives.
+   Confirm exactly one report is created. Natural iOS scheduling can take much longer than
+   the requested interval; record elapsed time rather than treating 15 minutes as a deadline.
+4. Reopen the app and confirm the delivery state matches the dashboard. Repeat five times,
+   including a guest report, a signed-in resident, and several queued reports.
+5. Repeat after swiping the app away. The report should remain saved and send when reopened;
+   background delivery is not expected in this case.
+
+For a debug native build on a physical iPhone, Expo's
+`BackgroundTask.triggerTaskWorkerForTestingAsync()` can trigger the worker for a controlled
+queue test. It does not work in the release build produced by the AltStore workflow and does
+not validate natural OS scheduling.
