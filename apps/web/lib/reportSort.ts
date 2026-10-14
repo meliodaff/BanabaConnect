@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS, REPORT_STATUSES } from "@banabaconnect/shared";
+import { CATEGORY_LABELS, REPORT_STATUSES, type ReportCategory } from "@banabaconnect/shared";
 import type { ReportSummary } from "@/lib/data";
 
 /**
@@ -28,16 +28,6 @@ const FIRST_DIRECTION: Record<SortKey, SortDirection> = {
   status: "asc",
 };
 
-/** How each order reads above the list, e.g. "Newest first". */
-const DESCRIPTIONS: Record<SortKey, Record<SortDirection, string>> = {
-  priority: { desc: "Highest priority first", asc: "Lowest priority first" },
-  report: { asc: "Report type, A to Z", desc: "Report type, Z to A" },
-  reporter: { asc: "Reporter name, A to Z (guests last)", desc: "Reporter name, Z to A (guests last)" },
-  nearby: { desc: "Most nearby reports first", asc: "Fewest nearby reports first" },
-  reported: { desc: "Newest first", asc: "Oldest first" },
-  status: { asc: "Status, Received to Invalid", desc: "Status, Invalid to Received" },
-};
-
 export function parseSort(sort: unknown, dir: unknown): ReportSort {
   if (typeof sort !== "string" || !(SORT_KEYS as readonly string[]).includes(sort)) {
     return DEFAULT_SORT;
@@ -63,10 +53,6 @@ export function nextSort(current: ReportSort, key: SortKey): ReportSort {
   return { key, dir: FIRST_DIRECTION[key] };
 }
 
-export function describeSort(sort: ReportSort) {
-  return DESCRIPTIONS[sort.key][sort.dir];
-}
-
 const STATUS_ORDER = new Map(REPORT_STATUSES.map((status, index) => [status, index]));
 
 function reporterName(report: ReportSummary): string | null {
@@ -86,14 +72,22 @@ function tieBreak(a: ReportSummary, b: ReportSummary) {
   );
 }
 
-export function sortReports(reports: ReportSummary[], sort: ReportSort): ReportSummary[] {
+/**
+ * `categoryLabels` are the type names staff see, so "Report type, A to Z" follows the screen
+ * (Filipino names sort differently from the English ones).
+ */
+export function sortReports(
+  reports: ReportSummary[],
+  sort: ReportSort,
+  categoryLabels: Record<ReportCategory, string> = CATEGORY_LABELS,
+): ReportSummary[] {
   const sign = sort.dir === "asc" ? 1 : -1;
   const compare = (a: ReportSummary, b: ReportSummary): number => {
     switch (sort.key) {
       case "priority":
         return sign * ((a.priority ?? -1) - (b.priority ?? -1));
       case "report":
-        return sign * CATEGORY_LABELS[a.category].localeCompare(CATEGORY_LABELS[b.category]);
+        return sign * categoryLabels[a.category].localeCompare(categoryLabels[b.category]);
       case "reporter": {
         // Guests have no name to sort by, so they stay at the end either way.
         const nameA = reporterName(a);

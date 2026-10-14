@@ -97,3 +97,18 @@ h3 {
 .map-card-passive .maplibregl-popup-content {
   pointer-events: none;
 }
+
+/*
+ * Printing (a report's "Print / Save as PDF"): white paper with even margins, and no
+ * screen-height minimums, which would push a blank page out after a short report.
+ */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    min-height: 0;
+    background: white;
+  }
+}

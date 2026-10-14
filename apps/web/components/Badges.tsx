@@ -1,6 +1,9 @@
-import { VERIFICATION_LABELS, type ReportStatus, type VerificationStatus } from "@banabaconnect/shared";
-import { formatDistance, scoreOutOf100 } from "@/lib/format";
-import { PRIORITY_BADGES, PRIORITY_BAND_LABELS, STAFF_STATUS_LABELS, priorityBand } from "@/lib/labels";
+"use client";
+
+import type { ReportStatus, VerificationStatus } from "@banabaconnect/shared";
+import { useDictionary } from "@/components/I18nProvider";
+import { scoreOutOf100 } from "@/lib/format";
+import { PRIORITY_BADGES, priorityBand } from "@/lib/labels";
 
 /*
  * State indicators follow .claude/skills/anti-slop-status-colors: color shows attention, not
@@ -86,11 +89,12 @@ function Pill({
 
 /** Priority out of 100, filled with its level's color (as on the map), with the level name in ink. */
 export function PriorityBadge({ score, size = "md" }: { score: number | null; size?: "md" | "lg" }) {
+  const t = useDictionary();
   const band = priorityBand(score);
   const badge = PRIORITY_BADGES[band];
   const urgent = band === "critical" || band === "high";
   return (
-    <div className="flex items-center gap-2.5" title={`Priority ${scoreOutOf100(score)} of 100`}>
+    <div className="flex items-center gap-2.5" title={t.badges.priorityTitle(scoreOutOf100(score))}>
       <span
         className={`inline-flex items-center justify-center rounded-lg border-2 font-bold tabular-nums ${
           size === "lg" ? "h-14 w-14 text-2xl" : "h-10 w-10 text-base"
@@ -100,7 +104,7 @@ export function PriorityBadge({ score, size = "md" }: { score: number | null; si
         {scoreOutOf100(score)}
       </span>
       <span className={`text-sm ${urgent ? "font-bold text-ink" : "font-semibold text-muted"}`}>
-        {PRIORITY_BAND_LABELS[band]}
+        {t.priority[band]}
       </span>
     </div>
   );
@@ -120,10 +124,11 @@ const STATUS_STYLE: Record<
 };
 
 export function StatusPill({ status }: { status: ReportStatus }) {
+  const t = useDictionary();
   const style = STATUS_STYLE[status];
   return (
     <Pill glyph={style.glyph} glyphClass={style.glyphClass} textClass={style.textClass} tinted={style.tinted}>
-      {STAFF_STATUS_LABELS[status]}
+      {t.status[status]}
     </Pill>
   );
 }
@@ -140,10 +145,11 @@ const VERIFICATION_STYLE: Record<
 };
 
 export function VerificationBadge({ status }: { status: VerificationStatus }) {
+  const t = useDictionary();
   const style = VERIFICATION_STYLE[status];
   return (
     <Pill glyph={style.glyph} glyphClass={style.glyphClass} textClass={style.textClass}>
-      {VERIFICATION_LABELS[status]}
+      {t.verification[status]}
     </Pill>
   );
 }
@@ -153,19 +159,21 @@ export function VerificationBadge({ status }: { status: VerificationStatus }) {
  * be for a neighboring barangay, so staff decide. Orange glyph: worth a look, not urgent.
  */
 export function OutsideBanabaTag({ meters }: { meters: number }) {
+  const t = useDictionary();
   return (
-    <span title={`Sent from ${formatDistance(meters)} outside Barangay Banaba`}>
+    <span title={t.badges.outsideTitle(t.time.distance(meters))}>
       <Pill glyph="pin" glyphClass="text-warning">
-        Outside Banaba
+        {t.badges.outsideBanaba}
       </Pill>
     </span>
   );
 }
 
 export function GuestBadge() {
+  const t = useDictionary();
   return (
     <Pill glyph="ring" textClass="text-muted">
-      Guest
+      {t.common.guest}
     </Pill>
   );
 }

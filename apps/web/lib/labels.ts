@@ -21,6 +21,11 @@ export function parseStatusFilter(value: unknown): StatusFilter {
   return typeof value === "string" && value in STATUS_FILTERS ? (value as StatusFilter) : "active";
 }
 
+/** The short number staff can write in a logbook: the start of the report's ID, e.g. 3F2A9C1D. */
+export function reportNumber(id: string): string {
+  return id.slice(0, 8).toUpperCase();
+}
+
 /**
  * The reports grouped with this one as the same incident, not counting it: "2 other reports" when
  * three were grouped. For reports with a clusterCount above 1 (which includes the report itself).

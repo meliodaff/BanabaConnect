@@ -124,13 +124,59 @@ export async function listReports(statuses: readonly ReportStatus[]): Promise<Re
   return (data ?? []).map(toSummary).filter((row): row is ReportSummary => row !== null);
 }
 
+/** The most rows the database returns per request; longer lists are read in batches. */
+const BATCH = 1000;
+
+export interface ReportWithResponse extends ReportSummary {
+  /** When staff first marked it In progress or Resolved, or null if they haven't yet. */
+  firstActionAt: string | null;
+}
+
+/**
+ * Every report that reached the barangay in [startIso, endIso), oldest first, for the monthly
+ * report. All of them (in batches), not just the first QUEUE_LIMIT.
+ */
+export async function listReportsReceivedBetween(
+  startIso: string,
+  endIso: string,
+): Promise<ReportWithResponse[]> {
+  const supabase = await createClient();
+  const rows = [];
+  for (let from = 0; ; from += BATCH) {
+    const { data, error } = await supabase
+      .from("reports")
+      .select(`${SUMMARY_COLUMNS}, history:report_status_history(to_status, changed_at)`)
+      .gte("received_at", startIso)
+      .lt("received_at", endIso)
+      .order("received_at", { ascending: true })
+      .order("id")
+      .range(from, from + BATCH - 1);
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if (!data || data.length < BATCH) break;
+  }
+
+  return rows.flatMap((row) => {
+    const summary = toSummary(row);
+    if (!summary) return [];
+    const actions = (row.history ?? [])
+      .filter((change) => change.to_status === "in_progress" || change.to_status === "resolved")
+      .map((change) => change.changed_at)
+      .sort();
+    return [{ ...summary, firstActionAt: actions[0] ?? null }];
+  });
+}
+
 export interface StatusChange {
   id: number;
   from: ReportStatus | null;
   to: ReportStatus;
   note: string | null;
   changedAt: string;
+  /** The staff member's name, if they have one; null when the resident made the change. */
   changedBy: string | null;
+  /** Barangay staff made the change (the first entry is the resident sending the report). */
+  byStaff: boolean;
 }
 
 export interface ReportDetail extends ReportSummary {
@@ -189,8 +235,8 @@ export async function getReport(id: string): Promise<ReportDetail | null> {
           to: h.to_status,
           note: h.note,
           changedAt: h.changed_at,
-          changedBy:
-            changer?.role === "admin" ? changer.full_name?.trim() || "Barangay staff" : "Reporter",
+          changedBy: changer?.role === "admin" ? changer.full_name?.trim() || null : null,
+          byStaff: changer?.role === "admin",
         };
       }),
     linked: (linked.data ?? []).map(toSummary).filter((r): r is ReportSummary => r !== null),

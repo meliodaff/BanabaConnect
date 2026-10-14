@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Public_Sans } from "next/font/google";
+import { I18nProvider } from "@/components/I18nProvider";
+import { getLang } from "@/lib/i18n-server";
 import "./globals.css";
 
 /**
@@ -21,10 +23,14 @@ export const metadata: Metadata = {
   description: "Incident reports from residents of Barangay Banaba, ranked by priority.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // The staff member's language (English or Filipino), for screen readers and client components.
+  const lang = await getLang();
   return (
-    <html lang="en" className={displayFont.variable}>
-      <body className="min-h-screen antialiased">{children}</body>
+    <html lang={lang} className={displayFont.variable}>
+      <body className="min-h-screen antialiased">
+        <I18nProvider lang={lang}>{children}</I18nProvider>
+      </body>
     </html>
   );
 }

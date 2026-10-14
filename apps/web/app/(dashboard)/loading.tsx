@@ -1,3 +1,6 @@
+"use client";
+
+import { useDictionary } from "@/components/I18nProvider";
 import { PageHeader } from "@/components/PageHeader";
 import {
   Bone,
@@ -11,13 +14,14 @@ import {
  * Pages in this group without their own loading.tsx fall back to this one.
  */
 export default function OverviewLoading() {
+  const t = useDictionary();
   return (
     <>
-      <PageHeader title="Overview" description="Barangay Banaba right now. This page updates by itself.">
+      <PageHeader title={t.overview.title} description={t.overview.description}>
         <Bone className="skeleton-in h-6 w-44 rounded-full" />
       </PageHeader>
 
-      <SkeletonBody label="the overview" className="px-8 py-6">
+      <SkeletonBody label={t.loading.overview} className="px-8 py-6">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[0, 1, 2, 3].map((tile) => (
             <div key={tile} className="rounded-lg border border-line bg-surface p-5">
@@ -30,7 +34,7 @@ export default function OverviewLoading() {
         </div>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <CardSkeleton title="Most urgent now">
+          <CardSkeleton title={t.overview.mostUrgent}>
             <ul className="divide-y divide-line">
               {[0, 1, 2, 3, 4].map((row) => (
                 <li key={row} className="grid grid-cols-[150px_minmax(0,1fr)_auto] items-center gap-4 py-3">
@@ -46,7 +50,7 @@ export default function OverviewLoading() {
           </CardSkeleton>
 
           <div className="space-y-6">
-            <CardSkeleton title="Reported by several people">
+            <CardSkeleton title={t.overview.several}>
               <ul className="divide-y divide-line">
                 {[0, 1, 2].map((row) => (
                   <li key={row} className="flex items-center justify-between gap-3 py-3">
@@ -60,7 +64,7 @@ export default function OverviewLoading() {
               </ul>
             </CardSkeleton>
 
-            <CardSkeleton title="Active reports by type">
+            <CardSkeleton title={t.overview.byType}>
               <div className="space-y-3">
                 {["w-full", "w-4/5", "w-3/5", "w-2/5"].map((width, row) => (
                   <div key={row} className="grid grid-cols-[110px_minmax(0,1fr)] items-center gap-3">

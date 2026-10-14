@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS, MCPS_WEIGHTS, VERIFICATION_LABELS } from "@banabaconnect/shared";
+import { MCPS_WEIGHTS } from "@banabaconnect/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,190 +9,206 @@ import {
   StatusPill,
   VerificationBadge,
 } from "@/components/Badges";
+import { CopyButton } from "@/components/CopyButton";
+import { IncidentReportSheet } from "@/components/IncidentReportSheet";
 import { MapLoader } from "@/components/map/MapLoader";
+import { PrintButton } from "@/components/PrintButton";
 import { StatusUpdateForm } from "@/components/StatusUpdateForm";
 import { getReport, type ReportDetail } from "@/lib/data";
-import { formatDateTime, formatDistance, scoreOutOf100, timeAgo, waitedForSignal } from "@/lib/format";
-import {
-  PRIORITY_BAND_COLORS,
-  STAFF_STATUS_LABELS,
-  parseStatusFilter,
-  priorityBand,
-} from "@/lib/labels";
+import { formatDateTime, scoreOutOf100 } from "@/lib/format";
+import type { Dictionary } from "@/lib/i18n";
+import { getDictionary } from "@/lib/i18n-server";
+import { PRIORITY_BAND_COLORS, parseStatusFilter, priorityBand, reportNumber } from "@/lib/labels";
 import { pageQuery, parsePage } from "@/lib/pagination";
 import { parseSort, sortQuery, type ReportSort } from "@/lib/reportSort";
 
-export const metadata: Metadata = { title: "Report" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getDictionary()).report.title };
+}
 
 /**
  * Back to where the staff member came from: Overview, the map, or the queue with its filter, sort
  * and page. Links into a report carry them as ?from=active&sort=reported&dir=asc&page=2.
  */
-function backLink(from: string | string[] | undefined, sort: ReportSort, page: number) {
+function backLink(from: string | string[] | undefined, sort: ReportSort, page: number, t: Dictionary) {
   if (from === "overview") {
-    return { href: "/", label: "← Back to overview", from: "overview" };
+    return { href: "/", label: t.report.backToOverview, from: "overview" };
   }
   if (from === "map") {
-    return { href: "/map", label: "← Back to map", from: "map" };
+    return { href: "/map", label: t.report.backToMap, from: "map" };
   }
   const filter = parseStatusFilter(from);
   const sorted = `${filter}${sortQuery(sort)}${pageQuery(page)}`;
-  return { href: `/reports?status=${sorted}`, label: "← Back to reports", from: sorted };
+  return { href: `/reports?status=${sorted}`, label: t.report.backToReports, from: sorted };
 }
 
 export default async function ReportPage({ params, searchParams }: PageProps<"/reports/[id]">) {
   const { id } = await params;
   const query = await searchParams;
-  const back = backLink(query.from, parseSort(query.sort, query.dir), parsePage(query.page));
+  const t = await getDictionary();
+  const back = backLink(query.from, parseSort(query.sort, query.dir), parsePage(query.page), t);
   const report = /^[0-9a-f-]{36}$/i.test(id) ? await getReport(id) : null;
   if (!report) {
     notFound();
   }
-  const waited = waitedForSignal(report.createdAt, report.receivedAt);
+  const waited = t.time.waited(report.createdAt, report.receivedAt);
+  const category = t.category[report.category];
 
   return (
-    <div className="px-8 py-6">
-      <Link href={back.href} className="inline-block py-2 text-[15px] font-bold text-brand hover:underline">
-        {back.label}
-      </Link>
-
-      <div className="mt-3 flex flex-wrap items-center gap-4">
-        <PriorityBadge score={report.priority} size="lg" />
-        <div>
-          <h1 className="text-2xl font-bold">{CATEGORY_LABELS[report.category]}</h1>
-          <p className="text-[15px] text-muted">
-            Reported {timeAgo(report.createdAt)} · {formatDateTime(report.createdAt)}
-          </p>
+    <>
+      <div className="px-8 py-6 print:hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link href={back.href} className="inline-block py-2 text-[15px] font-bold text-brand hover:underline">
+            {back.label}
+          </Link>
+          {/* The printout is in English, as an official record. */}
+          <PrintButton documentTitle={`Incident report ${reportNumber(report.id)}`} />
         </div>
-        <StatusPill status={report.status} />
-        {report.outsideBanabaM !== null && <OutsideBanabaTag meters={report.outsideBanabaM} />}
-      </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
-        <div className="space-y-6">
-          <Card title="What the resident saw">
-            {report.photoUrl ? (
-              // A signed, short-lived Supabase link, so next/image optimization isn't used.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={report.photoUrl}
-                alt={`Photo of the ${CATEGORY_LABELS[report.category].toLowerCase()} report`}
-                className="max-h-[480px] w-full rounded-lg bg-page object-contain"
-              />
-            ) : (
-              <p className="rounded-lg bg-page px-4 py-6 text-center text-[15px] text-muted">
-                {report.hasPhoto ? "The photo couldn't be loaded." : "No photo was sent."}
-              </p>
-            )}
-            <p className="mt-4 whitespace-pre-wrap text-base">
-              {report.description || <span className="text-muted">No description.</span>}
+        <div className="mt-3 flex flex-wrap items-center gap-4">
+          <PriorityBadge score={report.priority} size="lg" />
+          <div>
+            <h1 className="text-2xl font-bold">{category}</h1>
+            <p className="text-[15px] text-muted">
+              {t.report.reported(t.time.ago(report.createdAt), formatDateTime(report.createdAt))}
             </p>
-          </Card>
-
-          <Card title="Location">
-            {report.outsideBanabaM !== null && (
-              <p className="mb-4 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-[15px]">
-                <span className="font-bold">
-                  Sent from {formatDistance(report.outsideBanabaM)} outside Barangay Banaba.
-                </span>{" "}
-                It may be for a neighboring barangay. Pass it on to them or the San Mateo MDRRMO, or
-                mark it Invalid if it isn&apos;t a real emergency.
-              </p>
-            )}
-            <MapLoader
-              height="320px"
-              points={[
-                {
-                  id: report.id,
-                  latitude: report.latitude,
-                  longitude: report.longitude,
-                  color: PRIORITY_BAND_COLORS[priorityBand(report.priority)],
-                  title: CATEGORY_LABELS[report.category],
-                  lines: [`${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}`],
-                },
-              ]}
-            />
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
-              <span className="text-muted">
-                {report.latitude.toFixed(5)}, {report.longitude.toFixed(5)}
-                {report.accuracy !== null && ` · accurate to about ${Math.round(report.accuracy)} m`}
-              </span>
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${report.latitude},${report.longitude}`}
-                target="_blank"
-                rel="noreferrer"
-                className="font-bold text-brand hover:underline"
-              >
-                Open in Google Maps
-              </a>
-            </div>
-          </Card>
-
-          <LinkedReports report={report} from={back.from} />
+          </div>
+          <StatusPill status={report.status} />
+          {report.outsideBanabaM !== null && <OutsideBanabaTag meters={report.outsideBanabaM} />}
         </div>
 
-        <div className="space-y-6">
-          <Card title="Update status">
-            <StatusUpdateForm reportId={report.id} current={report.status} />
-          </Card>
-
-          <ScoreBreakdown report={report} />
-
-          <Card title="Reporter">
-            {!report.reporter || report.reporter.isGuest ? (
-              <div className="space-y-1.5">
-                <GuestBadge />
-                <p className="text-[15px] text-muted">
-                  Reported without an account, so there&apos;s no name or number.
-                </p>
-              </div>
-            ) : (
-              <dl className="space-y-2 text-[15px]">
-                <Row label="Name" value={report.reporter.name ?? "No name"} />
-                <Row
-                  label="Mobile"
-                  value={
-                    report.reporter.phone ? (
-                      <a href={`tel:${report.reporter.phone}`} className="font-bold text-brand hover:underline">
-                        {report.reporter.phone}
-                      </a>
-                    ) : (
-                      "Not given"
-                    )
-                  }
+        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
+          <div className="space-y-6">
+            <Card title={t.report.sawTitle}>
+              {report.photoUrl ? (
+                // A signed, short-lived Supabase link, so next/image optimization isn't used.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={report.photoUrl}
+                  alt={t.report.photoAlt(category)}
+                  className="max-h-[480px] w-full rounded-lg bg-page object-contain"
                 />
-                <Row label="Sitio / purok" value={report.reporter.area ?? "Not given"} />
-                <Row label="Address" value={report.reporter.address ?? "Not given"} />
-                <Row label="Status" value={<VerificationBadge status={report.reporter.verification} />} />
-              </dl>
-            )}
-          </Card>
+              ) : (
+                <p className="rounded-lg bg-page px-4 py-6 text-center text-[15px] text-muted">
+                  {report.hasPhoto ? t.report.photoFailed : t.report.noPhoto}
+                </p>
+              )}
+              <p className="mt-4 whitespace-pre-wrap text-base">
+                {report.description || <span className="text-muted">{t.report.noDescription}</span>}
+              </p>
+            </Card>
 
-          <Card title="Timeline">
-            <ol className="space-y-3 text-[15px]">
-              <TimelineItem title="Happened" time={formatDateTime(report.incidentAt)} />
-              <TimelineItem title="Reported on the phone" time={formatDateTime(report.createdAt)} />
-              <TimelineItem
-                title="Reached the barangay"
-                time={formatDateTime(report.receivedAt)}
-                detail={waited ? `Waited ${waited} for signal` : undefined}
-                detailTone="warning"
+            <Card title={t.report.locationTitle}>
+              {report.outsideBanabaM !== null && (
+                <p className="mb-4 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-[15px]">
+                  <span className="font-bold">{t.report.outside(t.time.distance(report.outsideBanabaM))}</span>{" "}
+                  {t.report.outsideAdvice}
+                </p>
+              )}
+              <MapLoader
+                height="320px"
+                points={[
+                  {
+                    id: report.id,
+                    latitude: report.latitude,
+                    longitude: report.longitude,
+                    color: PRIORITY_BAND_COLORS[priorityBand(report.priority)],
+                    title: category,
+                    lines: [`${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}`],
+                  },
+                ]}
               />
-              {report.history
-                .filter((change) => change.from !== null)
-                .map((change) => (
-                  <TimelineItem
-                    key={change.id}
-                    title={`${STAFF_STATUS_LABELS[change.to]} · by ${change.changedBy ?? "staff"}`}
-                    time={formatDateTime(change.changedAt)}
-                    detail={change.note ? `“${change.note}”` : undefined}
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span className="text-muted">
+                  {report.latitude.toFixed(5)}, {report.longitude.toFixed(5)}
+                  {report.accuracy !== null && ` · ${t.report.accurateTo(Math.round(report.accuracy))}`}
+                </span>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${report.latitude},${report.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-bold text-brand hover:underline"
+                >
+                  {t.report.openInMaps}
+                </a>
+              </div>
+            </Card>
+
+            <LinkedReports report={report} from={back.from} t={t} />
+          </div>
+
+          <div className="space-y-6">
+            <Card title={t.report.updateStatusTitle}>
+              <StatusUpdateForm reportId={report.id} current={report.status} />
+            </Card>
+
+            <ScoreBreakdown report={report} t={t} />
+
+            <Card title={t.report.reporterTitle}>
+              {!report.reporter || report.reporter.isGuest ? (
+                <div className="space-y-1.5">
+                  <GuestBadge />
+                  <p className="text-[15px] text-muted">{t.report.guestExplained}</p>
+                </div>
+              ) : (
+                <dl className="space-y-2 text-[15px]">
+                  <Row label={t.report.name} value={report.reporter.name ?? t.common.noName} />
+                  <Row
+                    label={t.report.mobile}
+                    value={
+                      report.reporter.phone ? (
+                        <span className="inline-flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
+                          <a href={`tel:${report.reporter.phone}`} className="font-bold text-brand hover:underline">
+                            {report.reporter.phone}
+                          </a>
+                          <CopyButton text={report.reporter.phone} />
+                        </span>
+                      ) : (
+                        t.common.notGiven
+                      )
+                    }
                   />
-                ))}
-            </ol>
-          </Card>
+                  <Row label={t.report.area} value={report.reporter.area ?? t.common.notGiven} />
+                  <Row label={t.report.address} value={report.reporter.address ?? t.common.notGiven} />
+                  <Row label={t.report.idStatus} value={<VerificationBadge status={report.reporter.verification} />} />
+                </dl>
+              )}
+            </Card>
+
+            <Card title={t.report.timelineTitle}>
+              <ol className="space-y-3 text-[15px]">
+                <TimelineItem title={t.report.happened} time={formatDateTime(report.incidentAt)} />
+                <TimelineItem title={t.report.reportedOnPhone} time={formatDateTime(report.createdAt)} />
+                <TimelineItem
+                  title={t.report.reachedBarangay}
+                  time={formatDateTime(report.receivedAt)}
+                  detail={waited ? t.time.waitedForSignal(waited) : undefined}
+                  detailTone="warning"
+                />
+                {report.history
+                  .filter((change) => change.from !== null)
+                  .map((change) => (
+                    <TimelineItem
+                      key={change.id}
+                      title={t.report.changedBy(
+                        t.status[change.to],
+                        change.byStaff ? (change.changedBy ?? t.common.barangayStaff) : t.common.reporter,
+                      )}
+                      time={formatDateTime(change.changedAt)}
+                      detail={change.note ? `“${change.note}”` : undefined}
+                    />
+                  ))}
+              </ol>
+            </Card>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* What prints instead of the page above: the report as a paper document. */}
+      <div className="hidden print:block">
+        <IncidentReportSheet report={report} asOf={new Date().toISOString()} />
+      </div>
+    </>
   );
 }
 
@@ -200,32 +216,31 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
  * Volume counts different people, not reports, and leaves out reports marked Invalid
  * (supabase/migrations/20261016000000_volume_counts_people.sql). Say so when the two differ.
  */
-function volumeReason(people: number, reports: number): string {
-  const who = people === 1 ? "1 person has" : `${people} people have`;
-  if (people <= 1 && reports <= 1) return "Only report of this incident so far";
-  if (people === reports) return `${who} reported this incident`;
-  return `${who} reported this incident · ${reports} reports, but repeats from one person and Invalid reports don't add`;
+function volumeReason(people: number, reports: number, t: Dictionary): string {
+  if (people <= 1 && reports <= 1) return t.report.onlyReport;
+  if (people === reports) return t.report.peopleReported(people);
+  return `${t.report.peopleReported(people)} · ${t.report.repeats(reports)}`;
 }
 
-function ScoreBreakdown({ report }: { report: ReportDetail }) {
+/** How the priority adds up, in points: what each part earned, out of the most it can give. */
+function ScoreBreakdown({ report, t }: { report: ReportDetail; t: Dictionary }) {
   const reporter = report.reporter;
-  const credibilityReason =
-    !reporter || reporter.isGuest ? "Guest reporter" : VERIFICATION_LABELS[reporter.verification];
+  const credibilityReason = !reporter || reporter.isGuest ? t.common.guestReporter : t.verification[reporter.verification];
   const parts = [
     {
-      label: "Seriousness",
-      reason: CATEGORY_LABELS[report.category],
+      label: t.report.seriousness,
+      reason: t.category[report.category],
       value: report.severity,
       weight: MCPS_WEIGHTS.severity,
     },
     {
-      label: "Nearby reports",
-      reason: volumeReason(report.clusterPeople, report.clusterCount),
+      label: t.report.nearbyReports,
+      reason: volumeReason(report.clusterPeople, report.clusterCount, t),
       value: report.volume,
       weight: MCPS_WEIGHTS.volume,
     },
     {
-      label: "Reporter",
+      label: t.report.reporterPart,
       reason: credibilityReason,
       value: report.credibility,
       weight: MCPS_WEIGHTS.credibility,
@@ -233,7 +248,7 @@ function ScoreBreakdown({ report }: { report: ReportDetail }) {
   ];
 
   return (
-    <Card title="Why this priority">
+    <Card title={t.report.whyTitle}>
       <ul className="space-y-3">
         {parts.map((part) => {
           const contribution = (part.value ?? 0) * part.weight;
@@ -251,30 +266,26 @@ function ScoreBreakdown({ report }: { report: ReportDetail }) {
                   style={{ width: `${Math.round((part.value ?? 0) * 100)}%` }}
                 />
               </div>
-              <p className="mt-1 text-[13px] text-muted">
-                {Math.round(part.weight * 100)}% of the score × {scoreOutOf100(part.value)}/100
-              </p>
+              <p className="mt-1 text-[13px] text-muted">{t.report.upTo(Math.round(part.weight * 100))}</p>
             </li>
           );
         })}
       </ul>
       <div className="mt-4 flex items-center justify-between border-t border-line pt-3 text-base font-bold">
-        <span>Priority</span>
+        <span>{t.report.priorityTotal}</span>
         <span className="tabular-nums">{scoreOutOf100(report.priority)} / 100</span>
       </div>
     </Card>
   );
 }
 
-function LinkedReports({ report, from }: { report: ReportDetail; from: string }) {
+function LinkedReports({ report, from, t }: { report: ReportDetail; from: string; t: Dictionary }) {
   if (report.linked.length === 0) {
     return null;
   }
   return (
-    <Card title={`Linked reports (${report.linked.length})`}>
-      <p className="mb-3 text-sm text-muted">
-        Same kind of incident reported within 150 m and 2 hours. They count as one incident.
-      </p>
+    <Card title={t.report.linkedTitle(report.linked.length)}>
+      <p className="mb-3 text-sm text-muted">{t.report.linkedExplained}</p>
       <ul className="divide-y divide-line">
         {report.linked.map((linked) => (
           <li key={linked.id}>
@@ -284,10 +295,10 @@ function LinkedReports({ report, from }: { report: ReportDetail; from: string })
             >
               <span className="min-w-0">
                 <span className="block text-[15px] font-bold">
-                  {linked.reporter?.isGuest ? "Guest reporter" : linked.reporter?.name ?? "Resident"}
+                  {linked.reporter?.isGuest ? t.common.guestReporter : (linked.reporter?.name ?? t.common.resident)}
                 </span>
                 <span className="block truncate text-sm text-muted">
-                  {timeAgo(linked.createdAt)} · {linked.description || "No description"}
+                  {t.time.ago(linked.createdAt)} · {linked.description || t.common.noDescription}
                 </span>
               </span>
               <StatusPill status={linked.status} />

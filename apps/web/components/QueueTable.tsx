@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReportStatus, VerificationStatus } from "@banabaconnect/shared";
+import type { ReportCategory, ReportStatus, VerificationStatus } from "@banabaconnect/shared";
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import {
@@ -10,21 +10,15 @@ import {
   StatusPill,
   VerificationBadge,
 } from "@/components/Badges";
+import { useDictionary } from "@/components/I18nProvider";
 import { LiveIndicator, useLiveReports } from "@/components/LiveUpdates";
 import { Pagination } from "@/components/Pagination";
-import { groupedReportsHint, otherReportsLabel, type StatusFilter } from "@/lib/labels";
+import type { StatusFilter } from "@/lib/labels";
 import { pageQuery } from "@/lib/pagination";
 import { QUEUE_COLUMNS, QUEUE_DETAILS } from "@/lib/queueLayout";
-import {
-  describeSort,
-  isDefaultSort,
-  nextSort,
-  sortQuery,
-  type ReportSort,
-  type SortKey,
-} from "@/lib/reportSort";
+import { isDefaultSort, nextSort, sortQuery, type ReportSort, type SortKey } from "@/lib/reportSort";
 
-/** A queue row, with times already formatted on the server (in Philippine time). */
+/** A queue row, with its words and times already in the staff member's language (from the server). */
 export interface QueueRow {
   id: string;
   categoryLabel: string;
@@ -53,13 +47,7 @@ const COLUMNS = QUEUE_COLUMNS;
 
 // "Nearby" is shown inside the report cell rather than as its own column (it squeezed the report
 // text); priority already counts nearby reports. Old ?sort=nearby links still work.
-const SORT_COLUMNS: { key: SortKey; label: string }[] = [
-  { key: "priority", label: "Priority" },
-  { key: "report", label: "Report" },
-  { key: "reporter", label: "Reporter" },
-  { key: "reported", label: "Reported" },
-  { key: "status", label: "Status" },
-];
+const SORT_COLUMNS: SortKey[] = ["priority", "report", "reporter", "reported", "status"];
 
 export function QueueTable({
   rows,
@@ -84,6 +72,7 @@ export function QueueTable({
   /** How the rows are already sorted (the page sorts them; the headers change it). */
   sort: ReportSort;
 }) {
+  const t = useDictionary();
   // "Back to reports" on a report returns to this filter, sort and page.
   const backTo = `${filter}${sortQuery(sort)}${pageQuery(page)}`;
   const [fresh, setFresh] = useState<ReadonlySet<string>>(new Set());
@@ -94,12 +83,12 @@ export function QueueTable({
   const isInUse = useCallback(() => inUse.current.pointer || inUse.current.focus, []);
 
   const handleNewReport = useCallback(
-    (id: string, label: string) => {
+    (id: string, category: ReportCategory | null) => {
       setFresh((current) => new Set(current).add(id));
       if (isInUse()) {
         setHeldNewReports((count) => count + 1);
       }
-      const message = `New report: ${label}`;
+      const message = t.queue.newReport(category ? t.category[category] : t.report.title);
       setToast(message);
       setTimeout(() => setToast((current) => (current === message ? null : current)), TOAST_MS);
       setTimeout(() => {
@@ -110,7 +99,7 @@ export function QueueTable({
         });
       }, HIGHLIGHT_MS);
     },
-    [isInUse],
+    [isInUse, t],
   );
 
   const { connected, held, applyUpdates } = useLiveReports({
@@ -137,13 +126,9 @@ export function QueueTable({
         <div className="space-y-1">
           <p className="text-[15px]">
             <span className="font-bold">
-              {total !== undefined
-                ? `${count} of ${total.toLocaleString("en-PH")} reports`
-                : count === 1
-                  ? "1 report"
-                  : `${count} reports`}
+              {total !== undefined ? t.queue.countOf(count, total.toLocaleString("en-PH")) : t.queue.count(count)}
             </span>
-            <span className="text-muted"> · {describeSort(sort)}</span>
+            <span className="text-muted"> · {t.sort.describe[sort.key][sort.dir]}</span>
             {!isDefaultSort(sort) && (
               <>
                 {" · "}
@@ -152,16 +137,17 @@ export function QueueTable({
                   scroll={false}
                   className="font-bold text-brand hover:underline"
                 >
-                  Reset to highest priority first
+                  {t.queue.resetSort}
                 </Link>
               </>
             )}
           </p>
           <p className="text-sm text-muted">
-            Priority = 50% seriousness + 30% nearby reports + 20% verified reporter.
-            {total !== undefined && ` Only the ${count} highest-priority reports are listed.`}
+            {/* What priority means, in words; each report's page shows its own breakdown. */}
+            {t.queue.priorityExplained}
+            {total !== undefined && ` ${t.queue.cutShort(count)}`}
             {/* The column names only show on wide screens. */}
-            <span className="hidden xl:inline"> Click a column name to sort.</span>
+            <span className="hidden xl:inline"> {t.queue.clickToSort}</span>
           </p>
         </div>
         <LiveIndicator connected={connected} />
@@ -178,17 +164,15 @@ export function QueueTable({
       {held && (
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-sun bg-sun-soft px-4 py-3">
           <p className="text-[15px] font-semibold">
-            {heldNewReports > 0
-              ? `${heldNewReports === 1 ? "1 new report" : `${heldNewReports} new reports`} and other changes are waiting.`
-              : "Reports changed while you were reading."}{" "}
-            <span className="font-normal text-muted">The list updates when you move away from it.</span>
+            {heldNewReports > 0 ? t.queue.heldNew(heldNewReports) : t.queue.heldChanged}{" "}
+            <span className="font-normal text-muted">{t.queue.heldHint}</span>
           </p>
           <button
             type="button"
             onClick={showUpdates}
             className="rounded-md bg-brand px-4 py-2.5 text-[15px] font-bold text-white hover:bg-brand-dark"
           >
-            Update list now
+            {t.queue.updateNow}
           </button>
         </div>
       )}
@@ -196,7 +180,7 @@ export function QueueTable({
       {rows.length === 0 ? (
         <div className="rounded-lg border border-dashed border-line bg-surface px-6 py-16 text-center">
           <p className="text-lg font-bold">{emptyMessage}</p>
-          <p className="mt-1 text-[15px] text-muted">New reports appear here automatically.</p>
+          <p className="mt-1 text-[15px] text-muted">{t.reports.emptyHint}</p>
         </div>
       ) : (
         <div
@@ -219,11 +203,11 @@ export function QueueTable({
           }}
         >
           <nav
-            aria-label="Sort reports"
+            aria-label={t.sort.nav}
             className={`hidden border-b border-line bg-page px-5 py-2 text-xs font-bold uppercase tracking-wide text-muted xl:grid ${COLUMNS}`}
           >
             {SORT_COLUMNS.map((column) => (
-              <SortHeader key={column.key} column={column} current={sort} filter={filter} />
+              <SortHeader key={column} column={column} current={sort} filter={filter} />
             ))}
           </nav>
           <ul className="divide-y divide-line">
@@ -243,13 +227,15 @@ export function QueueTable({
                     <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-base font-bold leading-6">
                       {row.categoryLabel}
                       {fresh.has(row.id) && (
-                        <span className="rounded-full bg-urgent px-2 py-0.5 text-xs font-bold text-white">NEW</span>
+                        <span className="rounded-full bg-urgent px-2 py-0.5 text-xs font-bold text-white">
+                          {t.queue.newTag}
+                        </span>
                       )}
                       {row.outsideBanabaM !== null && <OutsideBanabaTag meters={row.outsideBanabaM} />}
                       {row.clusterCount > 1 && (
-                        <Chip title={groupedReportsHint(row.clusterPeople)}>{otherReportsLabel(row.clusterCount)}</Chip>
+                        <Chip title={t.nearby.hint(row.clusterPeople)}>{t.nearby.others(row.clusterCount)}</Chip>
                       )}
-                      {row.hasPhoto && <Chip>Photo</Chip>}
+                      {row.hasPhoto && <Chip>{t.queue.photo}</Chip>}
                     </p>
                     <p
                       title={row.description || undefined}
@@ -257,14 +243,14 @@ export function QueueTable({
                         row.description ? "text-ink/85" : "text-muted italic"
                       }`}
                     >
-                      {row.description || "No description"}
+                      {row.description || t.common.noDescription}
                     </p>
                   </div>
 
                   <div className={QUEUE_DETAILS}>
                     <div className="w-56 min-w-0">
                       <p className="truncate text-[15px] font-semibold leading-6">
-                        {row.reporterIsGuest ? "Guest reporter" : (row.reporterName ?? "Resident")}
+                        {row.reporterIsGuest ? t.common.guestReporter : (row.reporterName ?? t.common.resident)}
                       </p>
                       <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
                         {row.reporterIsGuest ? (
@@ -282,7 +268,7 @@ export function QueueTable({
                       <p className="text-[15px] font-semibold leading-6">{row.reportedAgo}</p>
                       <p className="text-[13px] text-muted">{row.reportedAt}</p>
                       {row.waited && (
-                        <p className="text-[13px] font-semibold text-warning">Waited {row.waited} for signal</p>
+                        <p className="text-[13px] font-semibold text-warning">{t.time.waitedForSignal(row.waited)}</p>
                       )}
                     </div>
 
@@ -297,8 +283,8 @@ export function QueueTable({
           <Pagination
             page={page}
             total={count}
-            noun="reports"
-            hrefFor={(target) => `/reports?status=${filter}${sortQuery(sort)}${pageQuery(target)}`}
+            list="reports"
+            baseHref={`/reports?status=${filter}${sortQuery(sort)}`}
             anchor="reports-list"
             className="border-t border-line bg-page px-5 py-3"
           />
@@ -329,27 +315,29 @@ function SortHeader({
   current,
   filter,
 }: {
-  column: { key: SortKey; label: string };
+  column: SortKey;
   current: ReportSort;
   filter: StatusFilter;
 }) {
-  const active = current.key === column.key;
-  const next = nextSort(current, column.key);
+  const t = useDictionary();
+  const active = current.key === column;
+  const next = nextSort(current, column);
+  const nextOrder = t.sort.describe[next.key][next.dir];
   return (
     <Link
       href={`/reports?status=${filter}${sortQuery(next)}`}
       scroll={false}
       aria-current={active ? "true" : undefined}
-      title={`Sort: ${describeSort(next)}`}
+      title={t.sort.title(nextOrder)}
       className={`-mx-1.5 inline-flex w-fit items-center gap-1 rounded-md px-1.5 py-1 uppercase hover:bg-surface hover:text-brand ${
         active ? "text-brand" : ""
       }`}
     >
-      {column.label}
+      {t.sort.columns[column]}
       <SortArrow direction={active ? current.dir : null} />
       <span className="sr-only">
-        {active ? `, sorted: ${describeSort(current)}. ` : ". "}
-        Sort {describeSort(next).toLowerCase()}
+        {active ? t.sort.current(t.sort.describe[current.key][current.dir]) : ". "}
+        {t.sort.action(nextOrder)}
       </span>
     </Link>
   );

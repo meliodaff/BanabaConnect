@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS, REPORT_CATEGORIES } from "@banabaconnect/shared";
+import { REPORT_CATEGORIES } from "@banabaconnect/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { OutsideBanabaTag, PriorityBadge, StatusPill } from "@/components/Badges";
@@ -12,17 +12,23 @@ import {
   listReports,
   type ReportSummary,
 } from "@/lib/data";
-import { startOfTodayInManila, timeAgo, timeSince } from "@/lib/format";
-import { otherReportsLabel, priorityBand } from "@/lib/labels";
+import { startOfTodayInManila } from "@/lib/format";
+import type { Dictionary } from "@/lib/i18n";
+import { getDictionary } from "@/lib/i18n-server";
+import { priorityBand } from "@/lib/labels";
 import { DEFAULT_SORT, sortReports } from "@/lib/reportSort";
 
-export const metadata: Metadata = { title: "Overview" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getDictionary()).overview.title };
+}
 
 const MOST_URGENT = 5;
 const MULTI_REPORT_INCIDENTS = 5;
 
-function reporterLabel(report: ReportSummary) {
-  return !report.reporter || report.reporter.isGuest ? "Guest reporter" : (report.reporter.name ?? "Resident");
+function reporterLabel(report: ReportSummary, t: Dictionary) {
+  return !report.reporter || report.reporter.isGuest
+    ? t.common.guestReporter
+    : (report.reporter.name ?? t.common.resident);
 }
 
 /** Incidents more than one person reported, biggest first, each shown by its most urgent report. */
@@ -41,10 +47,11 @@ function multiReportIncidents(active: ReportSummary[]) {
 }
 
 export default async function OverviewPage() {
-  const [active, pendingIds, today] = await Promise.all([
+  const [active, pendingIds, today, t] = await Promise.all([
     listReports(["received", "in_progress"]),
     countPendingVerifications(),
     countReportsSince(startOfTodayInManila()),
+    getDictionary(),
   ]);
 
   // "Urgent" = Critical or High priority that nobody has started on yet.
@@ -60,7 +67,7 @@ export default async function OverviewPage() {
   const mostUrgent = sortReports(active, DEFAULT_SORT).slice(0, MOST_URGENT);
   const incidents = multiReportIncidents(active);
   const byType = REPORT_CATEGORIES.map((category) => ({
-    label: CATEGORY_LABELS[category],
+    label: t.category[category],
     value: active.filter((r) => r.category === category).length,
   }))
     .filter((row) => row.value > 0)
@@ -68,45 +75,43 @@ export default async function OverviewPage() {
 
   return (
     <>
-      <PageHeader title="Overview" description="Barangay Banaba right now. This page updates by itself.">
+      <PageHeader title={t.overview.title} description={t.overview.description}>
         <LiveRefresh />
       </PageHeader>
 
       <div className="space-y-6 px-8 py-6">
-        <section aria-label="Work waiting" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section aria-label={t.overview.workWaiting} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatTile
-            label="Urgent, not yet handled"
+            label={t.overview.urgent}
             value={urgentWaiting.length}
             detail={
-              oldestUrgent
-                ? `Oldest has waited ${timeSince(oldestUrgent.receivedAt)}`
-                : "Critical or High reports still marked Received"
+              oldestUrgent ? t.overview.urgentOldest(t.time.since(oldestUrgent.receivedAt)) : t.overview.urgentNone
             }
             href="/reports?status=active"
-            action="Open the queue"
+            action={t.overview.openQueue}
             accent={urgentWaiting.length > 0 ? "urgent" : "none"}
           />
           <StatTile
-            label="Being handled"
+            label={t.overview.handling}
             value={inProgress}
-            detail="Reports marked In progress"
+            detail={t.overview.handlingDetail}
             href="/reports?status=active"
-            action="See active reports"
+            action={t.overview.seeActive}
           />
           <StatTile
-            label="Barangay IDs to review"
+            label={t.overview.ids}
             value={pendingIds}
-            detail="Residents waiting for verification"
+            detail={t.overview.idsDetail}
             href="/residents"
-            action="Review IDs"
+            action={t.overview.reviewIds}
             accent={pendingIds > 0 ? "waiting" : "none"}
           />
           <StatTile
-            label="Reports today"
+            label={t.overview.today}
             value={today.received}
-            detail={`${today.resolved} resolved · since midnight`}
+            detail={t.overview.todayDetail(today.resolved)}
             href="/reports?status=all"
-            action="See all reports"
+            action={t.overview.seeAll}
           />
         </section>
 
@@ -114,16 +119,14 @@ export default async function OverviewPage() {
           <section className="rounded-lg border border-line bg-surface p-5" aria-labelledby="most-urgent">
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <h2 id="most-urgent" className="text-base font-bold">
-                Most urgent now
+                {t.overview.mostUrgent}
               </h2>
               <Link href="/reports?status=active" className="text-sm font-bold text-brand hover:underline">
-                See all active reports →
+                {t.overview.seeAllActive}
               </Link>
             </div>
             {mostUrgent.length === 0 ? (
-              <p className="py-10 text-center text-[15px] text-muted">
-                No active reports right now. New reports appear here automatically.
-              </p>
+              <p className="py-10 text-center text-[15px] text-muted">{t.overview.noActive}</p>
             ) : (
               <ul className="divide-y divide-line">
                 {mostUrgent.map((report) => (
@@ -135,14 +138,14 @@ export default async function OverviewPage() {
                       <PriorityBadge score={report.priority} />
                       <span className="min-w-0">
                         <span className="flex flex-wrap items-center gap-2 text-base font-bold">
-                          {CATEGORY_LABELS[report.category]}
+                          {t.category[report.category]}
                           {report.outsideBanabaM !== null && (
                             <OutsideBanabaTag meters={report.outsideBanabaM} />
                           )}
                         </span>
                         <span className="block truncate text-sm text-muted">
-                          {reporterLabel(report)} · {timeAgo(report.createdAt)}
-                          {report.clusterCount > 1 && ` · ${otherReportsLabel(report.clusterCount)}`}
+                          {reporterLabel(report, t)} · {t.time.ago(report.createdAt)}
+                          {report.clusterCount > 1 && ` · ${t.nearby.others(report.clusterCount)}`}
                         </span>
                       </span>
                       <StatusPill status={report.status} />
@@ -156,11 +159,11 @@ export default async function OverviewPage() {
           <div className="space-y-6">
             <section className="rounded-lg border border-line bg-surface p-5" aria-labelledby="several">
               <h2 id="several" className="text-base font-bold">
-                Reported by several people
+                {t.overview.several}
               </h2>
-              <p className="mb-3 text-sm text-muted">Same kind of incident within 150 m and 2 hours.</p>
+              <p className="mb-3 text-sm text-muted">{t.overview.severalHint}</p>
               {incidents.length === 0 ? (
-                <p className="py-4 text-[15px] text-muted">No active incident has more than one report.</p>
+                <p className="py-4 text-[15px] text-muted">{t.overview.severalNone}</p>
               ) : (
                 <ul className="divide-y divide-line">
                   {incidents.map((report) => (
@@ -171,9 +174,11 @@ export default async function OverviewPage() {
                       >
                         <span className="min-w-0">
                           <span className="block text-[15px] font-bold">
-                            {CATEGORY_LABELS[report.category]} · {report.clusterCount} reports
+                            {t.overview.severalLine(t.category[report.category], report.clusterCount)}
                           </span>
-                          <span className="block text-sm text-muted">Most urgent one reported {timeAgo(report.createdAt)}</span>
+                          <span className="block text-sm text-muted">
+                            {t.overview.mostUrgentOne(t.time.ago(report.createdAt))}
+                          </span>
                         </span>
                         <StatusPill status={report.status} />
                       </Link>
@@ -185,13 +190,13 @@ export default async function OverviewPage() {
 
             <section className="rounded-lg border border-line bg-surface p-5" aria-labelledby="by-type">
               <h2 id="by-type" className="text-base font-bold">
-                Active reports by type
+                {t.overview.byType}
               </h2>
-              <p className="mb-4 text-sm text-muted">Received and In progress.</p>
+              <p className="mb-4 text-sm text-muted">{t.overview.byTypeHint}</p>
               {byType.length === 0 ? (
-                <p className="py-4 text-[15px] text-muted">No active reports.</p>
+                <p className="py-4 text-[15px] text-muted">{t.overview.byTypeNone}</p>
               ) : (
-                <BarList label="Active reports by type" rows={byType} />
+                <BarList label={t.overview.byType} rows={byType} />
               )}
             </section>
           </div>

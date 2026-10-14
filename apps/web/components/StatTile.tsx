@@ -1,19 +1,17 @@
 import Link from "next/link";
+import { getDictionary } from "@/lib/i18n-server";
 
 /**
  * A small dot before the label marks a tile that needs attention (no colored edge: a left-border
  * accent is a generated-UI tell). Red = urgent, blue = work waiting that isn't urgent.
  */
-const ATTENTION = {
-  urgent: { dot: "bg-urgent", text: "Needs action now" },
-  waiting: { dot: "bg-brand", text: "Waiting for staff" },
-} as const;
+const ATTENTION_DOT = { urgent: "bg-urgent", waiting: "bg-brand" } as const;
 
 /**
  * One number staff act on, linking to where they act on it. No trends or sparklines: the
  * dashboard only shows numbers that come straight from the database.
  */
-export function StatTile({
+export async function StatTile({
   label,
   value,
   detail,
@@ -27,9 +25,10 @@ export function StatTile({
   href: string;
   /** Where the tile goes, e.g. "Open the queue". */
   action: string;
-  accent?: keyof typeof ATTENTION | "none";
+  accent?: keyof typeof ATTENTION_DOT | "none";
 }) {
-  const attention = accent === "none" ? null : ATTENTION[accent];
+  const t = await getDictionary();
+  const attention = accent === "none" ? null : { dot: ATTENTION_DOT[accent], text: t.stat[accent] };
   return (
     <Link
       href={href}

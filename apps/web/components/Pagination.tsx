@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { PAGE_SIZE, pageCount } from "@/lib/pagination";
+import { useDictionary } from "@/components/I18nProvider";
+import { PAGE_SIZE, pageCount, pageQuery } from "@/lib/pagination";
 
 const BUTTON = "inline-flex h-9 items-center rounded-md border px-3 text-sm font-bold transition";
 const IDLE = "border-line bg-surface text-ink hover:border-brand hover:text-brand";
@@ -13,8 +16,8 @@ const IDLE = "border-line bg-surface text-ink hover:border-brand hover:text-bran
 export function Pagination({
   page,
   total,
-  noun,
-  hrefFor,
+  list,
+  baseHref,
   anchor,
   className = "",
 }: {
@@ -22,32 +25,34 @@ export function Pagination({
   page: number;
   /** How many rows the whole list has. */
   total: number;
-  /** What the list shows, in the plural, e.g. "reports". */
-  noun: string;
-  /** The list's URL for a page (without the anchor). */
-  hrefFor: (page: number) => string;
+  /** Which list it is, for its words ("reports", "Pages of reports"). */
+  list: "reports" | "residents";
+  /** The list's URL on its first page, with its filters, e.g. "/residents?show=pending". */
+  baseHref: string;
   /** The id at the top of the list. */
   anchor: string;
   className?: string;
 }) {
+  const t = useDictionary();
   const pages = pageCount(total);
   if (pages <= 1) return null;
+  const words = t.pagination[list];
   const first = (page - 1) * PAGE_SIZE + 1;
   const last = Math.min(page * PAGE_SIZE, total);
-  const href = (target: number) => `${hrefFor(target)}#${anchor}`;
+  const href = (target: number) => `${baseHref}${pageQuery(target)}#${anchor}`;
 
   return (
-    <nav aria-label={`Pages of ${noun}`} className={`flex flex-wrap items-center justify-between gap-3 ${className}`}>
+    <nav aria-label={words.navLabel} className={`flex flex-wrap items-center justify-between gap-3 ${className}`}>
       <p className="text-sm text-muted">
-        Showing{" "}
+        {t.pagination.showing}{" "}
         <span className="font-bold text-ink">
           {first}–{last}
         </span>{" "}
-        of {total.toLocaleString("en-PH")} {noun}
+        {t.pagination.of} {total.toLocaleString("en-PH")} {words.noun}
       </p>
       <ul className="flex flex-wrap items-center gap-1.5">
         <li>
-          <StepLink href={page > 1 ? href(page - 1) : null}>← Previous</StepLink>
+          <StepLink href={page > 1 ? href(page - 1) : null}>{t.pagination.previous}</StepLink>
         </li>
         {pageList(page, pages).map((item, index) =>
           item === "gap" ? (
@@ -58,7 +63,7 @@ export function Pagination({
             <li key={item}>
               <Link
                 href={href(item)}
-                aria-label={`Page ${item}`}
+                aria-label={t.pagination.page(item)}
                 aria-current={item === page ? "page" : undefined}
                 className={`${BUTTON} min-w-9 justify-center tabular-nums ${
                   item === page ? "border-brand bg-brand text-white" : IDLE
@@ -70,7 +75,7 @@ export function Pagination({
           ),
         )}
         <li>
-          <StepLink href={page < pages ? href(page + 1) : null}>Next →</StepLink>
+          <StepLink href={page < pages ? href(page + 1) : null}>{t.pagination.next}</StepLink>
         </li>
       </ul>
     </nav>

@@ -1,3 +1,6 @@
+"use client";
+
+import { useDictionary } from "@/components/I18nProvider";
 import {
   Bone,
   CardSkeleton,
@@ -10,8 +13,9 @@ import {
  * left; status, priority, reporter and timeline on the right. The card titles are real.
  */
 export default function ReportLoading() {
+  const t = useDictionary();
   return (
-    <SkeletonBody label="the report" className="px-8 py-6">
+    <SkeletonBody label={t.loading.report} className="px-8 py-6">
       <Bone className="my-2 h-5 w-36" />
 
       <div className="mt-3 flex flex-wrap items-center gap-4">
@@ -25,13 +29,13 @@ export default function ReportLoading() {
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
         <div className="space-y-6">
-          <CardSkeleton title="What the resident saw">
+          <CardSkeleton title={t.report.sawTitle}>
             <Bone className="h-72 w-full rounded-lg" />
             <Bone className="mt-4 h-4 w-full" />
             <Bone className="mt-2 h-4 w-2/3" />
           </CardSkeleton>
 
-          <CardSkeleton title="Location">
+          <CardSkeleton title={t.report.locationTitle}>
             <Bone className="h-80 w-full rounded-lg" />
             <div className="mt-3 flex justify-between gap-2">
               <Bone className="h-4 w-56" />
@@ -41,7 +45,7 @@ export default function ReportLoading() {
         </div>
 
         <div className="space-y-6">
-          <CardSkeleton title="Update status">
+          <CardSkeleton title={t.report.updateStatusTitle}>
             <div className="flex flex-wrap gap-2">
               {[0, 1, 2, 3].map((option) => (
                 <Bone key={option} className="h-10 w-24" />
@@ -51,7 +55,7 @@ export default function ReportLoading() {
             <Bone className="mt-3 h-11 w-36" />
           </CardSkeleton>
 
-          <CardSkeleton title="Why this priority">
+          <CardSkeleton title={t.report.whyTitle}>
             <div className="space-y-4">
               {[0, 1, 2].map((part) => (
                 <div key={part}>
@@ -65,7 +69,7 @@ export default function ReportLoading() {
             </div>
           </CardSkeleton>
 
-          <CardSkeleton title="Reporter">
+          <CardSkeleton title={t.report.reporterTitle}>
             <div className="space-y-2.5">
               {[0, 1, 2, 3].map((row) => (
                 <div key={row} className="grid grid-cols-[110px_minmax(0,1fr)] gap-3">
@@ -76,7 +80,7 @@ export default function ReportLoading() {
             </div>
           </CardSkeleton>
 
-          <CardSkeleton title="Timeline">
+          <CardSkeleton title={t.report.timelineTitle}>
             <div className="space-y-3">
               {[0, 1, 2].map((item) => (
                 <div key={item}>

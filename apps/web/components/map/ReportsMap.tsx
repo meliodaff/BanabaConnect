@@ -13,7 +13,9 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BANABA_BOUNDARY, BANABA_BOUNDS, isInsideBanaba } from "@banabaconnect/shared";
-import { PRIORITY_BAND_COLORS } from "@/lib/labels";
+import { useDictionary } from "@/components/I18nProvider";
+import type { Dictionary } from "@/lib/i18n";
+import { PRIORITY_BAND_COLORS, type PriorityBand } from "@/lib/labels";
 
 // Served from public/maplibre by scripts/copy-maplibre-worker.mjs.
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
@@ -74,8 +76,8 @@ const PASSIVE_CARD = "map-card-passive";
 
 /** How long a hover card stays after the mouse leaves, so staff can move onto it. */
 const HOVER_LINGER_MS = 250;
-/** Group hover card wording; rank 3 is the most urgent. */
-const RANK_LABELS = ["Low", "Medium", "High", "Critical"];
+/** The priority level of each rank in a group's hover card; rank 3 is the most urgent. */
+const RANK_BANDS: PriorityBand[] = ["low", "medium", "high", "critical"];
 
 /** Changes only when what's drawn changes, so live refreshes don't reset the groups mid-click. */
 function pointsKey(points: MapPoint[]) {
@@ -191,6 +193,9 @@ export default function ReportsMap({
   focus?: "banaba" | "points";
 }) {
   const router = useRouter();
+  const t = useDictionary();
+  // The map's cards are built in handlers set up once, so they read the words through a ref.
+  const wordsRef = useRef(t);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const pointsRef = useRef(points);
@@ -200,6 +205,7 @@ export default function ReportsMap({
 
   useEffect(() => {
     pointsRef.current = points;
+    wordsRef.current = t;
   });
 
   // Create the map once.
@@ -430,7 +436,7 @@ export default function ReportsMap({
           `pin:${point.id}`,
           at,
           PIN_EDGE,
-          popupContent(point, (href) => router.push(href)),
+          popupContent(point, (href) => router.push(href), wordsRef.current),
         );
       });
       map.on("mousemove", "report-groups", (event) => {
@@ -443,7 +449,7 @@ export default function ReportsMap({
           `group:${properties.cluster_id}`,
           feature.geometry.coordinates as [number, number],
           groupEdge(count),
-          groupContent(count, Number(properties.maxRank)),
+          groupContent(count, Number(properties.maxRank), wordsRef.current),
         );
       });
       map.on("mouseleave", "reports", hideHover);
@@ -460,7 +466,7 @@ export default function ReportsMap({
         closeHover();
         new Popup({ offset: PIN_EDGE + CARD_GAP, maxWidth: "260px" })
           .setLngLat(at)
-          .setDOMContent(popupContent(point, (href) => router.push(href)))
+          .setDOMContent(popupContent(point, (href) => router.push(href), wordsRef.current))
           .addTo(map);
       });
 
@@ -522,8 +528,7 @@ export default function ReportsMap({
         className="flex items-center justify-center rounded-lg border border-line bg-surface p-6 text-center text-[15px] text-muted"
         style={{ height }}
       >
-        This computer can&apos;t show the map (its browser doesn&apos;t support WebGL). Every report is
-        still listed under Reports.
+        {t.map.noWebgl}
       </div>
     );
   }
@@ -535,7 +540,7 @@ export default function ReportsMap({
           ref={containerRef}
           className="h-full w-full"
           role="region"
-          aria-label="Map of Barangay Banaba with report locations"
+          aria-label={t.map.regionLabel}
         />
         {focus === "banaba" && (
           <div className="absolute left-3 top-3 z-10 flex flex-col gap-2">
@@ -550,10 +555,10 @@ export default function ReportsMap({
               type="button"
               onClick={showAll}
               disabled={points.length === 0}
-              title={points.length === 0 ? "No reports to show" : undefined}
+              title={points.length === 0 ? t.map.noReports : undefined}
               className="rounded-md border border-line bg-surface px-3 py-2 text-sm font-bold text-ink shadow-sm hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Show all reports
+              {t.map.showAll}
             </button>
           </div>
         )}
@@ -561,9 +566,9 @@ export default function ReportsMap({
 
       {outside > 0 && (
         <p className="mt-3 text-[15px] text-muted">
-          {outside === 1 ? "1 report is" : `${outside} reports are`} outside Barangay Banaba.{" "}
+          {t.map.outsideCount(outside)}{" "}
           <button type="button" onClick={showAll} className="font-bold text-brand underline">
-            Show all reports
+            {t.map.showAll}
           </button>
         </p>
       )}
@@ -581,24 +586,24 @@ function supportsWebGL(): boolean {
 }
 
 /** Hover card for a group of pins: how many, the most urgent, and what a click does. */
-function groupContent(count: number, maxRank: number): HTMLElement {
+function groupContent(count: number, maxRank: number, t: Dictionary): HTMLElement {
   const root = document.createElement("div");
   root.className = "space-y-0.5";
   const title = document.createElement("p");
   title.className = "text-[15px] font-bold text-ink";
-  title.textContent = `${count} reports here`;
+  title.textContent = t.map.groupCount(count);
   const urgent = document.createElement("p");
   urgent.className = "text-sm text-muted";
-  urgent.textContent = `Most urgent: ${RANK_LABELS[maxRank] ?? "Low"}`;
+  urgent.textContent = t.map.mostUrgent(t.priority[RANK_BANDS[maxRank] ?? "low"]);
   const hint = document.createElement("p");
   hint.className = "text-sm font-bold text-brand";
-  hint.textContent = "Click to zoom in";
+  hint.textContent = t.map.zoomHint;
   root.append(title, urgent, hint);
   return root;
 }
 
 /** Popup body built with DOM nodes (no HTML strings), with an in-app link to the report. */
-function popupContent(point: MapPoint, navigate: (href: string) => void): HTMLElement {
+function popupContent(point: MapPoint, navigate: (href: string) => void, t: Dictionary): HTMLElement {
   const root = document.createElement("div");
   root.className = "space-y-0.5";
   const title = document.createElement("p");
@@ -615,7 +620,7 @@ function popupContent(point: MapPoint, navigate: (href: string) => void): HTMLEl
     const link = document.createElement("a");
     link.href = point.href;
     link.className = "mt-1 inline-block text-sm font-bold text-brand underline";
-    link.textContent = "Open report";
+    link.textContent = t.map.openReport;
     const href = point.href;
     link.addEventListener("click", (event) => {
       event.preventDefault();

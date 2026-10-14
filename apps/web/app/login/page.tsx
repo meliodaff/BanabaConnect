@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { BanabaOutline } from "@/components/BanabaOutline";
+import { LanguageSwitch } from "@/components/LanguageSwitch";
+import { getDictionary } from "@/lib/i18n-server";
 import { LoginForm } from "./LoginForm";
 
-export const metadata: Metadata = { title: "Sign in" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getDictionary()).login.title };
+}
 
 /** A faint survey-map grid in the brand color, behind the barangay outline. */
 const GRID_LINE = "color-mix(in srgb, var(--color-brand) 10%, transparent)";
@@ -17,7 +21,8 @@ const SURVEY_GRID: React.CSSProperties = {
  * seal, so the page is unmistakably the barangay's (and matches the dashboard map). Right: the
  * form. On narrow screens the map becomes a short band above the form.
  */
-export default function LoginPage() {
+export default async function LoginPage() {
+  const t = await getDictionary();
   return (
     <main className="flex min-h-screen flex-col bg-surface">
       <div className="h-1.5 shrink-0 bg-sun" />
@@ -30,7 +35,7 @@ export default function LoginPage() {
           <div className="relative z-10 flex items-center gap-3.5">
             <Image
               src="/brand/barangay-banaba-seal.jpg"
-              alt="Seal of Barangay Banaba, San Mateo, Rizal"
+              alt={t.nav.sealAlt}
               width={56}
               height={56}
               priority
@@ -45,7 +50,7 @@ export default function LoginPage() {
           <BanabaOutline className="pointer-events-none absolute inset-x-8 top-1/2 mx-auto hidden max-h-[62%] w-[calc(100%-4rem)] max-w-[620px] -translate-y-1/2 lg:block" />
           <BanabaOutline className="pointer-events-none absolute -right-6 bottom-2 h-40 w-auto opacity-80 lg:hidden" />
 
-          <p className="relative z-10 mt-6 text-sm text-muted">Barangay boundary: PSA 2023</p>
+          <p className="relative z-10 mt-6 text-sm text-muted">{t.login.boundary}</p>
         </section>
 
         <section className="flex items-center justify-center px-6 py-12 sm:px-10" aria-labelledby="sign-in-title">
@@ -53,21 +58,22 @@ export default function LoginPage() {
             <p className="font-display text-base font-bold">
               Banaba<span className="text-brand">Connect</span>
               <span className="ml-2 rounded-md bg-brand-soft px-2 py-0.5 text-sm font-semibold text-brand">
-                Command Dashboard
+                {t.nav.commandDashboard}
               </span>
             </p>
             <h1 id="sign-in-title" className="mt-8 text-3xl font-bold">
-              Sign in
+              {t.login.title}
             </h1>
-            <p className="mt-2 text-[15px] text-muted">Use your barangay staff account.</p>
+            <p className="mt-2 text-[15px] text-muted">{t.login.subtitle}</p>
 
             <div className="mt-8">
               <LoginForm />
             </div>
 
-            <p className="mt-8 border-t border-line pt-5 text-sm text-muted">
-              For authorized Barangay Banaba staff only.
-            </p>
+            <p className="mt-8 border-t border-line pt-5 text-sm text-muted">{t.login.authorizedOnly}</p>
+            <div className="mt-5 max-w-56">
+              <LanguageSwitch />
+            </div>
           </div>
         </section>
       </div>

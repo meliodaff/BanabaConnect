@@ -1,13 +1,14 @@
 "use client";
 
-import { CATEGORY_LABELS, isReportCategory } from "@banabaconnect/shared";
+import { isReportCategory, type ReportCategory } from "@banabaconnect/shared";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useDictionary } from "@/components/I18nProvider";
 import { createClient } from "@/lib/supabase/client";
 
 export interface LiveReportsOptions {
-  /** Called for each new report, so the page can highlight it and show an alert. */
-  onNewReport?: (id: string, label: string) => void;
+  /** Called for each new report (with its type, if known), so the page can highlight it and alert. */
+  onNewReport?: (id: string, category: ReportCategory | null) => void;
   /**
    * While this returns true (e.g. the pointer is on the queue), changes are held instead of
    * re-sorting the list under the staff member's cursor. Call `applyUpdates` to show them.
@@ -65,8 +66,7 @@ export function useLiveReports({ onNewReport, shouldHold }: LiveReportsOptions =
           if (payload.eventType === "INSERT") {
             const row = payload.new as { id?: string; category?: string };
             if (row.id) {
-              const label = isReportCategory(row.category) ? CATEGORY_LABELS[row.category] : "Report";
-              optionsRef.current.onNewReport?.(row.id, label);
+              optionsRef.current.onNewReport?.(row.id, isReportCategory(row.category) ? row.category : null);
             }
           }
           scheduleRefresh();
@@ -88,6 +88,7 @@ export function useLiveReports({ onNewReport, shouldHold }: LiveReportsOptions =
 
 /** "Live" dot, so staff know the list updates by itself (or that it's reconnecting). */
 export function LiveIndicator({ connected }: { connected: boolean }) {
+  const t = useDictionary();
   return (
     // Settled (live) is a calm neutral pill with a green dot; reconnecting needs attention.
     <span
@@ -97,7 +98,7 @@ export function LiveIndicator({ connected }: { connected: boolean }) {
       aria-live="polite"
     >
       <span className={`h-2.5 w-2.5 rounded-full ${connected ? "bg-success" : "bg-warning"}`} />
-      {connected ? "Live: updates automatically" : "Connecting…"}
+      {connected ? t.live.on : t.live.connecting}
     </span>
   );
 }

@@ -3,6 +3,8 @@
 import { isReportStatus } from "@banabaconnect/shared";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
+import type { Dictionary } from "@/lib/i18n";
+import { getDictionary } from "@/lib/i18n-server";
 import { createClient } from "@/lib/supabase/server";
 
 export interface ActionState {
@@ -10,10 +12,10 @@ export interface ActionState {
   done: boolean;
 }
 
-function messageFor(error: { code?: string; message: string }): string {
-  if (error.code === "42501") return "Only barangay staff can do this. Sign in with a staff account.";
+function messageFor(error: { code?: string; message: string }, t: Dictionary): string {
+  if (error.code === "42501") return t.actions.notStaff;
   if (error.code === "22023") return error.message;
-  return "That didn't save. Check your internet connection and try again.";
+  return t.actions.notSaved;
 }
 
 export async function signOut() {
@@ -30,11 +32,12 @@ export async function updateReportStatus(
   const reportId = String(formData.get("reportId") ?? "");
   const status = formData.get("status");
   const note = String(formData.get("note") ?? "").trim();
+  const t = await getDictionary();
   if (!reportId || !isReportStatus(status)) {
-    return { error: "Choose a status.", done: false };
+    return { error: t.actions.chooseStatus, done: false };
   }
   if (status === "invalid" && !note) {
-    return { error: "Write why the report is invalid. The resident will see this.", done: false };
+    return { error: t.actions.invalidNeedsNote, done: false };
   }
 
   const supabase = await createClient();
@@ -45,7 +48,7 @@ export async function updateReportStatus(
   });
   if (error) {
     console.error("update_report_status failed", error);
-    return { error: messageFor(error), done: false };
+    return { error: messageFor(error, t), done: false };
   }
   refresh();
   return { error: null, done: true };
@@ -59,11 +62,12 @@ export async function reviewResident(
   const profileId = String(formData.get("profileId") ?? "");
   const decision = formData.get("decision");
   const note = String(formData.get("note") ?? "").trim();
+  const t = await getDictionary();
   if (!profileId || (decision !== "approve" && decision !== "reject")) {
-    return { error: "Choose Approve or Reject.", done: false };
+    return { error: t.actions.chooseDecision, done: false };
   }
   if (decision === "reject" && !note) {
-    return { error: "Write why the ID wasn't approved. The resident will see this.", done: false };
+    return { error: t.actions.rejectNeedsNote, done: false };
   }
 
   const supabase = await createClient();
@@ -74,7 +78,7 @@ export async function reviewResident(
   });
   if (error) {
     console.error("review_verification failed", error);
-    return { error: messageFor(error), done: false };
+    return { error: messageFor(error, t), done: false };
   }
   // The reviewed resident leaves the "waiting" list, so confirm on the page instead of on the card.
   redirect(`/residents?reviewed=${decision === "approve" ? "approved" : "rejected"}`);

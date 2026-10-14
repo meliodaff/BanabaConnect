@@ -10,7 +10,7 @@ export function Bone({ className = "" }: { className?: string }) {
 }
 
 /**
- * The part of a loading page that waits for data. Screen readers hear "Loading …" once; the
+ * The part of a loading page that waits for data. Screen readers hear `label` once; the
  * shapes are hidden from them. They fade in after a short pause (`skeleton-in` in globals.css),
  * so pages that load quickly never flash a skeleton.
  */
@@ -19,14 +19,14 @@ export function SkeletonBody({
   className = "",
   children,
 }: {
-  /** What's loading, e.g. "reports". */
+  /** What screen readers hear, in the staff member's language, e.g. "Loading reports…". */
   label: string;
   className?: string;
   children: React.ReactNode;
 }) {
   return (
     <div role="status" aria-live="polite" className={className}>
-      <span className="sr-only">Loading {label}…</span>
+      <span className="sr-only">{label}</span>
       <div aria-hidden className="skeleton-in">
         {children}
       </div>

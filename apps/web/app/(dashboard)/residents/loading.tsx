@@ -1,18 +1,19 @@
+"use client";
+
+import { useDictionary } from "@/components/I18nProvider";
 import { PageHeader } from "@/components/PageHeader";
 import { Bone, SkeletonBody, TabsSkeleton } from "@/components/Skeleton";
 
 /** Residents while they load: filters and resident cards (ID photo, details, review buttons). */
 export default function ResidentsLoading() {
+  const t = useDictionary();
   return (
     <>
-      <PageHeader
-        title="Residents"
-        description="Check each Barangay ID against the resident's details. Verified residents' reports rank higher."
-      >
+      <PageHeader title={t.residents.title} description={t.residents.description}>
         <TabsSkeleton widths={["w-40", "w-24", "w-32", "w-32"]} />
       </PageHeader>
 
-      <SkeletonBody label="residents" className="px-8 py-6">
+      <SkeletonBody label={t.loading.residents} className="px-8 py-6">
         <ul className="grid gap-5 2xl:grid-cols-2">
           {[0, 1].map((card) => (
             <li

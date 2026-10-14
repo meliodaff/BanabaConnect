@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { countWithStatus, type ReportCounts } from "@/lib/data";
-import { STAFF_STATUS_LABELS, STATUS_FILTERS, type StatusFilter } from "@/lib/labels";
+import { getDictionary } from "@/lib/i18n-server";
+import { STATUS_FILTERS, type StatusFilter } from "@/lib/labels";
 
 /**
  * The Reports page's status filter, as cards with how many reports each one shows. The summary
  * and the filter are one control, so the numbers are always the way into those reports. Like the
  * filter tabs on other pages, they're links that set ?status= (and keep the sort).
  */
-export function ReportStatusCards({
+export async function ReportStatusCards({
   counts,
   current,
   keepQuery,
@@ -17,16 +18,16 @@ export function ReportStatusCards({
   /** The sort to keep, e.g. "&sort=reported&dir=asc". */
   keepQuery: string;
 }) {
-  const { received, in_progress: inProgress } = counts.byStatus;
+  const t = await getDictionary();
   const details: Record<StatusFilter, string> = {
-    active: `${received} ${STAFF_STATUS_LABELS.received} · ${inProgress} ${STAFF_STATUS_LABELS.in_progress}`,
-    resolved: `${counts.resolvedSince} today`,
-    closed: "Not real, duplicate or spam",
-    all: "Any status",
+    active: t.cards.active(counts.byStatus.received, counts.byStatus.in_progress),
+    resolved: t.cards.resolved(counts.resolvedSince),
+    closed: t.cards.closed,
+    all: t.cards.all,
   };
 
   return (
-    <nav aria-label="Report status" className="w-full">
+    <nav aria-label={t.reports.statusLabel} className="w-full">
       <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {(Object.keys(STATUS_FILTERS) as StatusFilter[]).map((key) => {
           const selected = key === current;
@@ -41,16 +42,16 @@ export function ReportStatusCards({
               >
                 <span className="flex items-center justify-between gap-2">
                   <span className={`text-[15px] font-bold leading-5 ${selected ? "text-brand" : "text-ink"}`}>
-                    {STATUS_FILTERS[key].label}
+                    {t.filters[key]}
                   </span>
                   {/* Same rule as Overview's "Urgent, not yet handled". */}
                   {key === "active" && counts.urgentWaiting > 0 && (
                     <span
-                      title="Critical or High priority, still Received"
+                      title={t.cards.urgentTitle}
                       className="flex items-center gap-1.5 text-[13px] font-bold leading-5 text-ink"
                     >
                       <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-urgent" />
-                      {counts.urgentWaiting} urgent waiting
+                      {t.cards.urgentWaiting(counts.urgentWaiting)}
                     </span>
                   )}
                 </span>

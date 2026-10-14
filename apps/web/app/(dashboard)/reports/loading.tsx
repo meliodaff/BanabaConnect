@@ -1,19 +1,25 @@
+"use client";
+
+import { useDictionary } from "@/components/I18nProvider";
+import { MonthlyReportLink } from "@/components/MonthlyReportLink";
 import { PageHeader } from "@/components/PageHeader";
 import { Bone, PriorityBadgeSkeleton, SkeletonBody } from "@/components/Skeleton";
-import { STATUS_FILTERS } from "@/lib/labels";
+import { STATUS_FILTERS, type StatusFilter } from "@/lib/labels";
 import { QUEUE_COLUMNS, QUEUE_DETAILS } from "@/lib/queueLayout";
 
 /** The Reports list while it loads: its status cards, column headers and rows, in the real layout. */
 export default function ReportsLoading() {
+  const t = useDictionary();
   return (
     <>
-      <PageHeader title="Reports" description="Incident reports from residents of Barangay Banaba.">
+      <PageHeader title={t.reports.title} description={t.reports.description}>
+        <MonthlyReportLink />
         {/* The status cards (components/ReportStatusCards.tsx) with their real names; the selected
             one isn't known yet. Same height as the real cards. */}
         <div aria-hidden className="skeleton-in grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {Object.values(STATUS_FILTERS).map(({ label }) => (
-            <div key={label} className="h-[106px] rounded-lg border border-line bg-surface px-4 py-3">
-              <p className="text-[15px] font-bold leading-5">{label}</p>
+          {(Object.keys(STATUS_FILTERS) as StatusFilter[]).map((key) => (
+            <div key={key} className="h-[106px] rounded-lg border border-line bg-surface px-4 py-3">
+              <p className="text-[15px] font-bold leading-5">{t.filters[key]}</p>
               <Bone className="mt-2 h-7 w-12" />
               <Bone className="mt-[7px] h-3.5 w-32" />
             </div>
@@ -21,7 +27,7 @@ export default function ReportsLoading() {
         </div>
       </PageHeader>
 
-      <SkeletonBody label="reports" className="px-8 py-6">
+      <SkeletonBody label={t.loading.reports} className="px-8 py-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-2">
             <Bone className="h-4 w-72" />

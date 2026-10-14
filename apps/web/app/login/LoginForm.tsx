@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useRef, useState } from "react";
+import { useDictionary } from "@/components/I18nProvider";
 import { signIn, type LoginState } from "./actions";
 
 const initialState: LoginState = { error: null };
@@ -9,6 +10,7 @@ const INPUT =
   "w-full rounded-md border bg-white px-3.5 py-3 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/25";
 
 export function LoginForm() {
+  const t = useDictionary();
   const [state, formAction, pending] = useActionState(signIn, initialState);
   // A wrong password used to wipe both fields: React resets a form after an action passed to its
   // `action` prop. So the form submits through onSubmit instead (no automatic reset), and the
@@ -42,7 +44,7 @@ export function LoginForm() {
     >
       <div>
         <label htmlFor="email" className="mb-1.5 block text-[15px] font-semibold">
-          Email
+          {t.login.email}
         </label>
         <input
           id="email"
@@ -61,7 +63,7 @@ export function LoginForm() {
 
       <div>
         <label htmlFor="password" className="mb-1.5 block text-[15px] font-semibold">
-          Password
+          {t.login.password}
         </label>
         <div className="relative">
           <input
@@ -87,8 +89,8 @@ export function LoginForm() {
             type="button"
             onClick={() => setShowPassword((shown) => !shown)}
             aria-controls="password"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-            title={showPassword ? "Hide password" : "Show password"}
+            aria-label={showPassword ? t.login.hidePassword : t.login.showPassword}
+            title={showPassword ? t.login.hidePassword : t.login.showPassword}
             className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-md text-muted hover:text-brand"
           >
             <EyeIcon crossed={showPassword} />
@@ -96,7 +98,7 @@ export function LoginForm() {
         </div>
         {capsLock && (
           <p id="caps-lock" className="mt-1.5 text-sm font-semibold text-warning">
-            Caps Lock is on.
+            {t.login.capsLock}
           </p>
         )}
       </div>
@@ -130,7 +132,7 @@ export function LoginForm() {
         disabled={pending}
         className="w-full rounded-md bg-brand px-4 py-3.5 text-base font-bold text-white transition hover:bg-brand-dark disabled:cursor-wait disabled:opacity-70"
       >
-        {pending ? "Signing in…" : "Sign in"}
+        {pending ? t.login.signingIn : t.login.signIn}
       </button>
     </form>
   );
