@@ -27,6 +27,7 @@ import { callNumber, NATIONAL_EMERGENCY_NUMBER } from '@/features/hotlines/call'
 import { useIsOffline } from '@/features/network/useIsOffline';
 import { buildSubmission, INCIDENT_TIME_OPTIONS } from '@/features/report/buildSubmission';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
+import { ReportCategoryIcon } from '@/components/ReportCategoryIcon';
 import { findRecentDuplicate } from '@/features/report/recentDuplicate';
 import { currentReportOwner } from '@/features/auth/guestSession';
 import { saveReport } from '@/features/queue/reportRepository';
@@ -193,9 +194,7 @@ function ReportDetailsForm({ category }: { category: ReportCategory }) {
           <Text style={styles.title}>Add details</Text>
 
           <View style={styles.categoryRow}>
-            <View style={[styles.categoryIcon, { backgroundColor: colors.categoryTint }]}>
-              <Icon name={look.icon} size={26} color={colors.categoryIcon} />
-            </View>
+            <ReportCategoryIcon category={category} size={26} style={styles.categoryIcon} />
             <View style={styles.flex}>
               <Text style={styles.categoryLabel}>{CATEGORY_LABELS[category]}</Text>
               <Text style={styles.categoryTagalog}>{look.tagalog}</Text>

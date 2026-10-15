@@ -1,7 +1,7 @@
 import { useColorScheme } from 'react-native';
 import { useThemePreference } from '@/features/appearance/themePreference';
 
-// Every color in the app comes from here, so the palette can change in one place.
+// Shared interface colors live here; incident category colors live in categoryAppearance.ts.
 // Each palette has a light and a dark version with the same token names, and every text pair
 // is at least 4.5:1 contrast. Red, green, and amber carry meaning (emergency, sent, waiting
 // for signal), so every palette keeps them red, green, and amber, and never uses them for branding.
@@ -49,7 +49,7 @@ const neutralLight = {
   highlight: '#A1A1AA',
   highlightSoft: '#F1F1F3',
   disabled: '#A1A1AA',
-  /** Report category icons share one color; the icon and label tell them apart. */
+  /** Neutral fallback for category placeholders; report symbols use their category palette. */
   categoryIcon: '#374151',
   categoryTint: '#ECEDEF',
   shadow: '#18181B',
@@ -136,7 +136,7 @@ const banabaPinkLight: ThemeColors = {
   highlight: '#F5B700',
   highlightSoft: '#FFF4CC',
   disabled: '#B9A9B1',
-  /** Report category icons share one color; the icon and label tell them apart. */
+  /** Neutral fallback for category placeholders; report symbols use their category palette. */
   categoryIcon: '#C2185B',
   categoryTint: '#FDE3EE',
   shadow: '#5A1838',
@@ -219,7 +219,7 @@ const denimLight: ThemeColors = {
   highlight: '#D9AE45',
   highlightSoft: '#F3E8C8',
   disabled: '#A9B0BA',
-  /** Report category icons share one color; the icon and label tell them apart. */
+  /** Neutral fallback for category placeholders; report symbols use their category palette. */
   categoryIcon: '#3A5F8F',
   categoryTint: '#DFE6EE',
   shadow: '#1E232B',

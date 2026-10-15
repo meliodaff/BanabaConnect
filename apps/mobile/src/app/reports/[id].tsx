@@ -27,6 +27,7 @@ import { useIsOffline } from '@/features/network/useIsOffline';
 import { tryToSendNow } from '@/features/queue/tryToSendNow';
 import type { QueuedReport } from '@/features/queue/types';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
+import { ReportCategoryIcon } from '@/components/ReportCategoryIcon';
 import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
 export default function ReportDetailScreen() {
@@ -82,9 +83,7 @@ function ReportDetail({
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.categoryRow}>
-          <View style={[styles.categoryIcon, { backgroundColor: colors.categoryTint }]}>
-            <Icon name={look.icon} size={26} color={colors.categoryIcon} />
-          </View>
+          <ReportCategoryIcon category={submission.category} size={26} style={styles.categoryIcon} />
           <View style={styles.flex}>
             <Text style={styles.categoryLabel}>{CATEGORY_LABELS[submission.category]}</Text>
             <Text style={styles.categoryTagalog}>{look.tagalog}</Text>

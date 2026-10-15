@@ -1,12 +1,11 @@
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CATEGORY_LABELS, REPORT_CATEGORIES, type ReportCategory } from '@banabaconnect/shared';
-import { Icon } from '@/components/Icon';
+import { ReportCategoryIcon } from '@/components/ReportCategoryIcon';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
-import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
+import { radius, useThemedStyles, type ThemeColors } from '@/theme';
 
 export default function ChooseCategoryScreen() {
-  const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   function choose(category: ReportCategory) {
     router.push({ pathname: '/report/details', params: { category } });
@@ -31,9 +30,7 @@ export default function ChooseCategoryScreen() {
               accessibilityRole="button"
               accessibilityLabel={`${CATEGORY_LABELS[category]}, ${look.tagalog}`}
             >
-              <View style={[styles.tileIcon, { backgroundColor: colors.categoryTint }]}>
-                <Icon name={look.icon} size={32} color={colors.categoryIcon} />
-              </View>
+              <ReportCategoryIcon category={category} size={32} style={styles.tileIcon} />
               <Text style={styles.tileLabel}>{CATEGORY_LABELS[category]}</Text>
               <Text style={styles.tileTagalog}>{look.tagalog}</Text>
             </Pressable>

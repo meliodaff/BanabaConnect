@@ -13,7 +13,7 @@ import { Icon, icons } from '@/components/Icon';
 import { LoadingImage, Spinner } from '@/components/LoadingImage';
 import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
 import { useIsOffline } from '@/features/network/useIsOffline';
-import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
+import { ReportCategoryIcon } from '@/components/ReportCategoryIcon';
 import {
   deliveryStatusOf,
   formatReportTime,
@@ -159,13 +159,10 @@ function ReportCard({
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { submission, photo } = report;
-  const look = CATEGORY_APPEARANCE[submission.category];
   const status = deliveryStatusOf(report, sending, colors);
   const photoWaiting = isPhotoWaiting(report);
   const categoryThumbnail = (
-    <View style={[styles.thumbnail, styles.iconThumbnail, { backgroundColor: colors.categoryTint }]}>
-      <Icon name={look.icon} size={28} color={colors.categoryIcon} />
-    </View>
+    <ReportCategoryIcon category={submission.category} size={28} style={[styles.thumbnail, styles.iconThumbnail]} />
   );
 
   return (
