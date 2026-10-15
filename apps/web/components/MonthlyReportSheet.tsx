@@ -51,7 +51,7 @@ export function MonthlyReportSheet({
         <div className="grid grid-cols-4 gap-3">
           <Total label="Reports received" value={summary.total} caption="Reached the barangay" />
           <Total label="Resolved" value={summary.byStatus.resolved} />
-          <Total label="Still open" value={summary.open} caption="Received or In progress" />
+          <Total label="Still open" value={summary.open} caption="Received, responders on the way, or In progress" />
           <Total label="Invalid" value={summary.byStatus.invalid} caption="Not real, duplicate or spam" />
         </div>
       </DocumentSection>
@@ -61,7 +61,7 @@ export function MonthlyReportSheet({
           <TypicalTime
             label="Typical time to start"
             typical={summary.toFirstAction}
-            basis={["report staff started or resolved", "reports staff started or resolved"]}
+            basis={["report staff dispatched, started, or resolved", "reports staff dispatched, started, or resolved"]}
             empty="No reports started yet"
           />
           <TypicalTime

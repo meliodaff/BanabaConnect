@@ -128,7 +128,7 @@ export async function listReports(statuses: readonly ReportStatus[]): Promise<Re
 const BATCH = 1000;
 
 export interface ReportWithResponse extends ReportSummary {
-  /** When staff first marked it In progress or Resolved, or null if they haven't yet. */
+  /** When staff first dispatched responders, started handling, or resolved it. */
   firstActionAt: string | null;
 }
 
@@ -160,7 +160,7 @@ export async function listReportsReceivedBetween(
     const summary = toSummary(row);
     if (!summary) return [];
     const actions = (row.history ?? [])
-      .filter((change) => change.to_status === "in_progress" || change.to_status === "resolved")
+      .filter((change) => ["dispatched", "in_progress", "resolved"].includes(change.to_status))
       .map((change) => change.changed_at)
       .sort();
     return [{ ...summary, firstActionAt: actions[0] ?? null }];
@@ -350,6 +350,7 @@ export async function countReportsByStatus(sinceIso: string): Promise<ReportCoun
   const count = () => supabase.from("reports").select("id", { count: "exact", head: true });
   const results = await Promise.all([
     count().eq("status", "received"),
+    count().eq("status", "dispatched"),
     count().eq("status", "in_progress"),
     count().eq("status", "resolved"),
     count().eq("status", "invalid"),
@@ -359,11 +360,11 @@ export async function countReportsByStatus(sinceIso: string): Promise<ReportCoun
   for (const result of results) {
     if (result.error) throw result.error;
   }
-  const [received, inProgress, resolved, invalid, urgentWaiting, resolvedSince] = results.map(
+  const [received, dispatched, inProgress, resolved, invalid, urgentWaiting, resolvedSince] = results.map(
     (result) => result.count ?? 0,
   );
   return {
-    byStatus: { received, in_progress: inProgress, resolved, invalid },
+    byStatus: { received, dispatched, in_progress: inProgress, resolved, invalid },
     urgentWaiting,
     resolvedSince,
   };

@@ -1,6 +1,6 @@
 "use client";
 
-import { REPORT_STATUSES, type ReportStatus } from "@banabaconnect/shared";
+import { REPORT_STATUSES, REPORT_STATUS_DETAILS, REPORT_STATUS_LABELS, type ReportStatus } from "@banabaconnect/shared";
 import { useActionState, useState } from "react";
 import { updateReportStatus, type ActionState } from "@/app/(dashboard)/actions";
 import { useDictionary } from "@/components/I18nProvider";
@@ -49,6 +49,14 @@ export function StatusUpdateForm({ reportId, current }: { reportId: string; curr
           })}
         </div>
       </fieldset>
+
+      <div className="rounded-lg border border-brand/25 bg-brand-soft px-4 py-3" aria-live="polite">
+        <p className="text-sm font-semibold text-muted">{t.statusForm.residentPreview}</p>
+        <div lang="fil" className="mt-1">
+          <p className="text-base font-bold text-ink">{REPORT_STATUS_LABELS[choice]}</p>
+          <p className="mt-1 text-sm text-ink">{REPORT_STATUS_DETAILS[choice]}</p>
+        </div>
+      </div>
 
       <div>
         <label htmlFor="note" className="mb-1.5 block text-sm font-semibold">

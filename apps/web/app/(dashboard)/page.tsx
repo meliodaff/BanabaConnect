@@ -1,4 +1,4 @@
-import { REPORT_CATEGORIES } from "@banabaconnect/shared";
+import { ACTIVE_REPORT_STATUSES, REPORT_CATEGORIES } from "@banabaconnect/shared";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { OutsideBanabaTag, PriorityBadge, StatusPill } from "@/components/Badges";
@@ -48,7 +48,7 @@ function multiReportIncidents(active: ReportSummary[]) {
 
 export default async function OverviewPage() {
   const [active, pendingIds, today, t] = await Promise.all([
-    listReports(["received", "in_progress"]),
+    listReports([...ACTIVE_REPORT_STATUSES]),
     countPendingVerifications(),
     countReportsSince(startOfTodayInManila()),
     getDictionary(),
@@ -62,7 +62,7 @@ export default async function OverviewPage() {
     (oldest, r) => (!oldest || r.receivedAt < oldest.receivedAt ? r : oldest),
     null,
   );
-  const inProgress = active.filter((r) => r.status === "in_progress").length;
+  const inProgress = active.filter((r) => r.status === "dispatched" || r.status === "in_progress").length;
   // Same order as the Reports list: highest priority, then reports from inside Banaba, then newest.
   const mostUrgent = sortReports(active, DEFAULT_SORT).slice(0, MOST_URGENT);
   const incidents = multiReportIncidents(active);

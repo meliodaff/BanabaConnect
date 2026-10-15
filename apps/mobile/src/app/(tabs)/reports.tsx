@@ -408,6 +408,7 @@ function createStyles(colors: ThemeColors) {
       marginTop: 8,
     },
     statusPill: {
+      maxWidth: '100%',
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
@@ -417,6 +418,7 @@ function createStyles(colors: ThemeColors) {
       paddingVertical: 4,
     },
     statusText: {
+      flexShrink: 1,
       fontSize: 13,
       fontWeight: '700',
     },

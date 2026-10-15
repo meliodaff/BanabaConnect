@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS, REPORT_STATUSES, type ReportCategory, type ReportStatus } from "@banabaconnect/shared";
+import { CATEGORY_LABELS, isActiveReportStatus, REPORT_STATUSES, type ReportCategory, type ReportStatus } from "@banabaconnect/shared";
 import type { ReportWithResponse } from "@/lib/data";
 import { priorityBand, type PriorityBand } from "@/lib/labels";
 
@@ -8,7 +8,7 @@ export interface TypeLine {
   label: string;
   total: number;
   resolved: number;
-  /** Received or In progress. */
+  /** Received, responders on the way, or In progress. */
   open: number;
   invalid: number;
 }
@@ -22,14 +22,14 @@ export interface Typical {
 export interface MonthSummary {
   total: number;
   byStatus: Record<ReportStatus, number>;
-  /** Received or In progress. */
+  /** Received, responders on the way, or In progress. */
   open: number;
   byType: TypeLine[];
   /** Priority of the reports that aren't Invalid (Invalid ones aren't real incidents). */
   byPriority: Record<PriorityBand, number>;
   reporters: { verified: number; notVerified: number; guest: number };
   outsideBanaba: number;
-  /** From reaching the barangay to staff marking it In progress or Resolved. */
+  /** From reaching the barangay to dispatch, handling, or resolution by staff. */
   toFirstAction: Typical;
   /** From reaching the barangay to Resolved, for the reports that are resolved now. */
   toResolved: Typical;
@@ -47,7 +47,7 @@ export function summarizeMonth(reports: ReportWithResponse[]): MonthSummary {
 
   for (const report of reports) {
     byStatus[report.status] += 1;
-    const open = report.status === "received" || report.status === "in_progress";
+    const open = isActiveReportStatus(report.status);
 
     const line = types.get(report.category) ?? {
       category: report.category,
@@ -80,7 +80,7 @@ export function summarizeMonth(reports: ReportWithResponse[]): MonthSummary {
   return {
     total: reports.length,
     byStatus,
-    open: byStatus.received + byStatus.in_progress,
+    open: byStatus.received + byStatus.dispatched + byStatus.in_progress,
     byType: [...types.values()].sort((a, b) => b.total - a.total || a.label.localeCompare(b.label)),
     byPriority,
     reporters,

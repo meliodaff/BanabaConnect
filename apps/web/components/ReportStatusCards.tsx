@@ -20,7 +20,7 @@ export async function ReportStatusCards({
 }) {
   const t = await getDictionary();
   const details: Record<StatusFilter, string> = {
-    active: t.cards.active(counts.byStatus.received, counts.byStatus.in_progress),
+    active: t.cards.active(counts.byStatus.received, counts.byStatus.dispatched, counts.byStatus.in_progress),
     resolved: t.cards.resolved(counts.resolvedSince),
     closed: t.cards.closed,
     all: t.cards.all,

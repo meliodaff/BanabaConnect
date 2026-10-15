@@ -116,7 +116,9 @@ const STATUS_STYLE: Record<
 > = {
   // New and untouched: a blue dot, so it reads as "waiting for someone".
   received: { glyph: "dot", glyphClass: "text-brand", textClass: "text-ink" },
-  // Someone is on it: the only tinted status.
+  // Staff explicitly confirmed responders are on the way.
+  dispatched: { glyph: "pin", glyphClass: "text-brand", textClass: "text-brand", tinted: true },
+  // Someone is handling the report.
   in_progress: { glyph: "half", glyphClass: "text-brand", textClass: "text-brand", tinted: true },
   // Settled: calm. A small green check is the only confirmation.
   resolved: { glyph: "check", glyphClass: "text-success", textClass: "text-ink" },

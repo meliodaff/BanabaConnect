@@ -1,15 +1,16 @@
-import { REPORT_STATUSES, type ReportStatus } from "@banabaconnect/shared";
+import { ACTIVE_REPORT_STATUSES, REPORT_STATUSES, type ReportStatus } from "@banabaconnect/shared";
 
 /** Status names for barangay staff (residents see friendlier wording in the app). */
 export const STAFF_STATUS_LABELS: Record<ReportStatus, string> = {
   received: "Received",
+  dispatched: "Responders on the way",
   in_progress: "In progress",
   resolved: "Resolved",
   invalid: "Invalid",
 };
 
 export const STATUS_FILTERS = {
-  active: { label: "Active", statuses: ["received", "in_progress"] },
+  active: { label: "Active", statuses: [...ACTIVE_REPORT_STATUSES] },
   resolved: { label: "Resolved", statuses: ["resolved"] },
   closed: { label: "Invalid", statuses: ["invalid"] },
   all: { label: "All", statuses: [...REPORT_STATUSES] },

@@ -1,4 +1,4 @@
-import { REPORT_STATUS_LABELS } from '@banabaconnect/shared';
+import { REPORT_STATUS_DETAILS, REPORT_STATUS_LABELS } from '@banabaconnect/shared';
 import { icons, type IconName } from '@/components/Icon';
 import type { ThemeColors } from '@/theme';
 import type { QueuedReport } from './types';
@@ -8,7 +8,7 @@ import type { QueuedReport } from './types';
  * a glance (the project owner chose this over the all-neutral pills in
  * .claude/skills/anti-slop-status-colors). Every pill still has an icon and a label, so color is
  * never the only signal, and red stays reserved for emergencies:
- * amber = waiting on the phone, blue = sending or received, violet = in progress,
+ * amber = waiting on the phone, blue = sending or received, violet = dispatched or in progress,
  * green = resolved, gray = closed.
  */
 export interface DeliveryStatus {
@@ -56,10 +56,11 @@ export function deliveryStatusOf(
   }
   if (report.syncStatus === 'sent') {
     switch (report.serverStatus) {
+      case 'dispatched':
       case 'in_progress':
         return pill(
-          REPORT_STATUS_LABELS.in_progress,
-          icons.pending,
+          REPORT_STATUS_LABELS[report.serverStatus],
+          report.serverStatus === 'dispatched' ? icons.next : icons.pending,
           colors.progress,
           colors.progressSoft,
           colors.progressBorder,
@@ -104,20 +105,12 @@ export function deliveryStatusDetail(report: QueuedReport): string {
       ? "Saved on your phone. The barangay's system didn't accept it yet, so the app keeps trying."
       : 'Saved on your phone. Sends automatically when you get signal.';
   }
-  const updated = report.serverStatusAt ? ` Updated ${formatReportTime(report.serverStatusAt)}.` : '';
-  const seeNote = report.serverNote ? ' See the note from barangay staff below.' : '';
-  switch (report.serverStatus) {
-    case 'in_progress':
-      return `The barangay is responding to your report.${updated}${seeNote}`;
-    case 'resolved':
-      return `The barangay marked this incident as resolved.${updated}${seeNote}`;
-    case 'invalid':
-      return report.serverNote
-        ? `The barangay closed this report. Their reason is below.${updated}`
-        : `The barangay closed this report.${updated}`;
-    default:
-      return `Sent to the barangay on ${formatReportTime(report.sentAt ?? report.submission.createdAt)}.${seeNote}`;
+  if (!report.serverStatus) {
+    return `Sent to the barangay on ${formatReportTime(report.sentAt ?? report.submission.createdAt)}.`;
   }
+  const updated = report.serverStatusAt ? ` Na-update ${formatReportTime(report.serverStatusAt)}.` : '';
+  const seeNote = report.serverNote ? ' Basahin ang mensahe ng barangay sa ibaba.' : '';
+  return `${REPORT_STATUS_DETAILS[report.serverStatus]}${updated}${seeNote}`;
 }
 
 /** A sent report whose photo has not reached the server yet. */

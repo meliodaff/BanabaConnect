@@ -52,16 +52,32 @@ export interface ReportSubmission {
 }
 
 /** Status set by barangay admins on the dashboard. */
-export const REPORT_STATUSES = ['received', 'in_progress', 'resolved', 'invalid'] as const;
+export const REPORT_STATUSES = ['received', 'dispatched', 'in_progress', 'resolved', 'invalid'] as const;
 
 export type ReportStatus = (typeof REPORT_STATUSES)[number];
 
+export const ACTIVE_REPORT_STATUSES = ['received', 'dispatched', 'in_progress'] as const;
+
+export function isActiveReportStatus(status: ReportStatus): boolean {
+  return ACTIVE_REPORT_STATUSES.some((active) => active === status);
+}
+
 /** How a report's status reads to the resident who sent it. */
 export const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
-  received: 'Received by the barangay',
-  in_progress: 'Being handled',
-  resolved: 'Resolved',
-  invalid: 'Closed',
+  received: 'Natanggap na ng barangay',
+  dispatched: 'Papunta na ang responders',
+  in_progress: 'Inaasikaso na ang report',
+  resolved: 'Naayos na ang report',
+  invalid: 'Isinara ang report',
+};
+
+/** Also shown to staff before they save an update. Dispatch is an explicit staff action. */
+export const REPORT_STATUS_DETAILS: Record<ReportStatus, string> = {
+  received: 'Natanggap na po ng barangay ang report mo. Susuriin ito ng barangay staff.',
+  dispatched: 'Papunta na po ang responders sa iniulat na lokasyon. Manatili sa ligtas na lugar.',
+  in_progress: 'Nasa lokasyon na po ang mga tauhan ng barangay at inaasikaso na nila ang sitwasyon.',
+  resolved: 'Minarkahan na po ng barangay na naayos na ang iniulat na insidente.',
+  invalid: 'Isinara na po ng barangay ang report mo. Basahin ang mensahe ng barangay para sa dahilan.',
 };
 
 export function isReportStatus(value: unknown): value is ReportStatus {
