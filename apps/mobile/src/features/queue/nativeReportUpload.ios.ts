@@ -49,7 +49,8 @@ export const enqueueNativeReport: NativeReportEnqueue = async (report, handlers)
     void task.uploadAsync()
       .then(async (response) => {
         if (response.status < 200 || response.status >= 300) {
-          throw new Error(`Report not accepted (HTTP ${response.status})`);
+          // The status lets the queue tell an expired session (401) from other rejections.
+          throw Object.assign(new Error(`Report not accepted (HTTP ${response.status})`), { status: response.status });
         }
         await handlers.onSent();
       })

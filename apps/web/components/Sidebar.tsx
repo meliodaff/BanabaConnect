@@ -10,6 +10,7 @@ import {
   ReportsIcon,
   ResidentsIcon,
   SettingsIcon,
+  SignOutIcon,
 } from "@/components/NavIcons";
 
 /** The four places staff work, in two groups. Labels are keys of the dictionary's nav words. */
@@ -39,9 +40,11 @@ function initials(name: string) {
 export function Sidebar({
   staffName,
   pendingVerifications,
+  signOutAction,
 }: {
   staffName: string;
   pendingVerifications: number;
+  signOutAction: () => Promise<void>;
 }) {
   const pathname = usePathname();
   const t = useDictionary();
@@ -131,20 +134,29 @@ export function Sidebar({
             </p>
             <p className="text-[13px] text-muted">{t.nav.staff}</p>
           </div>
-          <Link
-            href="/settings"
-            aria-label={t.nav.settings}
-            title={t.nav.settings}
-            aria-current={pathname === "/settings" ? "page" : undefined}
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md transition ${
-              pathname === "/settings" || pathname === "/help"
-                ? "bg-brand-soft text-brand"
-                : "text-muted hover:bg-page hover:text-brand"
-            }`}
-          >
-            <SettingsIcon />
-          </Link>
         </div>
+        {/* Written out, not icon-only: staff look for these words, not for a gear. */}
+        <Link
+          href="/settings"
+          aria-current={pathname === "/settings" ? "page" : undefined}
+          className={`mt-1 flex items-center gap-3 rounded-md px-3 py-2.5 text-[15px] transition ${
+            pathname === "/settings" || pathname === "/help"
+              ? "bg-brand-soft font-bold text-brand"
+              : "font-semibold text-ink hover:bg-page hover:text-brand"
+          }`}
+        >
+          <SettingsIcon />
+          {t.nav.settingsAndHelp}
+        </Link>
+        <form action={signOutAction}>
+          <button
+            type="submit"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-[15px] font-semibold text-muted transition hover:bg-page hover:text-ink"
+          >
+            <SignOutIcon />
+            {t.nav.signOut}
+          </button>
+        </form>
       </div>
     </aside>
   );

@@ -1,4 +1,13 @@
-import type { LocalSyncStatus, ReportStatus, ReportSubmission } from '@banabaconnect/shared';
+import { isReportStatus, type LocalSyncStatus, type ReportStatus, type ReportSubmission } from '@banabaconnect/shared';
+
+/** The barangay's status as this app understands it. 'unrecognized' is one a newer dashboard added. */
+export type ResidentStatus = ReportStatus | 'unrecognized';
+
+/** Keeps an unknown status visible as an update instead of dropping it, so older apps still show a change. */
+export function toResidentStatus(raw: string | null | undefined): ResidentStatus | null {
+  if (!raw) return null;
+  return isReportStatus(raw) ? raw : 'unrecognized';
+}
 
 export interface QueuedPhoto {
   /** Copy in the app's documents folder, so Android can't clear it before upload. */
@@ -23,7 +32,7 @@ export interface QueuedReport {
   sentAt: string | null;
   photo: QueuedPhoto | null;
   /** The barangay's status once the report is sent; null until the app has checked. */
-  serverStatus: ReportStatus | null;
+  serverStatus: ResidentStatus | null;
   serverStatusAt: string | null;
   /** What barangay staff wrote with the current status, if anything. */
   serverNote: string | null;
@@ -33,7 +42,8 @@ export interface QueuedReport {
 export interface DownloadedReport {
   submission: ReportSubmission;
   sentAt: string;
-  serverStatus: ReportStatus;
+  /** As stored in Supabase, possibly a status this app version doesn't know. */
+  serverStatus: string;
   serverStatusAt: string;
   serverNote: string | null;
   photo: PhotoToSave | null;
@@ -42,7 +52,8 @@ export interface DownloadedReport {
 /** A sent report's status as stored in Supabase. */
 export interface ServerStatus {
   id: string;
-  status: ReportStatus;
+  /** As stored in Supabase, possibly a status this app version doesn't know. */
+  status: string;
   statusAt: string;
   /** Staff's note for this status (e.g. why it's invalid), or null. */
   note: string | null;

@@ -1,6 +1,6 @@
 import type { ReportCategory, ReportStatus, VerificationStatus } from "@banabaconnect/shared";
 import { formatDistance, formatDuration, timeAgo, timeSince, waitedForSignal } from "@/lib/format";
-import type { PriorityBand, StatusFilter } from "@/lib/labels";
+import { STAFF_STATUS_LABELS, type PriorityBand, type StatusFilter } from "@/lib/labels";
 import type { SortDirection, SortKey } from "@/lib/reportSort";
 
 /**
@@ -49,13 +49,8 @@ const en = {
     power_line: "Fallen power line",
     other: "Other",
   } satisfies Record<ReportCategory, string>,
-  status: {
-    received: "Received",
-    dispatched: "Responders on the way",
-    in_progress: "In progress",
-    resolved: "Resolved",
-    invalid: "Invalid",
-  } satisfies Record<ReportStatus, string>,
+  // The same names as on printed records, so screen and paper never disagree.
+  status: STAFF_STATUS_LABELS,
   statusHint: {
     received: "Seen, not yet acted on",
     dispatched: "Choose only after responders have been sent to the incident",
@@ -89,6 +84,7 @@ const en = {
     residents: "Residents",
     help: "Help",
     settings: "Settings",
+    settingsAndHelp: "Settings and help",
     commandDashboard: "Command Dashboard",
     sealAlt: "Seal of Barangay Banaba, San Mateo, Rizal",
     idsWaiting: (count: number) => `${count} Barangay IDs waiting for review`,
@@ -410,7 +406,7 @@ const en = {
       title: "Noticing new reports",
       body: [
         "The lists and the map update by themselves. A new report flashes yellow with a NEW tag.",
-        "To hear new reports, open Settings using the gear beside your name, then turn on Sound for new reports. After opening the dashboard, click anywhere once so the browser allows sound.",
+        "To hear new reports, open Settings and help at the bottom of the sidebar, then turn on Sound for new reports. After opening the dashboard, click anywhere once so the browser allows sound.",
       ],
     },
     printing: {
@@ -437,7 +433,7 @@ const en = {
       title: "Easier to read",
       items: [
         "Ctrl and + makes everything bigger, Ctrl and − smaller, and Ctrl and 0 goes back to normal.",
-        "To switch between English and Filipino, open Settings using the gear beside your name, then choose Language.",
+        "To switch between English and Filipino, open Settings and help at the bottom of the sidebar, then choose Language.",
       ],
     },
   },
@@ -545,6 +541,7 @@ const fil: Dictionary = {
     residents: "Mga residente",
     help: "Tulong",
     settings: "Mga setting",
+    settingsAndHelp: "Mga setting at tulong",
     commandDashboard: "Command Dashboard",
     sealAlt: "Selyo ng Barangay Banaba, San Mateo, Rizal",
     idsWaiting: (count) => `${count} Barangay ID ang naghihintay ng pagsusuri`,
@@ -872,7 +869,7 @@ const fil: Dictionary = {
       title: "Para mapansin ang bagong report",
       body: [
         "Kusang nag-a-update ang mga listahan at ang mapa. Kumikislap nang dilaw ang bagong report at may tatak na BAGO.",
-        "Para marinig ang bagong report, buksan ang Mga setting gamit ang gear sa tabi ng pangalan mo, tapos i-on ang Tunog para sa bagong report. Pagkabukas ng dashboard, mag-click kahit saan para payagan ng browser ang tunog.",
+        "Para marinig ang bagong report, buksan ang Mga setting at tulong sa ibaba ng sidebar, tapos i-on ang Tunog para sa bagong report. Pagkabukas ng dashboard, mag-click kahit saan para payagan ng browser ang tunog.",
       ],
     },
     printing: {
@@ -905,7 +902,7 @@ const fil: Dictionary = {
       title: "Para mas madaling basahin",
       items: [
         "Pinapalaki ng Ctrl at + ang lahat, pinapaliit ng Ctrl at −, at ibinabalik sa dati ng Ctrl at 0.",
-        "Para lumipat sa English o Filipino, buksan ang Mga setting gamit ang gear sa tabi ng pangalan mo, tapos piliin ang Wika.",
+        "Para lumipat sa English o Filipino, buksan ang Mga setting at tulong sa ibaba ng sidebar, tapos piliin ang Wika.",
       ],
     },
   },

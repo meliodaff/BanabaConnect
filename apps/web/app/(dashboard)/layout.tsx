@@ -48,6 +48,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
         <Sidebar
           staffName={profile.full_name?.trim() || t.common.barangayStaff}
           pendingVerifications={pending}
+          signOutAction={signOut}
         />
         <main className="min-w-0 flex-1">{children}</main>
       </div>

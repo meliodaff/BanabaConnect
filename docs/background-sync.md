@@ -14,8 +14,13 @@ Non-2xx responses and network errors retain it for retry.
 
 This requires a saved reporting session. Opening the app with internet prepares a guest
 session if necessary; simultaneous startup and Send share that authentication request.
-A first-ever offline launch cannot create an authenticated server request. An expired
-session or token that expires while waiting can require a later authenticated retry.
+A first-ever offline launch cannot create an authenticated server request. The upload carries
+the access token from when it was handed off, and Supabase tokens last 1 hour by default. If the
+server answers 401 because the token expired while waiting, the queue retries that report once
+right away with a refreshed session; later 401s use the normal retry delays. This only happens
+while JavaScript is running, so an upload that fails while the app is suspended is retried on the
+next background run or when the app is reopened. A longer JWT expiry in Supabase → Authentication
+would let more uploads finish while the app is suspended, at the cost of longer-lived tokens.
 Authentication credentials are sent in request headers, not in the temporary JSON file.
 
 Photo upload and attachment still run through the queue after the text is accepted.
@@ -57,17 +62,34 @@ References:
 
 Expo Go (`host.exp.exponent`) cannot run this native background worker. Keeping Expo Go in the
 recent apps list does not enable background tasks. Install the actual BanabaConnect debug app
-(`ph.banabaconnect.app`) on the emulator first:
+(`ph.banabaconnect.app`) on the emulator:
 
 ```sh
-npm run android:build --workspace @banabaconnect/mobile
 npm run android --workspace @banabaconnect/mobile
 ```
 
-The first command needs the Android SDK and Java; it generates the ignored native project and
-installs the app. Rebuild after native dependency or app configuration changes. The second starts
-the development server and explicitly targets the native app. To use Expo Go for foreground UI
-testing instead, pass `-- --go` to the second command.
+This needs the Android SDK and Java. It builds the native app, installs it on the emulator, and
+starts the development server. Gradle reuses cached build outputs on subsequent runs. For JavaScript
+changes with the app already installed, pass `-- --start-only` to skip the native build. To use
+Expo Go for foreground UI testing instead, pass `-- --go`. Use `android:build` to build and install
+without starting the development server.
+
+If `--start-only` reports that no development build is installed, run `npm run android` without
+that flag and wait for the build to finish successfully. Starting Metro alone does not install
+the native app.
+
+On Windows, an SDK path containing spaces can make CMake invoke `clang++.exe` by its shortened
+filename, which prevents it from linking the C++ runtime. The `withWindowsCxxCompiler` config
+plugin explicitly selects the C++ compiler mode for native modules and pins CMake 4.1.2,
+whose newer Ninja supports long generated file paths. It only does this when prebuild runs on
+Windows; Mac, Linux and EAS builds keep their default CMake. To apply these settings to an existing
+generated Android project, run these commands from `apps/mobile`:
+
+```sh
+npx expo prebuild --platform android --no-install
+npm run android:build
+npm run android
+```
 
 For a controlled background-worker test, leave BanabaConnect using Home, then inspect its job:
 

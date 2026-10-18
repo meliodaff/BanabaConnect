@@ -1,12 +1,17 @@
 import { Directory, File, Paths } from 'expo-file-system';
 import {
-  isReportStatus,
   type LocalSyncStatus,
   type ReportCategory,
   type ReportSubmission,
 } from '@banabaconnect/shared';
 import { getDb, withWriteLock } from './db';
-import type { DownloadedReport, PhotoToSave, QueuedReport, ServerStatus } from './types';
+import {
+  toResidentStatus,
+  type DownloadedReport,
+  type PhotoToSave,
+  type QueuedReport,
+  type ServerStatus,
+} from './types';
 
 interface ReportRow {
   id: string;
@@ -61,7 +66,7 @@ function toQueuedReport(row: ReportRow): QueuedReport {
     nextAttemptAt: row.next_attempt_at,
     lastError: row.last_error,
     sentAt: row.sent_at,
-    serverStatus: isReportStatus(row.server_status) ? row.server_status : null,
+    serverStatus: toResidentStatus(row.server_status),
     serverStatusAt: row.server_status_at,
     serverNote: row.server_note,
     photo:

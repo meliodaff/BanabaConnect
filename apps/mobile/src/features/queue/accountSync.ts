@@ -1,4 +1,4 @@
-import { isReportCategory, isReportStatus } from '@banabaconnect/shared';
+import { isReportCategory } from '@banabaconnect/shared';
 import { supabase, supabaseConfigured } from '@/features/auth/supabase';
 import {
   adoptGuestReports,
@@ -63,7 +63,7 @@ async function downloadAccountReports(ownerId: string) {
   const known = await localReportIds();
   let added = 0;
   for (const row of rows) {
-    if (known.has(row.id) || !isReportCategory(row.category) || !isReportStatus(row.status)) {
+    if (known.has(row.id) || !isReportCategory(row.category) || typeof row.status !== 'string') {
       continue;
     }
     await insertDownloadedReport(

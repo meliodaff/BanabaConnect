@@ -4,8 +4,9 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useReduceMotion } from '@/components/useReduceMotion';
 
-const SPLASH_DURATION_MS = 3000;
-const REVEAL_DURATION_MS = 1200;
+// Long enough to read the seal and name, short enough not to delay someone reporting an emergency.
+const SPLASH_DURATION_MS = 700;
+const REVEAL_DURATION_MS = 400;
 
 /** Keep navigation mounted so the app can initialize behind the startup screen. */
 export function StartupScreen({ children }: { children: ReactNode }) {
@@ -75,9 +76,7 @@ export function StartupScreen({ children }: { children: ReactNode }) {
           <Text style={styles.subtitle}>Your barangay, within reach.</Text>
           <View style={styles.loading} accessibilityRole="progressbar" accessibilityLabel="Loading BanabaConnect">
             <LoadingDots reduceMotion={reduceMotion} />
-            <Text style={styles.loadingText} accessibilityLiveRegion="polite">
-              {ready ? 'Welcome to BanabaConnect' : 'Loading your dashboard…'}
-            </Text>
+            <Text style={styles.loadingText}>Opening BanabaConnect…</Text>
           </View>
           <Text style={styles.location}>Barangay Banaba · San Mateo, Rizal</Text>
           <StatusBar style="dark" />

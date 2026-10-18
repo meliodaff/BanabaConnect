@@ -38,6 +38,7 @@ function getSnapshot() {
 
 export const reportsStore = {
   getState: getSnapshot,
+  subscribe,
   /** Reloads the signed-in account's (or the guest's) reports from the local database. */
   async refresh() {
     const reports = await listReports(await currentReportOwner());

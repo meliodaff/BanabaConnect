@@ -25,12 +25,19 @@ transactions), before deploying the updated dashboard:
 
 The first adds `dispatched` to the status enum and must commit before the second uses it.
 The second updates the staff action, notification wording, and scoring of open reports.
-Existing `in_progress` reports keep their meaning; dispatch is a separate staff choice.
+Dispatch is a separate staff choice.
 
 For the final polite resident messages, run
 `supabase/migrations/20261018000003_polite_resident_status_messages.sql`. If the first two
-migrations are already applied, run only this new file. It works whether or not the earlier
-wording-only migration `20261018000002_friendlier_in_progress_message.sql` was applied.
+migrations are already applied, run only this new file. (An earlier wording-only migration,
+`20261018000002`, was removed because this file replaces it; a database that already ran it
+needs nothing extra.)
+
+The resident message for In progress now says barangay personnel are at the location.
+Reports that were already In progress before this change were not necessarily on site, but
+residents will now read that message for them too. While only the team is testing, those are
+test reports. Before the public release, check that no real report is left In progress from
+before this change, or move it to the right status.
 Reload the updated app/dashboard to see the messages in resident report details and the
 employee preview. Use In progress only once barangay personnel are at the location and
 handling the incident, because that is what its resident message now says.
@@ -45,8 +52,9 @@ also have friendly Filipino messages. Dispatched reports stay in active queues a
 The status action writes a matching row to the existing `notifications` table. Delivery as
 a phone push notification still depends on the separate push-notification setup.
 
-Update the resident app before staff start choosing the new status. Older app versions
-do not recognize `dispatched`. Test with `npm run test:status` and mobile lint/typecheck.
+Update the resident app before staff start choosing the new status. Versions up to 1.0.7
+do not recognize `dispatched` and keep showing the previous status. Newer versions show a
+status they don't know as "May update ang barangay" and ask the resident to update the app. Test with `npm run test:status` and mobile lint/typecheck.
 
 ## 2. The admin account
 

@@ -28,8 +28,9 @@ function report(id, category = 'fire', ownerId = 'resident') {
   };
 }
 
-function engineHarness(reports, send = async () => {}, owner = 'resident', enqueue = async () => false) {
+function engineHarness(reports, send = async () => {}, owner = 'resident', enqueue = async () => false, online = true) {
   const events = [];
+  const sending = new Set();
   class OfflineError extends Error {}
   const repository = {
     dueReports: async (id, now, ignoreBackoff) => reports.filter((r) =>
@@ -50,12 +51,13 @@ function engineHarness(reports, send = async () => {}, owner = 'resident', enque
     '@/features/auth/guestSession': { currentReportOwner: async () => owner },
     './reportRepository': repository,
     './reportsStore': { reportsStore: {
-      setSending: () => events.push('ui'), refresh: async () => events.push('ui'),
+      setSending: (id, on) => { events.push('ui'); if (on) sending.add(id); else sending.delete(id); },
+      refresh: async () => events.push('ui'),
     } },
     './statusSync': { refreshStatuses: async () => events.push('status') },
     './syncFeedback': { notifyReportSent: () => events.push('toast') },
     './nativeReportUpload': { enqueueNativeReport: enqueue },
-    './transport': { OfflineError, transport: {
+    './transport': { OfflineError, hasConnection: async () => online, transport: {
       sendReport: async (submission) => {
         events.push(`text:${submission.id}`);
         await send(submission, OfflineError);
@@ -63,7 +65,7 @@ function engineHarness(reports, send = async () => {}, owner = 'resident', enque
       uploadPhoto: async (id) => events.push(`photo:${id}`),
     } },
   });
-  return { ...engine, events };
+  return { ...engine, events, sending };
 }
 
 test('background sync sends urgent text before photos, bypasses backoff, and respects ownership', async () => {
@@ -477,4 +479,43 @@ test('concurrent startup and Send share guest creation; a failure permits a late
   fail = false;
   assert.equal((await guest.ensureSession()).user.id, 'guest');
   assert.equal(creations, 2);
+});
+
+test('an iOS upload waiting offline shows as waiting for signal, not as sending', async () => {
+  const reports = [report('fire')];
+  const engine = engineHarness(reports, async () => assert.fail('ordinary RPC used'), 'resident', async () => true, false);
+  await engine.requestSync({ ignoreBackoff: true });
+  assert.equal(engine.sending.size, 0);
+  const online = engineHarness([report('fire')], undefined, 'resident', async () => true, true);
+  await online.requestSync({ ignoreBackoff: true });
+  assert.ok(online.sending.has('fire'), 'online, the upload is really in progress');
+});
+
+test('an expired session (401) retries once right away, then uses the normal delay', async () => {
+  const reports = [report('fire')];
+  const handlersById = [];
+  const engine = engineHarness(reports, async () => assert.fail('ordinary RPC used'), 'resident', async (item, handlers) => {
+    handlersById.push(handlers);
+    return true;
+  });
+  await engine.requestSync({ background: true, ignoreBackoff: true });
+  const expired = Object.assign(new Error('Report not accepted (HTTP 401)'), { status: 401 });
+  await handlersById[0].onFailed(expired);
+  assert.ok(reports[0].nextAttemptAt <= Date.now(), 'first 401 is due again immediately');
+  await tick();
+  assert.equal(handlersById.length, 2, 'the queue handed the report off again');
+  await handlersById[1].onFailed(expired);
+  assert.ok(reports[0].nextAttemptAt > Date.now(), 'a second 401 waits for the retry delay');
+});
+
+test('the reporting session is prepared once per launch, not on every network change', async () => {
+  const hook = triggersHarness('ios', 'active', true);
+  try {
+    await tick();
+    hook.network(true);
+    hook.network(true, false);
+    hook.network(true);
+    await tick();
+    assert.equal(hook.prepared, 1);
+  } finally { hook.cleanup(); }
 });

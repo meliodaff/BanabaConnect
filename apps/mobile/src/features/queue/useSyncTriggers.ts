@@ -27,11 +27,17 @@ export function useSyncTriggers() {
 
     let wasConnected: boolean | null = null;
     let wasReachable: boolean | null = null;
+    let sessionPrepared = false;
     const unsubscribeNetInfo = NetInfo.addEventListener((network) => {
       // Prepare authentication while online, so a later offline report can be handed to iOS.
-      if (network.isConnected === true && AppState.currentState === 'active' && supabaseConfigured) {
+      // Once per launch: network details change often, and the saved session lasts.
+      if (!sessionPrepared && network.isConnected === true && AppState.currentState === 'active' && supabaseConfigured) {
+        sessionPrepared = true;
         void ensureSession().then(() => requestSync())
-          .catch((error) => console.warn('Could not prepare the reporting session', error));
+          .catch((error) => {
+            sessionPrepared = false;
+            console.warn('Could not prepare the reporting session', error);
+          });
       }
       // Even a hint of signal is worth a try, so don't wait for internet reachability.
       // Try again if Wi-Fi connected before it actually had internet access.

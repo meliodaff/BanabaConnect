@@ -3,8 +3,9 @@ export const OFFLINE_TOAST_MESSAGE =
 
 export const BACK_ONLINE_TOAST_MESSAGE = 'Your signal is back.';
 
+// The "Try now" results are in Tagalog, like the rest of a report's status.
 export const STILL_NO_SIGNAL_TOAST_MESSAGE =
-  "Still no signal. We'll send your report as soon as your signal comes back.";
+  'Wala pa ring signal. Ipapadala namin ang report mo pagbalik ng signal.';
 
 export const COULD_NOT_SEND_TOAST_MESSAGE =
-  "Couldn't send yet. Your signal may be weak. We'll keep trying.";
+  'Hindi pa naipadala. Baka mahina ang signal mo. Patuloy naming susubukan.';

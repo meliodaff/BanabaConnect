@@ -22,6 +22,10 @@ export interface DeliveryStatus {
 
 const OFFLINE_ERROR_MESSAGE = 'No connection';
 
+const UNRECOGNIZED_LABEL = 'May update ang barangay';
+const UNRECOGNIZED_DETAIL =
+  'May bagong update po ang barangay sa report mo. I-update ang BanabaConnect para makita ito nang buo.';
+
 /** Not sent yet, and the last try reached the server but wasn't accepted (not just no signal). */
 export function isRetryingAfterError(report: QueuedReport) {
   return (
@@ -52,7 +56,7 @@ export function deliveryStatusOf(
     pill(label, icon, colors.primary, colors.primarySoft, colors.border);
 
   if (sending) {
-    return blue('Sending…', icons.sending);
+    return blue('Ipinapadala…', icons.sending);
   }
   if (report.syncStatus === 'sent') {
     switch (report.serverStatus) {
@@ -84,13 +88,16 @@ export function deliveryStatusOf(
         );
       case 'received':
         return blue(REPORT_STATUS_LABELS.received, icons.sent);
+      case 'unrecognized':
+        // A status from a newer dashboard: say something changed rather than show a stale one.
+        return blue(UNRECOGNIZED_LABEL, icons.bell);
       default:
-        return blue('Sent', icons.sent);
+        return blue('Naipadala na', icons.sent);
     }
   }
   // Not delivered yet: still on the phone.
   return pill(
-    isRetryingAfterError(report) ? 'Not sent yet' : 'Waiting for signal',
+    isRetryingAfterError(report) ? 'Hindi pa naipadala' : 'Naghihintay ng signal',
     icons.queued,
     colors.warning,
     colors.warningSoft,
@@ -102,15 +109,18 @@ export function deliveryStatusOf(
 export function deliveryStatusDetail(report: QueuedReport): string {
   if (report.syncStatus !== 'sent') {
     return isRetryingAfterError(report)
-      ? "Saved on your phone. The barangay's system didn't accept it yet, so the app keeps trying."
-      : 'Saved on your phone. Sends automatically when you get signal.';
+      ? 'Naka-save po ito sa phone mo. Hindi pa ito tinatanggap ng system ng barangay, kaya patuloy itong susubukang ipadala ng app.'
+      : 'Naka-save po ito sa phone mo. Kusa itong maipapadala kapag may signal na.';
   }
   if (!report.serverStatus) {
-    return `Sent to the barangay on ${formatReportTime(report.sentAt ?? report.submission.createdAt)}.`;
+    return `Naipadala sa barangay noong ${formatReportTime(report.sentAt ?? report.submission.createdAt)}.`;
   }
   const updated = report.serverStatusAt ? ` Na-update ${formatReportTime(report.serverStatusAt)}.` : '';
   const seeNote = report.serverNote ? ' Basahin ang mensahe ng barangay sa ibaba.' : '';
-  return `${REPORT_STATUS_DETAILS[report.serverStatus]}${updated}${seeNote}`;
+  const detail = report.serverStatus === 'unrecognized'
+    ? UNRECOGNIZED_DETAIL
+    : REPORT_STATUS_DETAILS[report.serverStatus];
+  return `${detail}${updated}${seeNote}`;
 }
 
 /** A sent report whose photo has not reached the server yet. */

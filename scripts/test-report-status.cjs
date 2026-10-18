@@ -50,10 +50,35 @@ test('only an explicit dispatch update tells the resident responders are on the 
 });
 
 test('local sending and offline states take precedence over a cached barangay status', () => {
-  assert.equal(delivery.deliveryStatusOf(report('dispatched'), true, {}).label, 'Sending…');
-  assert.equal(delivery.deliveryStatusOf(report('dispatched', { syncStatus: 'queued' }), false, {}).label, 'Waiting for signal');
+  assert.equal(delivery.deliveryStatusOf(report('dispatched'), true, {}).label, 'Ipinapadala…');
+  assert.equal(delivery.deliveryStatusOf(report('dispatched', { syncStatus: 'queued' }), false, {}).label, 'Naghihintay ng signal');
   assert.doesNotMatch(delivery.deliveryStatusDetail(report('dispatched', { syncStatus: 'queued' })), /Papunta na/);
   assert.match(delivery.deliveryStatusDetail(report('invalid', { serverNote: 'Duplicate report' })), /mensahe ng barangay sa ibaba/);
+});
+
+test('a status from a newer dashboard shows as an update instead of a stale status', () => {
+  const newer = report('unrecognized');
+  assert.equal(delivery.deliveryStatusOf(newer, false, {}).label, 'May update ang barangay');
+  assert.match(delivery.deliveryStatusDetail(newer), /I-update ang BanabaConnect/);
+  const types = load('apps/mobile/src/features/queue/types.ts', { '@banabaconnect/shared': shared });
+  assert.equal(types.toResidentStatus('dispatched'), 'dispatched');
+  assert.equal(types.toResidentStatus('on_hold'), 'unrecognized');
+  assert.equal(types.toResidentStatus(null), null);
+});
+
+test('the resident notification says exactly what the app and the staff preview show', () => {
+  // The latest migration that defines update_report_status is what the database runs.
+  const dir = path.join(root, 'supabase/migrations');
+  const latest = fs.readdirSync(dir).sort().reverse()
+    .map((file) => fs.readFileSync(path.join(dir, file), 'utf8'))
+    .find((sql) => /create or replace function public\.update_report_status/.test(sql));
+  const cases = (variable) => {
+    const block = latest.match(new RegExp(`${variable} := case p_status([\\s\\S]*?)end;`))[1];
+    return Object.fromEntries([...block.matchAll(/when '(\w+)' then '((?:[^']|'')*)'/g)]
+      .map(([, status, text]) => [status, text.replace(/''/g, "'")]));
+  };
+  assert.deepEqual(cases('v_title'), shared.REPORT_STATUS_LABELS);
+  assert.deepEqual(cases('v_body'), shared.REPORT_STATUS_DETAILS);
 });
 
 test('status refresh accepts dispatch and preserves the current staff note', async () => {

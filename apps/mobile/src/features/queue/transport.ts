@@ -25,10 +25,13 @@ export class OfflineError extends Error {
   }
 }
 
+/** Any connection counts, even a weak one: worth a try. */
+export async function hasConnection() {
+  return (await NetInfo.fetch()).isConnected !== false;
+}
+
 async function requireConnection() {
-  const state = await NetInfo.fetch();
-  // Any connection counts, even a weak one: worth a try.
-  if (state.isConnected === false) {
+  if (!(await hasConnection())) {
     throw new OfflineError();
   }
 }

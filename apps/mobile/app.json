@@ -23,6 +23,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "./plugins/withWindowsCxxCompiler",
       "expo-router",
       "expo-status-bar",
       [

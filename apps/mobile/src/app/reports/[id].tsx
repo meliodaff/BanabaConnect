@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CATEGORY_LABELS } from '@banabaconnect/shared';
+import { CATEGORY_LABELS, REPORT_STATUS_LABELS } from '@banabaconnect/shared';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { LoadingImage, Spinner } from '@/components/LoadingImage';
 import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
@@ -108,7 +108,7 @@ function ReportDetail({
               hitSlop={12}
               accessibilityRole="button"
             >
-              <Text style={styles.link}>Try now</Text>
+              <Text style={styles.link}>Subukan ngayon</Text>
             </Pressable>
           )}
         </View>
@@ -117,7 +117,7 @@ function ReportDetail({
           <StaffNote
             note={report.serverNote}
             time={report.serverStatusAt ? formatReportTime(report.serverStatusAt) : null}
-            attention={report.serverStatus === 'invalid' ? 'Report closed' : null}
+            attention={report.serverStatus === 'invalid' ? REPORT_STATUS_LABELS.invalid : null}
           />
         )}
 
@@ -163,7 +163,7 @@ function ReportDetail({
             />
             {isPhotoWaiting(report) && (
               <Text style={styles.note}>
-                Photo still uploading. It sends automatically when you get signal.
+                Ipinapadala pa ang litrato. Kusa itong maipapadala kapag may signal na.
               </Text>
             )}
           </View>

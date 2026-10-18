@@ -6,6 +6,33 @@ import { currentToastId, hideToast, showToast } from '@/features/toast/toastStor
 import { countWaiting, reportsStore } from './reportsStore';
 import { requestSync } from './syncEngine';
 
+// How long to wait for uploads iOS is still finishing before saying it didn't work.
+const IN_FLIGHT_WAIT_MS = 30_000;
+
+/** Waiting reports whose upload is still running (iOS finishes them after the queue pass). */
+function hasUploadsInFlight() {
+  const { reports, sendingIds } = reportsStore.getState();
+  return reports.some((r) => r.syncStatus === 'queued' && sendingIds.has(r.submission.id));
+}
+
+function waitForUploadsInFlight() {
+  return new Promise<void>((resolve) => {
+    if (!hasUploadsInFlight()) {
+      resolve();
+      return;
+    }
+    const done = () => {
+      clearTimeout(timer);
+      unsubscribe();
+      resolve();
+    };
+    const timer = setTimeout(done, IN_FLIGHT_WAIT_MS);
+    const unsubscribe = reportsStore.subscribe(() => {
+      if (!hasUploadsInFlight()) done();
+    });
+  });
+}
+
 /**
  * The "Try now" button: send waiting reports right away and show how it went,
  * or say why that can't happen yet.
@@ -20,10 +47,11 @@ export async function tryToSendNow(offline: boolean) {
   const several = waitingBefore > 1;
   const loadingId = showToast({
     tone: 'loading',
-    message: several ? 'Sending your reports…' : 'Sending your report…',
+    message: several ? 'Ipinapadala ang mga report mo…' : 'Ipinapadala ang report mo…',
   });
 
   await requestSync({ ignoreBackoff: true });
+  await waitForUploadsInFlight();
 
   // The sync shows its own "sent" toast per report; if one replaced the spinner, it's done.
   if (currentToastId() !== loadingId) {
@@ -35,8 +63,8 @@ export async function tryToSendNow(offline: boolean) {
     showToast({
       tone: 'success',
       message: several
-        ? 'Your reports were sent to the barangay.'
-        : 'Your report was sent to the barangay.',
+        ? 'Naipadala na sa barangay ang mga report mo.'
+        : 'Naipadala na sa barangay ang report mo.',
     });
   } else {
     hideToast(loadingId);

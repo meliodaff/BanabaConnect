@@ -1,4 +1,3 @@
-import { isReportStatus } from '@banabaconnect/shared';
 import { currentReportOwner } from '@/features/auth/guestSession';
 import { supabase, supabaseConfigured } from '@/features/auth/supabase';
 import { listReports, saveServerStatuses } from './reportRepository';
@@ -85,7 +84,8 @@ async function fetchStatuses() {
       throw error;
     }
     for (const row of data ?? []) {
-      if (isReportStatus(row.status)) {
+      // Kept even when this app version doesn't know the status, so the resident still sees an update.
+      if (typeof row.status === 'string') {
         statuses.push({
           id: row.id,
           status: row.status,

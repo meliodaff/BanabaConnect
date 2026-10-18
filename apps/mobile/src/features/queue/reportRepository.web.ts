@@ -1,7 +1,13 @@
 // In-memory stand-in for web previews: expo-sqlite's web support is still alpha.
 // Same API as reportRepository.ts; nothing survives a page reload.
 import type { ReportSubmission } from '@banabaconnect/shared';
-import type { DownloadedReport, PhotoToSave, QueuedReport, ServerStatus } from './types';
+import {
+  toResidentStatus,
+  type DownloadedReport,
+  type PhotoToSave,
+  type QueuedReport,
+  type ServerStatus,
+} from './types';
 
 const reports = new Map<string, QueuedReport>();
 
@@ -75,7 +81,7 @@ export async function markPhotoRetry(reportId: string, attempts: number, nextAtt
 
 export async function saveServerStatuses(statuses: ServerStatus[]) {
   for (const { id, status, statusAt, note } of statuses) {
-    update(id, (r) => ({ ...r, serverStatus: status, serverStatusAt: statusAt, serverNote: note }));
+    update(id, (r) => ({ ...r, serverStatus: toResidentStatus(status), serverStatusAt: statusAt, serverNote: note }));
   }
 }
 
@@ -111,7 +117,7 @@ export async function insertDownloadedReport(report: DownloadedReport, ownerId: 
     photo: report.photo
       ? { ...report.photo, syncStatus: 'sent', attempts: 0, nextAttemptAt: 0 }
       : null,
-    serverStatus: report.serverStatus,
+    serverStatus: toResidentStatus(report.serverStatus),
     serverStatusAt: report.serverStatusAt,
     serverNote: report.serverNote,
   });

@@ -129,10 +129,10 @@ function WaitingSummary({ count }: { count: number }) {
       <Icon name={icons.queued} size={24} color={colors.warning} />
       <View style={styles.flex}>
         <Text style={styles.summaryTitle}>
-          {count === 1 ? '1 report waiting for signal' : `${count} reports waiting for signal`}
+          {`${count} report ang naghihintay ng signal`}
         </Text>
         <Text style={styles.summaryText}>
-          Saved on your phone. Sends automatically when you get signal.
+          Naka-save po sa phone mo. Kusang maipapadala kapag may signal na.
         </Text>
       </View>
       <Pressable
@@ -140,7 +140,7 @@ function WaitingSummary({ count }: { count: number }) {
         hitSlop={8}
         accessibilityRole="button"
       >
-        <Text style={styles.link}>Try now</Text>
+        <Text style={styles.link}>Subukan ngayon</Text>
       </Pressable>
     </View>
   );
@@ -206,7 +206,7 @@ function ReportCard({
             <Icon name={status.icon} size={14} color={status.iconColor} />
             <Text style={[styles.statusText, { color: status.textColor }]}>{status.label}</Text>
           </View>
-          {photoWaiting && <Text style={styles.photoNote}>Photo still uploading</Text>}
+          {photoWaiting && <Text style={styles.photoNote}>Ipinapadala pa ang litrato</Text>}
         </View>
         {report.syncStatus === 'sent' && report.serverNote && (
           <NotePreview note={report.serverNote} closed={report.serverStatus === 'invalid'} />
