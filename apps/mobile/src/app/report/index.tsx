@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { CATEGORY_LABELS, REPORT_CATEGORIES, type ReportCategory } from '@banabaconnect/shared';
+import { CATEGORY_LABELS, PICKER_CATEGORIES, type ReportCategory } from '@banabaconnect/shared';
 import { ReportCategoryIcon } from '@/components/ReportCategoryIcon';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
 import { radius, useThemedStyles, type ThemeColors } from '@/theme';
@@ -20,7 +20,7 @@ export default function ChooseCategoryScreen() {
       </Text>
 
       <View style={styles.grid}>
-        {REPORT_CATEGORIES.map((category) => {
+        {PICKER_CATEGORIES.map((category) => {
           const look = CATEGORY_APPEARANCE[category];
           return (
             <Pressable

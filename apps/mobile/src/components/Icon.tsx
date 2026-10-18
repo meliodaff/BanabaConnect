@@ -31,6 +31,9 @@ export function Icon({
 
 export const icons = {
   emergency: { ios: 'light.beacon.max.fill', android: 'e911_emergency' },
+  sos: { ios: 'sos.circle.fill', android: 'sos' },
+  close: { ios: 'xmark', android: 'close' },
+  fingerprint: { ios: 'touchid', android: 'fingerprint' },
   camera: { ios: 'camera.fill', android: 'photo_camera' },
   gallery: { ios: 'photo.on.rectangle', android: 'image' },
   location: { ios: 'location.fill', android: 'location_on' },

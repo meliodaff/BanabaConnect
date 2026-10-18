@@ -49,6 +49,8 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          {/* Opened by the SOS widget, the app icon shortcut, and the Home tab (banabaconnect://sos). */}
+          <Stack.Screen name="sos" options={{ headerShown: false }} />
           <Stack.Screen name="report/index" options={{ title: 'New report' }} />
           <Stack.Screen name="report/details" options={{ title: 'New report' }} />
           <Stack.Screen name="reports/[id]" options={{ title: 'Report details' }} />

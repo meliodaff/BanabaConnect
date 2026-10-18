@@ -21,6 +21,7 @@ const RETRY_DELAYS_MS = [30_000, 120_000, 600_000];
 // Life-safety reports go first when several are waiting. Draft order: the per-category
 // severity values are still an open question in the project doc.
 const SYNC_PRIORITY: ReportCategory[] = [
+  'sos',
   'medical',
   'fire',
   'flood',

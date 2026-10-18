@@ -31,6 +31,7 @@ interface ReportRow {
   server_status: string | null;
   server_status_at: string | null;
   server_note: string | null;
+  phone_lock_confirmed: number | null;
   photo_uri: string | null;
   photo_width: number | null;
   photo_height: number | null;
@@ -59,6 +60,7 @@ function toQueuedReport(row: ReportRow): QueuedReport {
       description: row.description,
       incidentAt: row.incident_at,
       createdAt: row.created_at,
+      ...(row.phone_lock_confirmed === null ? {} : { phoneLockConfirmed: row.phone_lock_confirmed === 1 }),
     },
     ownerId: row.owner_id,
     syncStatus: row.sync_status as LocalSyncStatus,
@@ -124,8 +126,9 @@ export async function saveReport(
       db.withTransactionAsync(async () => {
         await db.runAsync(
           `INSERT INTO reports
-            (id, category, latitude, longitude, location_accuracy, description, incident_at, created_at, owner_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            (id, category, latitude, longitude, location_accuracy, description, incident_at, created_at, owner_id,
+             phone_lock_confirmed)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           submission.id,
           submission.category,
           submission.latitude,
@@ -135,6 +138,7 @@ export async function saveReport(
           submission.incidentAt,
           submission.createdAt,
           ownerId,
+          submission.phoneLockConfirmed == null ? null : Number(submission.phoneLockConfirmed),
         );
         if (photo && photoFile) {
           await db.runAsync(

@@ -56,6 +56,16 @@ Update the resident app before staff start choosing the new status. Versions up 
 do not recognize `dispatched` and keep showing the previous status. Newer versions show a
 status they don't know as "May update ang barangay" and ask the resident to update the app. Test with `npm run test:status` and mobile lint/typecheck.
 
+### One-tap SOS
+
+Run these as separate SQL Editor runs, in order, **before** deploying the dashboard (it reads
+the new `phone_lock_confirmed` column):
+
+1. `supabase/migrations/20261019000000_sos_category.sql`
+2. `supabase/migrations/20261019000001_sos_reports.sql`
+
+An SOS is always Critical. See `docs/sos.md` for how residents send one and what staff see.
+
 ## 2. The admin account
 
 There is one staff account for now.

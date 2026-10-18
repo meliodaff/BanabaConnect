@@ -1,6 +1,7 @@
 import { router, Tabs } from 'expo-router';
 import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import { Icon, icons, type IconName } from '@/components/Icon';
+import { useSosShortcut } from '@/features/sos/useSosShortcut';
 import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
 function tabIcon(name: IconName) {
@@ -34,6 +35,8 @@ function ReportTabButton() {
 
 export default function TabsLayout() {
   const { colors } = useTheme();
+  // Here, not in the root layout: opening the SOS shortcut navigates.
+  useSosShortcut();
   return (
     <Tabs
       screenOptions={{

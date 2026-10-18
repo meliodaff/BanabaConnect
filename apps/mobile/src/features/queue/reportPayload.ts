@@ -11,5 +11,7 @@ export function reportPayload(submission: ReportSubmission) {
     p_description: submission.description,
     p_incident_at: submission.incidentAt,
     p_created_at: submission.createdAt,
+    // Only for SOS, so other reports still work against a database without the SOS migration.
+    ...(submission.phoneLockConfirmed == null ? {} : { p_phone_lock_confirmed: submission.phoneLockConfirmed }),
   };
 }

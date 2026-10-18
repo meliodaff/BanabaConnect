@@ -57,6 +57,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
     clusterCount: report.clusterCount,
     clusterPeople: report.clusterPeople,
     outsideBanabaM: report.outsideBanabaM,
+    phoneLockConfirmed: report.phoneLockConfirmed,
     reportedAgo: t.time.ago(report.createdAt),
     reportedAt: formatDateTime(report.createdAt),
     waited: t.time.waited(report.createdAt, report.receivedAt),

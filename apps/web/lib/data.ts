@@ -52,6 +52,11 @@ export interface ReportSummary {
    * enough that GPS error could explain it). Flagged, never rejected.
    */
   outsideBanabaM: number | null;
+  /**
+   * SOS only: true when the phone's own lock (fingerprint, face, PIN) confirmed it, false when the
+   * phone has no screen lock. Null for other reports and for SOS from before the column existed.
+   */
+  phoneLockConfirmed: boolean | null;
   hasPhoto: boolean;
   reporter: Reporter | null;
 }
@@ -59,7 +64,7 @@ export interface ReportSummary {
 const SUMMARY_COLUMNS = `
   id, category, status, priority_score, severity_score, volume_score, credibility_score,
   description, latitude, longitude, location_accuracy_m, created_at, received_at, incident_at,
-  status_updated_at, photo_path, cluster_id, outside_banaba_m,
+  status_updated_at, photo_path, cluster_id, outside_banaba_m, phone_lock_confirmed,
   cluster:incident_clusters(report_count, reporter_count),
   reporter:profiles!reports_reporter_id_fkey(id, full_name, is_guest, verification_status, phone, area, address)
 `;
@@ -104,6 +109,7 @@ function toSummary(row: any): ReportSummary | null {
     clusterCount: row.cluster?.report_count ?? 1,
     clusterPeople: row.cluster?.reporter_count ?? 1,
     outsideBanabaM: toNumber(row.outside_banaba_m),
+    phoneLockConfirmed: typeof row.phone_lock_confirmed === "boolean" ? row.phone_lock_confirmed : null,
     hasPhoto: Boolean(row.photo_path),
     reporter: toReporter(row.reporter),
   };

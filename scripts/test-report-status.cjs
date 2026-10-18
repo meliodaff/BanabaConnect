@@ -244,3 +244,25 @@ test('employee action saves dispatch and rejects invalid or unsupported updates 
   assert.equal((await update('invalid')).done, false);
   assert.equal(calls.length, 1);
 });
+
+test('SOS has its own screen: it is a category, but not one residents pick in the report form', () => {
+  assert.ok(shared.REPORT_CATEGORIES.includes('sos'));
+  assert.equal(shared.PICKER_CATEGORIES.includes('sos'), false);
+  assert.equal(shared.PICKER_CATEGORIES.length, shared.REPORT_CATEGORIES.length - 1);
+});
+
+test('the database keeps every SOS Critical and accepts apps that do not send the phone-lock answer', () => {
+  const dir = path.join(root, 'supabase/migrations');
+  const files = fs.readdirSync(dir).sort().map((file) => fs.readFileSync(path.join(dir, file), 'utf8'));
+  // The latest definition of each function is the one the database runs.
+  const latest = (name) => [...files].reverse().find((sql) => new RegExp(`create (or replace )?function public\\.${name}\\(`).test(sql));
+  const body = (name) => {
+    const sql = latest(name);
+    const start = sql.search(new RegExp(`create (or replace )?function public\\.${name}\\(`));
+    return sql.slice(start, sql.indexOf('$$;', start));
+  };
+  for (const name of ['rescore_cluster_volume', 'review_verification']) {
+    assert.match(body(name), /priority_score = case when r\.category = 'sos' then 1\.000 else/, name);
+  }
+  assert.match(body('submit_report'), /p_phone_lock_confirmed boolean default null/);
+});

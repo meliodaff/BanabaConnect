@@ -2,7 +2,7 @@
   "expo": {
     "name": "BanabaConnect",
     "slug": "banabaconnect",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -54,7 +54,63 @@
           "motionUsagePermission": false
         }
       ],
-      "expo-background-task"
+      "expo-background-task",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "BanabaConnect uses Face ID to confirm it's you before sending an SOS to Barangay Banaba."
+        }
+      ],
+      [
+        "expo-quick-actions",
+        {
+          "androidIcons": {
+            "shortcut_sos": {
+              "foregroundImage": "./assets/android-icon-foreground.png",
+              "backgroundColor": "#C2342E"
+            }
+          },
+          "iosActions": [
+            {
+              "id": "sos",
+              "title": "Send SOS",
+              "subtitle": "Barangay Banaba",
+              "icon": "symbol:sos.circle.fill",
+              "params": { "href": "/sos" }
+            }
+          ]
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "widgets": [
+            {
+              "name": "SosWidget",
+              "displayName": "SOS",
+              "description": "Send an SOS to Barangay Banaba in one tap.",
+              "ios": { "supportedFamilies": ["systemSmall", "accessoryCircular"] }
+            }
+          ]
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "SosWidget",
+              "label": "BanabaConnect SOS",
+              "description": "Send an SOS to Barangay Banaba in one tap.",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical"
+            }
+          ]
+        }
+      ]
     ],
     "scheme": "banabaconnect"
   }

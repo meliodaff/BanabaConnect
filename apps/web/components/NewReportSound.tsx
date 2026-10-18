@@ -45,6 +45,8 @@ interface Sound {
   /** The browser lets the page play sound (only after a click or key press on it). */
   allowed: boolean;
   toggle: () => void;
+  /** Plays the SOS siren once, so staff know what it sounds like. */
+  previewSiren: () => void;
 }
 
 const SoundContext = createContext<Sound | null>(null);
@@ -99,9 +101,58 @@ export function playAlert(context: BaseAudioContext) {
   }
 }
 
+/** The SOS siren's shape: frequencies in Hz, times in seconds. About 4 s in all. */
+const SIREN = {
+  low: 650,
+  high: 1500,
+  // Slow rise and fall, like an ambulance's wail.
+  wail: 1.0,
+  wails: 3,
+  // Then fast ones, like its yelp, so it can't be mistaken for anything else.
+  yelp: 0.16,
+  yelps: 6,
+  volume: 0.2,
+} as const;
+
+/**
+ * For an SOS: a siren that rises and falls (wail), then speeds up (yelp), so staff can tell an
+ * SOS from other new reports by ear. A sawtooth wave sounds closest to a real siren; the low-pass
+ * filter takes off its harshest edge.
+ */
+export function playSiren(context: BaseAudioContext) {
+  const output = context.createGain();
+  output.connect(context.destination);
+  const soften = context.createBiquadFilter();
+  soften.type = "lowpass";
+  soften.frequency.value = 2800;
+  soften.connect(output);
+  const tone = context.createOscillator();
+  tone.type = "sawtooth";
+  tone.connect(soften);
+
+  const start = context.currentTime + 0.05;
+  let at = start;
+  tone.frequency.setValueAtTime(SIREN.low, at);
+  for (const [length, count] of [[SIREN.wail, SIREN.wails], [SIREN.yelp, SIREN.yelps]] as const) {
+    for (let i = 0; i < count; i++) {
+      tone.frequency.exponentialRampToValueAtTime(SIREN.high, at + length / 2);
+      tone.frequency.exponentialRampToValueAtTime(SIREN.low, at + length);
+      at += length;
+    }
+  }
+  // Fade in and out over 20 ms so it doesn't click.
+  output.gain.setValueAtTime(0, start);
+  output.gain.linearRampToValueAtTime(SIREN.volume, start + 0.02);
+  output.gain.setValueAtTime(SIREN.volume, at - 0.02);
+  output.gain.linearRampToValueAtTime(0, at);
+  tone.start(start);
+  tone.stop(at + 0.01);
+}
+
 /**
  * Plays a sound when a new report arrives, on every dashboard page, if staff turned it on
- * (SoundToggle in Settings). For staff who aren't watching the screen during a busy night.
+ * (SoundToggle in Settings). For staff who aren't watching the screen during a busy night. An SOS
+ * plays the siren; every other report plays the beeps.
  */
 export function NewReportSoundProvider({ children }: { children: React.ReactNode }) {
   const enabled = useSyncExternalStore(subscribe, readSaved, () => false);
@@ -146,8 +197,10 @@ export function NewReportSoundProvider({ children }: { children: React.ReactNode
       }
       channel = supabase
         .channel("new-report-sound")
-        .on("postgres_changes", { event: "INSERT", schema: "public", table: "reports" }, () => {
-          if (audio.current?.state === "running") playAlert(audio.current);
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "reports" }, (payload) => {
+          if (audio.current?.state !== "running") return;
+          if ((payload.new as { category?: string }).category === "sos") playSiren(audio.current);
+          else playAlert(audio.current);
         })
         .subscribe();
     })();
@@ -171,7 +224,15 @@ export function NewReportSoundProvider({ children }: { children: React.ReactNode
     }
   }, [enabled, unlock]);
 
-  return <SoundContext.Provider value={{ enabled, allowed, toggle }}>{children}</SoundContext.Provider>;
+  const previewSiren = useCallback(() => {
+    void unlock().then((context) => {
+      if (context?.state === "running") playSiren(context);
+    });
+  }, [unlock]);
+
+  return (
+    <SoundContext.Provider value={{ enabled, allowed, toggle, previewSiren }}>{children}</SoundContext.Provider>
+  );
 }
 
 /**
@@ -212,6 +273,15 @@ export function SoundToggle({ compact = false }: { compact?: boolean }) {
           />
         </span>
       </button>
+      {!compact && (
+        <button
+          type="button"
+          onClick={sound.previewSiren}
+          className="mx-3 mb-1 text-xs font-semibold text-brand underline-offset-2 hover:underline"
+        >
+          {t.sound.previewSiren}
+        </button>
+      )}
       {sound.enabled && !sound.allowed && (
         <p className="px-3 pb-1 text-xs font-semibold text-warning">{t.sound.blocked}</p>
       )}

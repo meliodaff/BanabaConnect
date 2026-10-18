@@ -24,6 +24,17 @@ export interface CategoryAppearance {
 }
 
 export const CATEGORY_APPEARANCE: Record<ReportCategory, CategoryAppearance> = {
+  sos: {
+    icon: { ios: 'sos.circle.fill', android: 'sos' },
+    colors: {
+      // Emergency red on purpose: an SOS is the one report that always means "act now".
+      light: { icon: '#C62828', background: '#FDE7E7' },
+      dark: { icon: '#FF8A80', background: '#3D1C1C' },
+    },
+    tagalog: 'SOS',
+    // Not shown: an SOS is sent from its own screen, without a details form.
+    placeholder: '',
+  },
   flood: {
     icon: { ios: 'water.waves.and.arrow.up', android: 'flood' },
     colors: {

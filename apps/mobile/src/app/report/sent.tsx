@@ -17,6 +17,7 @@ export default function ReportSentScreen() {
   const offline = useIsOffline();
   const report = reports.find((r) => r.submission.id === id);
   const label = report ? CATEGORY_LABELS[report.submission.category] : 'Your';
+  const sos = report?.submission.category === 'sos';
 
   let icon: IconName;
   let tone: { color: string; background: string };
@@ -28,14 +29,16 @@ export default function ReportSentScreen() {
     icon = icons.check;
     tone = { color: colors.success, background: colors.successSoft };
     title = 'Sent to the barangay';
-    message = `${label} report received. Salamat! Stay safe and keep your phone with you.`;
+    message = sos
+      ? 'Your SOS reached the barangay. Stay where it is safe and keep your phone with you; they may call you.'
+      : `${label} report received. Salamat! Stay safe and keep your phone with you.`;
   } else if (
     !offline &&
     (!report || report.attempts === 0 || sendingIds.has(report.submission.id))
   ) {
     icon = icons.sending;
     tone = { color: colors.primary, background: colors.primarySoft };
-    title = 'Sending your report…';
+    title = sos ? 'Sending your SOS…' : 'Sending your report…';
     message = 'Your report is saved on your phone and is on its way to the barangay.';
     busy = true;
   } else {

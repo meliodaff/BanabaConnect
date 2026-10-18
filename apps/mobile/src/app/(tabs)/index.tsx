@@ -215,6 +215,21 @@ export default function HomeScreen() {
           </View>
         </Pressable>
 
+        {/* Same screen as the home-screen widget and the app icon shortcut. */}
+        <Pressable
+          onPress={() => router.push('/sos')}
+          style={({ pressed }) => [styles.sosButton, pressed && styles.pressed]}
+          accessibilityRole="button"
+          accessibilityLabel="Send SOS and call 911. For when you can't say what is happening."
+        >
+          <Icon name={icons.sos} size={30} color={colors.onEmergency} />
+          <View style={styles.flex}>
+            <Text style={styles.sosTitle}>Send SOS</Text>
+            <Text style={styles.sosDetail}>Hindi masabi kung ano? Ipapadala ang location mo at tatawag sa 911.</Text>
+          </View>
+          <Icon name={icons.chevron} size={22} color={colors.onEmergency} />
+        </Pressable>
+
         <Text style={styles.sectionTitle}>How reporting works</Text>
         <ScrollView
           horizontal
@@ -371,6 +386,27 @@ function createStyles(colors: ThemeColors) {
       textAlign: 'center',
       marginTop: 8,
       paddingHorizontal: 2,
+    },
+    sosButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      marginHorizontal: 20,
+      marginTop: 12,
+      paddingHorizontal: 18,
+      paddingVertical: 14,
+      borderRadius: radius.xl,
+      backgroundColor: colors.emergency,
+    },
+    sosTitle: {
+      color: colors.onEmergency,
+      fontSize: 18,
+      fontWeight: '800',
+    },
+    sosDetail: {
+      color: colors.onEmergency,
+      fontSize: 13,
+      marginTop: 2,
     },
     banner: {
       flexDirection: 'row',

@@ -519,3 +519,37 @@ test('the reporting session is prepared once per launch, not on every network ch
     assert.equal(hook.prepared, 1);
   } finally { hook.cleanup(); }
 });
+
+test('an SOS is sent before every other waiting report', async () => {
+  const reports = [report('medical', 'medical'), report('sos', 'sos'), report('fire')];
+  const engine = engineHarness(reports);
+  await engine.requestSync({ background: true, ignoreBackoff: true });
+  assert.deepEqual(engine.events.filter((event) => event.startsWith('text:')), ['text:sos', 'text:medical', 'text:fire']);
+});
+
+test('only an SOS sends the phone-lock answer, so other reports work before the SOS migration', () => {
+  const { reportPayload } = loadModule('reportPayload.ts', {});
+  const base = { id: 'r', category: 'fire', latitude: 1, longitude: 2, locationAccuracy: null, description: '', incidentAt: 'a', createdAt: 'b' };
+  assert.equal('p_phone_lock_confirmed' in reportPayload(base), false);
+  assert.equal(reportPayload({ ...base, category: 'sos', phoneLockConfirmed: true }).p_phone_lock_confirmed, true);
+  assert.equal(reportPayload({ ...base, category: 'sos', phoneLockConfirmed: false }).p_phone_lock_confirmed, false);
+});
+
+test('the phone-owner check maps the lock prompt to confirmed, cancelled, or no lock', async () => {
+  const check = (level, result) => loadModule('../sos/confirmOwner.ts', {
+    'expo-local-authentication': {
+      SecurityLevel: { NONE: 0, SECRET: 1, BIOMETRIC_STRONG: 3 },
+      getEnrolledLevelAsync: async () => level,
+      authenticateAsync: async (options) => {
+        assert.equal(options.disableDeviceFallback, false, 'the phone PIN must stay allowed');
+        return result;
+      },
+    },
+  }).confirmPhoneOwner();
+  assert.equal(await check(3, { success: true }), 'confirmed');
+  assert.equal(await check(1, { success: true }), 'confirmed', 'a PIN-only phone still confirms');
+  assert.equal(await check(3, { success: false, error: 'user_cancel' }), 'cancelled');
+  assert.equal(await check(3, { success: false, error: 'lockout' }), 'cancelled');
+  assert.equal(await check(0, { success: true }), 'noLock');
+  assert.equal(await check(3, { success: false, error: 'passcode_not_set' }), 'noLock');
+});

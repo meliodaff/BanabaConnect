@@ -36,6 +36,8 @@ export interface QueueRow {
   clusterPeople: number;
   /** Meters outside Barangay Banaba, or null if inside. */
   outsideBanabaM: number | null;
+  /** SOS only: false when the phone had no screen lock to confirm its owner. */
+  phoneLockConfirmed: boolean | null;
   reportedAgo: string;
   reportedAt: string;
   waited: string | null;
@@ -249,6 +251,9 @@ export function QueueTable({
                         <span className="rounded-full bg-urgent px-2 py-0.5 text-xs font-bold text-white">
                           {t.queue.newTag}
                         </span>
+                      )}
+                      {row.phoneLockConfirmed === false && (
+                        <Chip title={t.badges.ownerNotConfirmedTitle}>{t.badges.ownerNotConfirmed}</Chip>
                       )}
                       {row.outsideBanabaM !== null && <OutsideBanabaTag meters={row.outsideBanabaM} />}
                       {row.clusterCount > 1 && (

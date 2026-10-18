@@ -6,7 +6,10 @@
 
 // Draft list. Severity values per category are still an open question (see the
 // project doc), so they are deliberately not defined here yet.
+// 'sos' is the one-tap emergency from the widget or shortcut: the resident had no time to say
+// what is happening. It is always Critical (see 20261019000001_sos_reports.sql).
 export const REPORT_CATEGORIES = [
+  'sos',
   'flood',
   'fire',
   'medical',
@@ -24,6 +27,7 @@ export function isReportCategory(value: unknown): value is ReportCategory {
 }
 
 export const CATEGORY_LABELS: Record<ReportCategory, string> = {
+  sos: 'SOS',
   flood: 'Flood',
   fire: 'Fire',
   medical: 'Medical emergency',
@@ -33,6 +37,11 @@ export const CATEGORY_LABELS: Record<ReportCategory, string> = {
   power_line: 'Fallen power line',
   other: 'Other',
 };
+
+/** What residents choose from in the New report form. SOS has its own one-tap screen. */
+export const PICKER_CATEGORIES = REPORT_CATEGORIES.filter(
+  (category): category is Exclude<ReportCategory, 'sos'> => category !== 'sos',
+);
 
 export const DESCRIPTION_MAX_LENGTH = 500;
 
@@ -49,6 +58,12 @@ export interface ReportSubmission {
   incidentAt: string;
   /** ISO 8601 timestamp of when the report was saved on the phone. */
   createdAt: string;
+  /**
+   * SOS only: true when the phone's own fingerprint, face, PIN or password confirmed the send,
+   * false when the phone has no screen lock (the resident held the button instead).
+   * Absent for other reports.
+   */
+  phoneLockConfirmed?: boolean | null;
 }
 
 /** Status set by barangay admins on the dashboard. */

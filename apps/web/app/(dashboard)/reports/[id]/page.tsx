@@ -100,6 +100,7 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]">
           <div className="space-y-6">
+            {report.category === "sos" && <SosNotice report={report} t={t} />}
             <Card title={t.report.sawTitle}>
               {report.photoUrl ? (
                 // A signed, short-lived Supabase link, so next/image optimization isn't used.
@@ -243,8 +244,47 @@ function volumeReason(people: number, reports: number, t: Dictionary): string {
   return `${t.report.peopleReported(people)} · ${t.report.repeats(reports)}`;
 }
 
+/**
+ * What staff need first on an SOS: there are no details, so act on the location, call the
+ * resident, and know whether the phone's owner confirmed it (submit_report's phone_lock_confirmed).
+ */
+function SosNotice({ report, t }: { report: ReportDetail; t: Dictionary }) {
+  const phone = report.reporter?.phone;
+  return (
+    <section className="rounded-lg border border-urgent/30 bg-urgent-soft px-5 py-4" aria-label={t.category.sos}>
+      <h2 className="text-base font-bold text-urgent">{t.report.sosTitle}</h2>
+      <p className="mt-1 text-[15px]">{t.report.sosAdvice}</p>
+      {report.phoneLockConfirmed !== null && (
+        <p className="mt-2 text-[15px] font-semibold">
+          {report.phoneLockConfirmed ? t.report.ownerConfirmed : t.report.ownerNotConfirmed}
+        </p>
+      )}
+      {phone && (
+        <a
+          href={`tel:${phone}`}
+          className="mt-3 inline-flex min-h-11 items-center rounded-md bg-urgent px-4 py-2 text-[15px] font-bold text-white hover:opacity-90"
+        >
+          {t.report.sosCall(phone)}
+        </a>
+      )}
+    </section>
+  );
+}
+
 /** How the priority adds up, in points: what each part earned, out of the most it can give. */
 function ScoreBreakdown({ report, t }: { report: ReportDetail; t: Dictionary }) {
+  // An SOS doesn't use the formula (see 20261019000001_sos_reports.sql), so don't show one.
+  if (report.category === "sos") {
+    return (
+      <Card title={t.report.whyTitle}>
+        <p className="text-[15px]">{t.report.sosPriority}</p>
+        <div className="mt-4 flex items-center justify-between border-t border-line pt-3 text-base font-bold">
+          <span>{t.report.priorityTotal}</span>
+          <span className="tabular-nums">{scoreOutOf100(report.priority)} / 100</span>
+        </div>
+      </Card>
+    );
+  }
   const reporter = report.reporter;
   const credibilityReason = !reporter || reporter.isGuest ? t.common.guestReporter : t.verification[reporter.verification];
   const parts = [
