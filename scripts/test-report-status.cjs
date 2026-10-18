@@ -159,6 +159,69 @@ test('dashboard counts include dispatched reports without counting them as untou
   assert.equal(counts.urgentWaiting, 1);
 });
 
+test('"Reports today" filters the list and every status count by arrival since midnight', async () => {
+  const queries = [];
+  const data = load('apps/web/lib/data.ts', {
+    '@banabaconnect/shared': shared,
+    '@/lib/labels': labels,
+    '@/lib/pagination': { PAGE_SIZE: 25, pageCount: (count) => Math.ceil(count / 25) },
+    '@/lib/supabase/server': { createClient: async () => ({ from: () => {
+      const gte = {};
+      queries.push(gte);
+      const query = {
+        select: () => query, eq: () => query, in: () => query, order: () => query, limit: () => query,
+        gte: (key, value) => { gte[key] = value; return query; },
+        then: (resolve, reject) => Promise.resolve({ error: null, count: 0, data: [] }).then(resolve, reject),
+      };
+      return query;
+    } }) },
+  });
+  const midnight = '2026-10-17T16:00:00.000Z';
+  await data.listReports(['received'], { receivedSince: midnight });
+  await data.countReportsByStatus(midnight, midnight);
+  assert.ok(queries.length > 1);
+  assert.ok(queries.every((gte) => gte.received_at === midnight), 'list and every card count use the same day');
+  queries.length = 0;
+  await data.listReports(['received']);
+  await data.countReportsByStatus(midnight);
+  assert.ok(queries.every((gte) => gte.received_at === undefined), 'without the filter, all dates are listed');
+  assert.equal(labels.parseDateFilter('today'), 'today');
+  assert.equal(labels.parseDateFilter('yesterday'), null);
+  assert.equal(labels.dateQuery('today'), '&date=today');
+  assert.equal(labels.dateQuery(null), '');
+});
+
+test('the Overview urgent and being-handled views use the same rules as their numbers', async () => {
+  const queries = [];
+  const data = load('apps/web/lib/data.ts', {
+    '@banabaconnect/shared': shared,
+    '@/lib/labels': labels,
+    '@/lib/pagination': { PAGE_SIZE: 25, pageCount: (count) => Math.ceil(count / 25) },
+    '@/lib/supabase/server': { createClient: async () => ({ from: () => {
+      const filters = {};
+      queries.push(filters);
+      const query = {
+        select: () => query, order: () => query, limit: () => query,
+        in: (key, values) => { filters[key] = values; return query; },
+        gte: (key, value) => { filters[key] = value; return query; },
+        then: (resolve, reject) => Promise.resolve({ error: null, data: [] }).then(resolve, reject),
+      };
+      return query;
+    } }) },
+  });
+  const { urgent, handling } = labels.ONLY_FILTERS;
+  await data.listReports(urgent.statuses, { minPriority: urgent.minPriority });
+  await data.listReports(handling.statuses, { minPriority: handling.minPriority });
+  // Urgent: Critical or High (the Overview's priorityBand), still Received.
+  assert.deepEqual(queries[0], { status: ['received'], priority_score: labels.HIGH_PRIORITY_MIN });
+  assert.equal(labels.priorityBand(labels.HIGH_PRIORITY_MIN), 'high');
+  assert.deepEqual(queries[1], { status: ['dispatched', 'in_progress'] });
+  assert.equal(labels.parseOnlyFilter('urgent'), 'urgent');
+  assert.equal(labels.parseOnlyFilter('everything'), null);
+  assert.equal(labels.filtersQuery({ only: 'urgent', date: 'today' }), '&only=urgent&date=today');
+  assert.equal(labels.filtersQuery({ only: null, date: null }), '');
+});
+
 test('employee action saves dispatch and rejects invalid or unsupported updates before calling the database', async () => {
   const calls = [];
   let refreshes = 0;

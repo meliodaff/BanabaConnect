@@ -110,13 +110,19 @@ function toSummary(row: any): ReportSummary | null {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-/** The queue: highest priority first, then newest. */
-export async function listReports(statuses: readonly ReportStatus[]): Promise<ReportSummary[]> {
+/**
+ * The queue: highest priority first, then newest. With `receivedSince`, only reports that arrived
+ * since then; with `minPriority`, only reports at least that urgent (0 to 1).
+ */
+export async function listReports(
+  statuses: readonly ReportStatus[],
+  { receivedSince, minPriority }: { receivedSince?: string; minPriority?: number } = {},
+): Promise<ReportSummary[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("reports")
-    .select(SUMMARY_COLUMNS)
-    .in("status", [...statuses])
+  let query = supabase.from("reports").select(SUMMARY_COLUMNS).in("status", [...statuses]);
+  if (receivedSince) query = query.gte("received_at", receivedSince);
+  if (minPriority !== undefined) query = query.gte("priority_score", minPriority);
+  const { data, error } = await query
     .order("priority_score", { ascending: false, nullsFirst: false })
     .order("received_at", { ascending: false })
     .limit(QUEUE_LIMIT);
@@ -344,10 +350,16 @@ export interface ReportCounts {
   resolvedSince: number;
 }
 
-/** For the status cards on the Reports page. Exact counts, unlike the list (QUEUE_LIMIT). */
-export async function countReportsByStatus(sinceIso: string): Promise<ReportCounts> {
+/**
+ * For the status cards on the Reports page. Exact counts, unlike the list (QUEUE_LIMIT). With
+ * `receivedSince`, only reports that arrived since then, so the cards match a date-filtered list.
+ */
+export async function countReportsByStatus(sinceIso: string, receivedSince?: string): Promise<ReportCounts> {
   const supabase = await createClient();
-  const count = () => supabase.from("reports").select("id", { count: "exact", head: true });
+  const count = () => {
+    const query = supabase.from("reports").select("id", { count: "exact", head: true });
+    return receivedSince ? query.gte("received_at", receivedSince) : query;
+  };
   const results = await Promise.all([
     count().eq("status", "received"),
     count().eq("status", "dispatched"),

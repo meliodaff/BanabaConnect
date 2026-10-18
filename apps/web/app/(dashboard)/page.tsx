@@ -87,16 +87,16 @@ export default async function OverviewPage() {
             detail={
               oldestUrgent ? t.overview.urgentOldest(t.time.since(oldestUrgent.receivedAt)) : t.overview.urgentNone
             }
-            href="/reports?status=active"
-            action={t.overview.openQueue}
+            href="/reports?status=active&only=urgent"
+            action={t.overview.seeUrgent}
             accent={urgentWaiting.length > 0 ? "urgent" : "none"}
           />
           <StatTile
             label={t.overview.handling}
             value={inProgress}
             detail={t.overview.handlingDetail}
-            href="/reports?status=active"
-            action={t.overview.seeActive}
+            href="/reports?status=active&only=handling"
+            action={t.overview.seeHandling}
           />
           <StatTile
             label={t.overview.ids}
@@ -110,8 +110,8 @@ export default async function OverviewPage() {
             label={t.overview.today}
             value={today.received}
             detail={t.overview.todayDetail(today.resolved)}
-            href="/reports?status=all"
-            action={t.overview.seeAll}
+            href="/reports?status=all&date=today"
+            action={t.overview.seeToday}
           />
         </section>
 

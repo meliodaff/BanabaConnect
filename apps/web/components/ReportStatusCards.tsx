@@ -15,7 +15,7 @@ export async function ReportStatusCards({
 }: {
   counts: ReportCounts;
   current: StatusFilter;
-  /** The sort to keep, e.g. "&sort=reported&dir=asc". */
+  /** The sort and date filter to keep, e.g. "&sort=reported&dir=asc&date=today". */
   keepQuery: string;
 }) {
   const t = await getDictionary();

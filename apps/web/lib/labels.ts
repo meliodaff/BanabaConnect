@@ -22,6 +22,35 @@ export function parseStatusFilter(value: unknown): StatusFilter {
   return typeof value === "string" && value in STATUS_FILTERS ? (value as StatusFilter) : "active";
 }
 
+/** The Reports page's optional date filter: ?date=today keeps reports that reached the barangay since midnight. */
+export type DateFilter = "today" | null;
+
+export function parseDateFilter(value: unknown): DateFilter {
+  return value === "today" ? "today" : null;
+}
+
+/** The date filter as a query-string suffix, kept when the status, sort or page changes. */
+export function dateQuery(date: DateFilter): string {
+  return date ? `&date=${date}` : "";
+}
+
+export type OnlyFilter = "urgent" | "handling" | null;
+
+export function parseOnlyFilter(value: unknown): OnlyFilter {
+  return value === "urgent" || value === "handling" ? value : null;
+}
+
+/** The Reports page's filters beyond status: the date and the Overview's narrower views. */
+export interface ListFilters {
+  date: DateFilter;
+  only: OnlyFilter;
+}
+
+/** Both filters as a query-string suffix, e.g. "&only=urgent&date=today". */
+export function filtersQuery({ date, only }: ListFilters): string {
+  return `${only ? `&only=${only}` : ""}${dateQuery(date)}`;
+}
+
 /** The short number staff can write in a logbook: the start of the report's ID, e.g. 3F2A9C1D. */
 export function reportNumber(id: string): string {
   return id.slice(0, 8).toUpperCase();
@@ -50,6 +79,19 @@ export type PriorityBand = "critical" | "high" | "medium" | "low";
 
 /** Where High priority starts. Critical and High together are "urgent" on Overview and Reports. */
 export const HIGH_PRIORITY_MIN = 0.55;
+
+/**
+ * Narrower views of the Active list, opened from the Overview tiles with the same rules as their
+ * numbers: ?only=urgent is Critical or High that nobody has started on; ?only=handling is
+ * responders on the way or In progress.
+ */
+export const ONLY_FILTERS = {
+  urgent: { statuses: ["received"], minPriority: HIGH_PRIORITY_MIN },
+  handling: { statuses: ["dispatched", "in_progress"], minPriority: undefined },
+} as const satisfies Record<
+  Exclude<OnlyFilter, null>,
+  { statuses: readonly ReportStatus[]; minPriority: number | undefined }
+>;
 
 /**
  * Groups the 0–1 priority score so staff can scan the queue. For example, a fire from a verified

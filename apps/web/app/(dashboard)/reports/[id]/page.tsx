@@ -18,7 +18,16 @@ import { getReport, type ReportDetail } from "@/lib/data";
 import { formatDateTime, scoreOutOf100 } from "@/lib/format";
 import type { Dictionary } from "@/lib/i18n";
 import { getDictionary } from "@/lib/i18n-server";
-import { PRIORITY_BAND_COLORS, parseStatusFilter, priorityBand, reportNumber } from "@/lib/labels";
+import {
+  PRIORITY_BAND_COLORS,
+  filtersQuery,
+  parseDateFilter,
+  parseOnlyFilter,
+  parseStatusFilter,
+  priorityBand,
+  reportNumber,
+  type ListFilters,
+} from "@/lib/labels";
 import { pageQuery, parsePage } from "@/lib/pagination";
 import { parseSort, sortQuery, type ReportSort } from "@/lib/reportSort";
 
@@ -27,10 +36,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Back to where the staff member came from: Overview, the map, or the queue with its filter, sort
- * and page. Links into a report carry them as ?from=active&sort=reported&dir=asc&page=2.
+ * Back to where the staff member came from: Overview, the map, or the queue with its filters, sort
+ * and page. Links into a report carry them as ?from=active&sort=reported&dir=asc&page=2&only=urgent&date=today.
  */
-function backLink(from: string | string[] | undefined, sort: ReportSort, page: number, t: Dictionary) {
+function backLink(
+  from: string | string[] | undefined,
+  sort: ReportSort,
+  page: number,
+  filters: ListFilters,
+  t: Dictionary,
+) {
   if (from === "overview") {
     return { href: "/", label: t.report.backToOverview, from: "overview" };
   }
@@ -38,7 +53,7 @@ function backLink(from: string | string[] | undefined, sort: ReportSort, page: n
     return { href: "/map", label: t.report.backToMap, from: "map" };
   }
   const filter = parseStatusFilter(from);
-  const sorted = `${filter}${sortQuery(sort)}${pageQuery(page)}`;
+  const sorted = `${filter}${sortQuery(sort)}${pageQuery(page)}${filtersQuery(filters)}`;
   return { href: `/reports?status=${sorted}`, label: t.report.backToReports, from: sorted };
 }
 
@@ -46,7 +61,13 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
   const { id } = await params;
   const query = await searchParams;
   const t = await getDictionary();
-  const back = backLink(query.from, parseSort(query.sort, query.dir), parsePage(query.page), t);
+  const back = backLink(
+    query.from,
+    parseSort(query.sort, query.dir),
+    parsePage(query.page),
+    { date: parseDateFilter(query.date), only: parseOnlyFilter(query.only) },
+    t,
+  );
   const report = /^[0-9a-f-]{36}$/i.test(id) ? await getReport(id) : null;
   if (!report) {
     notFound();

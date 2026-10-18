@@ -13,7 +13,7 @@ import {
 import { useDictionary } from "@/components/I18nProvider";
 import { LiveIndicator, useLiveReports } from "@/components/LiveUpdates";
 import { Pagination } from "@/components/Pagination";
-import type { StatusFilter } from "@/lib/labels";
+import { filtersQuery, type ListFilters, type StatusFilter } from "@/lib/labels";
 import { pageQuery } from "@/lib/pagination";
 import { QUEUE_COLUMNS, QUEUE_DETAILS } from "@/lib/queueLayout";
 import { isDefaultSort, nextSort, sortQuery, type ReportSort, type SortKey } from "@/lib/reportSort";
@@ -56,6 +56,7 @@ export function QueueTable({
   total,
   emptyMessage,
   filter,
+  filters,
   sort,
 }: {
   /** This page's rows. */
@@ -69,12 +70,15 @@ export function QueueTable({
   emptyMessage: string;
   /** The status filter, kept when the sort changes. */
   filter: StatusFilter;
+  /** The date filter and Overview views (e.g. urgent only), kept when the sort or page changes. */
+  filters: ListFilters;
   /** How the rows are already sorted (the page sorts them; the headers change it). */
   sort: ReportSort;
 }) {
   const t = useDictionary();
   // "Back to reports" on a report returns to this filter, sort and page.
-  const backTo = `${filter}${sortQuery(sort)}${pageQuery(page)}`;
+  const keep = filtersQuery(filters);
+  const backTo = `${filter}${sortQuery(sort)}${pageQuery(page)}${keep}`;
   const [fresh, setFresh] = useState<ReadonlySet<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
   const [heldNewReports, setHeldNewReports] = useState(0);
@@ -133,7 +137,7 @@ export function QueueTable({
               <>
                 {" · "}
                 <Link
-                  href={`/reports?status=${filter}`}
+                  href={`/reports?status=${filter}${keep}`}
                   scroll={false}
                   className="font-bold text-brand hover:underline"
                 >
@@ -142,6 +146,21 @@ export function QueueTable({
               </>
             )}
           </p>
+          {/* Each narrowing filter says what it keeps and how to undo it, keeping the others. */}
+          {filters.only && (
+            <FilterNote
+              text={t.queue.only[filters.only]}
+              clear={t.queue.showAllActive}
+              href={`/reports?status=active${sortQuery(sort)}${filtersQuery({ ...filters, only: null })}`}
+            />
+          )}
+          {filters.date === "today" && (
+            <FilterNote
+              text={t.queue.todayOnly}
+              clear={t.queue.showAllDates}
+              href={`/reports?status=${filter}${sortQuery(sort)}${filtersQuery({ ...filters, date: null })}`}
+            />
+          )}
           <p className="text-sm text-muted">
             {/* What priority means, in words; each report's page shows its own breakdown. */}
             {t.queue.priorityExplained}
@@ -207,7 +226,7 @@ export function QueueTable({
             className={`hidden border-b border-line bg-page px-5 py-2 text-xs font-bold uppercase tracking-wide text-muted xl:grid ${COLUMNS}`}
           >
             {SORT_COLUMNS.map((column) => (
-              <SortHeader key={column} column={column} current={sort} filter={filter} />
+              <SortHeader key={column} column={column} current={sort} filter={filter} keep={keep} />
             ))}
           </nav>
           <ul className="divide-y divide-line">
@@ -284,13 +303,26 @@ export function QueueTable({
             page={page}
             total={count}
             list="reports"
-            baseHref={`/reports?status=${filter}${sortQuery(sort)}`}
+            baseHref={`/reports?status=${filter}${sortQuery(sort)}${keep}`}
             anchor="reports-list"
             className="border-t border-line bg-page px-5 py-3"
           />
         </div>
       )}
     </div>
+  );
+}
+
+/** A filter that narrows the list, in words, with a link that removes just that filter. */
+function FilterNote({ text, clear, href }: { text: string; clear: string; href: string }) {
+  return (
+    <p className="text-[15px]">
+      <span className="font-semibold">{text}</span>
+      {" · "}
+      <Link href={href} scroll={false} className="font-bold text-brand hover:underline">
+        {clear}
+      </Link>
+    </p>
   );
 }
 
@@ -314,10 +346,13 @@ function SortHeader({
   column,
   current,
   filter,
+  keep,
 }: {
   column: SortKey;
   current: ReportSort;
   filter: StatusFilter;
+  /** The other filters to keep, from filtersQuery. */
+  keep: string;
 }) {
   const t = useDictionary();
   const active = current.key === column;
@@ -325,7 +360,7 @@ function SortHeader({
   const nextOrder = t.sort.describe[next.key][next.dir];
   return (
     <Link
-      href={`/reports?status=${filter}${sortQuery(next)}`}
+      href={`/reports?status=${filter}${sortQuery(next)}${keep}`}
       scroll={false}
       aria-current={active ? "true" : undefined}
       title={t.sort.title(nextOrder)}

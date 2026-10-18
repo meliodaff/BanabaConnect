@@ -6,7 +6,14 @@ import { ReportStatusCards } from "@/components/ReportStatusCards";
 import { QUEUE_LIMIT, countReportsByStatus, countWithStatus, listReports } from "@/lib/data";
 import { formatDateTime, startOfTodayInManila } from "@/lib/format";
 import { getDictionary } from "@/lib/i18n-server";
-import { STATUS_FILTERS, parseStatusFilter } from "@/lib/labels";
+import {
+  ONLY_FILTERS,
+  STATUS_FILTERS,
+  dateQuery,
+  parseDateFilter,
+  parseOnlyFilter,
+  parseStatusFilter,
+} from "@/lib/labels";
 import { PAGE_SIZE, pageCount, parsePage } from "@/lib/pagination";
 import { parseSort, sortQuery, sortReports } from "@/lib/reportSort";
 
@@ -16,11 +23,18 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ReportsPage({ searchParams }: PageProps<"/reports">) {
   const params = await searchParams;
-  const filter = parseStatusFilter(params.status);
+  const only = parseOnlyFilter(params.only);
+  // The Overview's narrower views are part of Active, so the Active card stays selected.
+  const filter = only ? "active" : parseStatusFilter(params.status);
   const sort = parseSort(params.sort, params.dir);
+  const date = parseDateFilter(params.date);
+  const statuses = only ? ONLY_FILTERS[only].statuses : STATUS_FILTERS[filter].statuses;
+  // Same rule as Overview's "Reports today": reached the barangay since midnight, Philippine time.
+  const today = startOfTodayInManila();
+  const receivedSince = date === "today" ? today : undefined;
   const [listed, counts, t] = await Promise.all([
-    listReports(STATUS_FILTERS[filter].statuses),
-    countReportsByStatus(startOfTodayInManila()),
+    listReports(statuses, { receivedSince, minPriority: only ? ONLY_FILTERS[only].minPriority : undefined }),
+    countReportsByStatus(today, receivedSince),
     getDictionary(),
   ]);
   const reports = sortReports(listed, sort, t.category);
@@ -52,7 +66,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
     <>
       <PageHeader title={t.reports.title} description={t.reports.description}>
         <MonthlyReportLink />
-        <ReportStatusCards counts={counts} current={filter} keepQuery={sortQuery(sort)} />
+        <ReportStatusCards counts={counts} current={filter} keepQuery={`${sortQuery(sort)}${dateQuery(date)}`} />
       </PageHeader>
       <div className="px-8 py-6">
         <QueueTable
@@ -61,10 +75,17 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
           page={page}
           // The list stops at QUEUE_LIMIT while the cards count everything, so it says when it's cut short.
           total={
-            listed.length >= QUEUE_LIMIT ? countWithStatus(counts, STATUS_FILTERS[filter].statuses) : undefined
+            listed.length < QUEUE_LIMIT
+              ? undefined
+              : only === "urgent"
+                ? counts.urgentWaiting
+                : countWithStatus(counts, statuses)
           }
-          emptyMessage={t.reports.empty[filter]}
+          emptyMessage={
+            only ? t.reports.emptyOnly[only] : date === "today" ? t.reports.emptyToday : t.reports.empty[filter]
+          }
           filter={filter}
+          filters={{ date, only }}
           sort={sort}
         />
       </div>
