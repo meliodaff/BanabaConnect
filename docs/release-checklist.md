@@ -42,6 +42,15 @@ while the app is only tested by the team (emulator and AltStore), to keep testin
   for testing, because apps installed with it expire after 7 days.
 - [x] Permission messages for camera, photos and location (in `apps/mobile/app.json`).
 
+## Google Play requirements
+
+- [ ] **Accessibility API declaration for volume-button SOS.** The volume-button pattern
+  (`apps/mobile/modules/volume-sos`) is an accessibility service that isn't an accessibility
+  tool. Play requires the Accessibility API declaration in Play Console, a video of the feature,
+  and an in-app disclosure before the resident turns it on (the Profile tab card covers this).
+  Review can still reject it. If it does, remove the module from the Play build and keep the
+  widget and icon shortcut.
+
 ## App content
 
 - [ ] **Confirm the app ID** `ph.banabaconnect.app` (`apps/mobile/app.json`). It can't change

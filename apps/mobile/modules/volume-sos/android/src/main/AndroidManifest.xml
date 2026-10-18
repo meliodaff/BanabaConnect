@@ -1,0 +1,20 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- A short buzz tells the resident the pattern was caught, even before the screen opens. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application>
+        <!-- Off until the resident turns it on in Settings, then Accessibility. -->
+        <service
+            android:name=".VolumeSosService"
+            android:label="@string/volume_sos_label"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/volume_sos_service" />
+        </service>
+    </application>
+</manifest>

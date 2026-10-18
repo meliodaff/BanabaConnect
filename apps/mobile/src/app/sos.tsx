@@ -1,6 +1,18 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  AppState,
+  Easing,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type NativeEventSubscription,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ReportSubmission } from '@banabaconnect/shared';
 import { Icon, icons } from '@/components/Icon';
@@ -36,8 +48,8 @@ async function callAfterUpload(upload: Promise<void>) {
 type Confirmation = { phoneLockConfirmed: boolean } | null;
 
 /**
- * One-tap SOS, opened from the home-screen widget, the app icon shortcut, or the Home tab
- * (banabaconnect://sos). No category or details: the resident may have no time to say what is
+ * One-tap SOS, opened from the home-screen widget, the app icon shortcut, the volume buttons
+ * (Android), Back Tap (iPhone), or the Home tab (banabaconnect://sos). No category or details: the resident may have no time to say what is
  * happening. The phone's own lock confirms it, then it is sent as soon as there is a location and
  * the phone calls 911 (callAfterUpload).
  */
@@ -63,15 +75,32 @@ export default function SosScreen() {
     }
   }, []);
 
-  // Ask right away: from the widget, the fingerprint prompt is the only step.
+  // Ask right away: from the widget, the fingerprint prompt is the only step. Opened by the volume
+  // buttons on the lock screen, the screen waits behind the lock, so ask once the phone is unlocked.
   useEffect(() => {
+    let closed = false;
+    let subscription: NativeEventSubscription | undefined;
+    function askOnce() {
+      if (askedOnOpen.current) return;
+      askedOnOpen.current = true;
+      void askForLock();
+    }
     void hasScreenLock().then((present) => {
+      if (closed) return;
       setLock(present ? 'present' : 'none');
-      if (present && !askedOnOpen.current) {
-        askedOnOpen.current = true;
-        void askForLock();
+      if (!present) return;
+      if (AppState.currentState === 'active') {
+        askOnce();
+        return;
       }
+      subscription = AppState.addEventListener('change', (state) => {
+        if (state === 'active') askOnce();
+      });
     });
+    return () => {
+      closed = true;
+      subscription?.remove();
+    };
   }, [askForLock]);
 
   // Saved on the phone first, like every report, so it survives no signal and restarts. Then

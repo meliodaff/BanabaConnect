@@ -6,7 +6,7 @@ and always arrives as **Critical** on the Command Dashboard.
 
 ## How residents start it
 
-All three open the same screen, `banabaconnect://sos` (`apps/mobile/src/app/sos.tsx`):
+All of these open the same screen, `banabaconnect://sos` (`apps/mobile/src/app/sos.tsx`):
 
 - **Home-screen widget.** iPhone: a small red "Send SOS" widget, plus a round Lock Screen widget.
   Android: a 2×2 red "SOS" widget. Add it the usual way: long-press the home screen, then Widgets,
@@ -14,6 +14,13 @@ All three open the same screen, `banabaconnect://sos` (`apps/mobile/src/app/sos.
 - **App icon shortcut.** Long-press the BanabaConnect icon, then **Send SOS**. On Android the
   shortcut can also be dragged onto the home screen as its own icon.
 - **Home tab.** The red **Send SOS** button under "May emergency?".
+- **Volume buttons (Android).** Press volume **up, down, up, down** within 2 seconds (either
+  button first), even on the lock screen. The phone buzzes twice and opens the SOS screen; on the
+  lock screen it waits until the phone is unlocked, then asks for the fingerprint as usual. Off
+  until the resident turns it on: Profile tab → **Volume-button SOS** → **Turn on in Settings**.
+- **Back Tap (iPhone).** Tapping the back of the iPhone three times runs a Shortcut that opens
+  the link. The resident sets it up once; the steps are on the Profile tab. On iPhone 15 Pro and
+  later the Action button can run the same Shortcut.
 
 ## What happens
 
@@ -40,9 +47,35 @@ report, and staff should call to check.
 phone from sending one by accident. It does not identify the person: anyone who knows the
 phone's PIN can pass it.
 
-**No volume-button pattern.** iPhones don't let apps detect volume buttons in the background,
-and Android only allows it through an accessibility service, which Google Play restricts to
-accessibility apps. The widget and the icon shortcut are the supported fast paths.
+## Volume-button SOS (Android)
+
+An Android accessibility service, `apps/mobile/modules/volume-sos` (a local Expo module), watches
+only the volume keys. It doesn't read the screen or typed text, and it never swallows a key, so
+the volume still changes; alternating up and down leaves it where it was. Plain volume changes
+press the same button repeatedly, so they don't open the screen. After it opens the screen once,
+the pattern is ignored for 10 seconds.
+
+- **Turning it on.** Apps can't turn an accessibility service on themselves. The Profile tab
+  card opens Settings → Accessibility; the resident turns on **BanabaConnect volume-button SOS**.
+  The card shows **On** or **Off** and checks again whenever the app comes back.
+- **"Restricted setting" (Android 13 and later).** Android blocks accessibility services for
+  apps installed from a downloaded APK, which is how test builds are installed. The resident
+  opens App info → ⋮ → **Allow restricted settings**, then turns it on. The card says this and
+  links to App info. Apps installed from Google Play don't get this block.
+- **Screen off.** Android only passes the volume keys to the service while the screen is on (the
+  lock screen counts). With the screen off, press the power button first.
+- **Floating button.** On recent Android versions, turning the service on also adds a round
+  BanabaConnect accessibility button at the side of the screen. Tapping it can turn the service off,
+  so the Profile card tells the resident how to remove it (turn off the **shortcut** on the same
+  Settings page; the service stays on).
+- **Force stop turns it off.** Android turns an accessibility service off when its app is
+  force-stopped (App info → Force stop), and some phone brands' cleaners or battery savers do the
+  same. The Profile card then shows **Off**, and the resident turns it on again.
+- **iPhone.** iOS doesn't let any app see the volume buttons unless it is open, so the iPhone
+  uses Back Tap instead (above).
+
+Google Play limits accessibility services that aren't accessibility tools; see
+`docs/release-checklist.md` before publishing there.
 
 ## On the dashboard
 

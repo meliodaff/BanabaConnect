@@ -1,0 +1,15 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'ph.banabaconnect'
+version = '1.0.0'
+
+android {
+  namespace "ph.banabaconnect.volumesos"
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
+}

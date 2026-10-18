@@ -27,6 +27,7 @@ import { isPhotoWaiting } from '@/features/queue/deliveryStatus';
 import { reportsStore } from '@/features/queue/reportsStore';
 import { requestSync } from '@/features/queue/syncEngine';
 import type { QueuedReport } from '@/features/queue/types';
+import { QuickSosSetting } from '@/features/sos/QuickSosSetting';
 import { showToast } from '@/features/toast/toastStore';
 import {
   setThemePreference,
@@ -136,6 +137,8 @@ export default function ProfileScreen() {
           </View>
         </View>
       )}
+
+      <QuickSosSetting />
 
       <AppearanceSetting />
 

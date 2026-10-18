@@ -112,6 +112,10 @@
         }
       ]
     ],
-    "scheme": "banabaconnect"
+    "scheme": "banabaconnect",
+    "owner": "jbialen",
+    "extra": {
+      "eas": { "projectId": "4f915da0-3520-48c5-a3ef-504ee06f906a" }
+    }
   }
 }
