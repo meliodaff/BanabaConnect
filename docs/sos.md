@@ -14,8 +14,8 @@ All of these open the same screen, `banabaconnect://sos` (`apps/mobile/src/app/s
 - **App icon shortcut.** Long-press the BanabaConnect icon, then **Send SOS**. On Android the
   shortcut can also be dragged onto the home screen as its own icon.
 - **Home tab.** The red **Send SOS** button under "May emergency?".
-- **Volume buttons (Android).** Press volume **up, down, up, down** within 2 seconds (either
-  button first), even on the lock screen. The phone buzzes twice and opens the SOS screen; on the
+- **Volume buttons (Android).** Press volume **down 5 times** within 3 seconds, even on the lock
+  screen. The phone buzzes twice and opens the SOS screen; on the
   lock screen it waits until the phone is unlocked, then asks for the fingerprint as usual. Off
   until the resident turns it on: Profile tab → **Volume-button SOS** → **Turn on in Settings**.
 - **Back Tap (iPhone).** Tapping the back of the iPhone three times runs a Shortcut that opens
@@ -51,9 +51,17 @@ phone's PIN can pass it.
 
 An Android accessibility service, `apps/mobile/modules/volume-sos` (a local Expo module), watches
 only the volume keys. It doesn't read the screen or typed text, and it never swallows a key, so
-the volume still changes; alternating up and down leaves it where it was. Plain volume changes
-press the same button repeatedly, so they don't open the screen. After it opens the screen once,
-the pattern is ignored for 10 seconds.
+the volume still changes (5 presses turn it down a little). A volume-up press in between starts
+the count again. Every caught pattern buzzes; within 3 seconds of opening the screen, another
+one only buzzes, so a long burst opens it once.
+
+- **Why one button.** The first version used up, down, up, down. Pressing the two buttons fast
+  overlaps them, and phones treat both volume keys held together as a key combination: on a
+  tester's phone it started a bug report, and on others it starts the accessibility shortcut.
+  Android handles those combinations before the service sees the keys, so the app can't stop
+  them. One button can't overlap with itself.
+- **Accidental opens.** Turning the volume down fast can sometimes reach 5 presses. That only
+  opens the SOS screen: nothing is sent without the fingerprint or PIN, and X closes it.
 
 - **Turning it on.** Apps can't turn an accessibility service on themselves. The Profile tab
   card opens Settings → Accessibility; the resident turns on **BanabaConnect volume-button SOS**.
@@ -63,11 +71,35 @@ the pattern is ignored for 10 seconds.
   opens App info → ⋮ → **Allow restricted settings**, then turns it on. The card says this and
   links to App info. Apps installed from Google Play don't get this block.
 - **Screen off.** Android only passes the volume keys to the service while the screen is on (the
-  lock screen counts). With the screen off, press the power button first.
+  lock screen counts); with the screen off they go straight to the volume or the media player
+  (confirmed on a Redmi Note 12). The resident presses the power button first. For screen-off
+  emergencies, the Profile card points to the phone's own Emergency SOS (press power 5 times),
+  which can call 911 but can't open BanabaConnect. Catching volume keys with the screen off would
+  mean pretending to play music all the time, which drains the battery, fights real music apps
+  and breaks Google Play rules, so the app doesn't do it.
+- **Own process.** The service runs in a separate `:volumesos` process with no screens and no
+  JavaScript, so swiping the app away (which kills the app's process) doesn't kill it. Inside the
+  service, use only Android APIs; nothing from the app's process.
+- **"Volume-button SOS is ready" notification.** On the Redmi Note 12, swiping the app away still
+  stopped the service, even in its own process. While the feature is on, a silent notification
+  (`VolumeSosReadyService`, a `specialUse` foreground service in the same `:volumesos` process)
+  tells Android that process is in use, so phones are much less likely to kill it. Tapping it
+  opens the Profile tab. Android 12 and later don't let the service start it from the background,
+  so the app also starts it whenever it comes to the front (`useKeepVolumeSosReady` in the root
+  layout). On Android 13 and later it only shows if the app may post notifications; the Profile
+  card asks right after the feature is turned on. Google Play needs a declaration for the
+  `specialUse` type (see `docs/release-checklist.md`).
 - **Floating button.** On recent Android versions, turning the service on also adds a round
   BanabaConnect accessibility button at the side of the screen. Tapping it can turn the service off,
   so the Profile card tells the resident how to remove it (turn off the **shortcut** on the same
   Settings page; the service stays on).
+- **Swiped away from recent apps.** On Xiaomi, Redmi and POCO phones (and some other brands),
+  swiping BanabaConnect away kills the service, and Xiaomi doesn't let Android start it again
+  unless the app has **Autostart**. Settings still shows it as on. The Profile card checks
+  whether the service is actually running and shows **Stopped** (turn it off and on again in
+  Settings), and while it is on it shows how to keep it running: **Turn on Autostart** (opens
+  Xiaomi's Autostart list) and Battery saver → **No restrictions**; on other phones, App info →
+  Battery → **Unrestricted**. Found on a Redmi Note 12.
 - **Force stop turns it off.** Android turns an accessibility service off when its app is
   force-stopped (App info → Force stop), and some phone brands' cleaners or battery savers do the
   same. The Profile card then shows **Off**, and the resident turns it on again.

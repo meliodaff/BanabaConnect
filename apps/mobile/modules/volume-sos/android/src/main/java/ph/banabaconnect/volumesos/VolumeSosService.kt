@@ -13,12 +13,14 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 
-// Four presses, alternating volume up and down (either one first), within this window.
-// Turning the volume up or down never alternates, so it doesn't open the screen by accident.
-private const val PRESSES = 4
-private const val WINDOW_MS = 2_000L
-// After opening the SOS screen, ignore the pattern for a while so one panicked burst opens it once.
-private const val COOLDOWN_MS = 10_000L
+// Five presses of volume down within this window, like Android's own power-button emergency SOS.
+// One button only: pressing up and down quickly overlaps the two keys, which many phones treat as a
+// key combination (a bug report or the accessibility shortcut) before this service sees the keys.
+private const val PRESSES = 5
+private const val WINDOW_MS = 3_000L
+// After opening the SOS screen, a second burst within this time only buzzes, so one long panicked
+// burst opens the screen once.
+private const val COOLDOWN_MS = 3_000L
 // Same link as the widget and the app icon shortcut (app.json "scheme").
 private const val SOS_URL = "banabaconnect://sos"
 
@@ -27,10 +29,14 @@ private const val SOS_URL = "banabaconnect://sos"
  * lock still confirms the send. Turned on by the resident in Settings, then Accessibility.
  *
  * It never consumes a key, so the volume still changes as usual. Android only passes keys to it
- * while the screen is on (the lock screen counts).
+ * while the screen is on (the lock screen counts); with the screen off they go straight to the
+ * volume or the media player.
+ *
+ * Runs in its own process (":volumesos", see AndroidManifest.xml), so it must not use anything
+ * that lives in the app's process, such as the JavaScript side.
  */
 class VolumeSosService : AccessibilityService() {
-  private val presses = ArrayDeque<Pair<Int, Long>>()
+  private val presses = ArrayDeque<Long>()
   private var lastOpenedAt = 0L
 
   override fun onKeyEvent(event: KeyEvent): Boolean {
@@ -38,15 +44,20 @@ class VolumeSosService : AccessibilityService() {
     if (key != KeyEvent.KEYCODE_VOLUME_UP && key != KeyEvent.KEYCODE_VOLUME_DOWN) return false
     // One entry per press: holding a button repeats ACTION_DOWN.
     if (event.action != KeyEvent.ACTION_DOWN || event.repeatCount > 0) return false
+    // Volume up in between means the resident is just adjusting the volume.
+    if (key == KeyEvent.KEYCODE_VOLUME_UP) {
+      presses.clear()
+      return false
+    }
 
     val now = SystemClock.uptimeMillis()
-    // A press that repeats the last button starts a new attempt from this press.
-    if (presses.lastOrNull()?.first == key) presses.clear()
-    presses.addLast(key to now)
-    while (presses.isNotEmpty() && now - presses.first().second > WINDOW_MS) presses.removeFirst()
+    presses.addLast(now)
+    while (presses.isNotEmpty() && now - presses.first() > WINDOW_MS) presses.removeFirst()
 
     if (presses.size >= PRESSES) {
       presses.clear()
+      // Always buzz, so the resident knows the pattern was caught even if SOS is already open.
+      buzz()
       if (now - lastOpenedAt > COOLDOWN_MS) {
         lastOpenedAt = now
         openSos()
@@ -56,7 +67,6 @@ class VolumeSosService : AccessibilityService() {
   }
 
   private fun openSos() {
-    buzz()
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(SOS_URL))
       .setPackage(packageName)
       .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -83,6 +93,17 @@ class VolumeSosService : AccessibilityService() {
       @Suppress("DEPRECATION")
       vibrator.vibrate(timings, -1)
     }
+  }
+
+  override fun onServiceConnected() {
+    super.onServiceConnected()
+    VolumeSosReadyService.start(this)
+  }
+
+  /** Turned off in Settings: the ready notification goes too. */
+  override fun onUnbind(intent: Intent?): Boolean {
+    VolumeSosReadyService.stop(this)
+    return super.onUnbind(intent)
   }
 
   override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit

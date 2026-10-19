@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="volume_sos_label">BanabaConnect volume-button SOS</string>
-    <string name="volume_sos_summary">Press volume up, down, up, down quickly to open Send SOS.</string>
-    <string name="volume_sos_description">Press volume up, down, up, down within 2 seconds, even on the lock screen, and BanabaConnect opens Send SOS. You still confirm with your fingerprint, face or PIN before anything is sent.\n\nBanabaConnect only listens for the volume buttons. It does not read your screen or what you type, and the volume buttons keep working as usual.</string>
+    <string name="volume_sos_summary">Press volume down 5 times quickly to open Send SOS.</string>
+    <string name="volume_sos_description">Press volume down 5 times within 3 seconds while the screen is on (the lock screen works), and BanabaConnect opens Send SOS. You still confirm with your fingerprint, face or PIN before anything is sent.\n\nBanabaConnect only listens for the volume buttons. It does not read your screen or what you type, and the volume buttons keep working as usual.</string>
+    <string name="volume_sos_channel">Volume-button SOS</string>
+    <string name="volume_sos_channel_description">Shows while volume-button SOS is on, so your phone keeps it running.</string>
+    <string name="volume_sos_ready_title">Volume-button SOS is ready</string>
+    <string name="volume_sos_ready_text">Press volume down 5 times to open Send SOS.</string>
 </resources>

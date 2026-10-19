@@ -7,6 +7,7 @@ import { ToastHost } from '@/components/ToastHost';
 import { startAuth } from '@/features/auth/authStore';
 import { useOfflineToasts } from '@/features/network/useOfflineToasts';
 import { useSyncTriggers } from '@/features/queue/useSyncTriggers';
+import { useKeepVolumeSosReady } from '@/features/sos/volumeSos';
 import { hasColoredHeader, useTheme } from '@/theme';
 
 // Hold the native logo until the matching startup screen has been laid out.
@@ -17,6 +18,7 @@ export default function RootLayout() {
   useEffect(() => { startAuth(); }, []);
   useSyncTriggers();
   useOfflineToasts();
+  useKeepVolumeSosReady();
   const { scheme, colors } = useTheme();
   const baseTheme = scheme === 'dark' ? DarkTheme : DefaultTheme;
 

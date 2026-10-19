@@ -5,10 +5,10 @@ How the feature works is in `docs/sos.md`.
 
 ## What was built
 
-- **Android:** press volume **up, down, up, down within 2 seconds** (either button first). The
-  phone buzzes twice and opens the normal SOS screen, which asks for the fingerprint or PIN as
-  usual. It's an accessibility service in `apps/mobile/modules/volume-sos` that listens only to
-  the volume keys.
+- **Android:** press volume **down 5 times within 3 seconds**. The phone buzzes twice and opens
+  the normal SOS screen, which asks for the fingerprint or PIN as usual. It's an accessibility
+  service in `apps/mobile/modules/volume-sos` that listens only to the volume keys. (The first
+  version used up, down, up, down; see "Key combinations" below for why it changed.)
 - **iPhone:** no volume pattern. The Profile tab explains how to set up Back Tap (tap the back of
   the iPhone three times) to run a Shortcut that opens `banabaconnect://sos`.
 - **Profile tab:** a card that shows On/Off on Android and opens Settings, or shows the Back Tap
@@ -29,8 +29,43 @@ How the feature works is in `docs/sos.md`.
 - Once, right after a reinstall, the pattern opened Home instead of SOS. It didn't happen again.
 - **Not tested:** the lock screen, a real Android phone, anything on iPhone.
 
+## Found on a real phone
+
+- **Play Protect blocked the APK** ("App blocked to protect your device") when it was installed
+  from a download. Google blocks downloaded apps that include an accessibility service. Earlier
+  APKs without it installed normally. Ways around it: install over USB (`adb install -r`), or turn
+  off "Scan apps with Play Protect" just for the install. Residents installing a downloaded APK
+  would hit the same block, so this feature needs Google Play (or a separate test-only APK).
+- **"Restricted setting"** appeared when turning the service on, as expected for a downloaded APK.
+  App info → ⋮ → Allow restricted settings fixed it.
+- **Key combinations.** The up, down, up, down pattern worked once, then started a bug report.
+  Pressing the two buttons fast overlaps them, and the phone treats both volume keys held together
+  as a key combination. Android handles those before the service sees the keys, so the app can't
+  stop them. The pattern is now volume down 5 times, which can't overlap.
+
+- **Stopped after swiping the app away** (Redmi Note 12). Settings still showed the service as
+  on, but it no longer worked until it was turned off and on again. Xiaomi kills the app when it
+  is swiped away and blocks Android from restarting the service without **Autostart**. The
+  Profile card now shows **Stopped** when this happens and has a **Turn on Autostart** button;
+  Battery saver → No restrictions helps too.
+- **Still stopped after a swipe, even with Autostart.** With Autostart on, reopening the app
+  brought the service back, but the pattern didn't work between the swipe and reopening. The
+  service ran in the app's process, which the swipe kills. It was moved to its own `:volumesos`
+  process with no screens. That worked everywhere while the app was running, including the lock
+  screen, but the swipe still stopped it: Xiaomi stops every process of a swiped app.
+- **Silent "Volume-button SOS is ready" notification.** The next try: while the feature is on, a
+  silent notification keeps the `:volumesos` process marked as in use. Not yet tested on the
+  Redmi. Locking the app in recent apps was ruled out, because residents wouldn't find the
+  setting and it differs between Xiaomi versions.
+
 ## Android limitations
 
+- **Phones that stop background apps.** Even with Autostart and no battery restrictions, some
+  phones may still stop the service. The resident only finds out from the Profile card or when
+  the pattern doesn't work, since the app can't restart an accessibility service itself.
+
+- **Accidental opens.** Turning the volume down fast can sometimes reach 5 presses within
+  3 seconds. That only opens the SOS screen: nothing is sent without the fingerprint or PIN.
 - **Residents must turn it on themselves** in Settings → Accessibility. The app can't do it.
 - **"Restricted setting" (Android 13 and later).** Android blocks accessibility services for
   apps installed from a downloaded APK, which is how test builds are installed. The resident
@@ -43,9 +78,12 @@ How the feature works is in `docs/sos.md`.
 - **Force stop turns it off** (confirmed on the emulator). Phone cleaners and battery savers on
   some brands may do the same. The Profile card then shows **Off** and the resident turns it on
   again.
-- **The screen must be on.** The lock screen counts. With the screen off, Android most likely
-  doesn't pass the keys to the service, so the resident presses the power button first. This
-  comes from how Android routes keys; it wasn't tested.
+- **The screen must be on** (confirmed on a Redmi Note 12). The lock screen counts. With the
+  screen off, Android sends volume presses straight to the volume or the media player, so the
+  resident presses the power button first. Only the system can watch buttons with the screen
+  off, which is why Android's own Emergency SOS uses the power button. The Profile card points to
+  it for screen-off emergencies. The only app workaround, pretending to play music all the time,
+  drains the battery, fights real music apps and breaks Google Play rules.
 - **Two steps on the lock screen.** The phone buzzes and SOS opens behind the lock. The resident
   unlocks the phone, then confirms with the fingerprint.
 - **Phone brands vary.** Samsung, Xiaomi and others may handle accessibility services or volume

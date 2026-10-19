@@ -2,7 +2,11 @@ import { requireOptionalNativeModule } from 'expo';
 
 interface VolumeSosNative {
   isEnabled(): boolean;
+  isRunning(): boolean;
+  keepReady(): void;
   openSettings(): void;
+  hasAutostart(): boolean;
+  openBackgroundSettings(): void;
 }
 
 /**
