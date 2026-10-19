@@ -45,31 +45,53 @@ function VolumeButtonSetting() {
         </View>
       </View>
       <Text style={styles.text}>
-        Press volume down 5 times within 3 seconds, even on the lock screen, to open Send SOS. The
-        phone buzzes twice, then you confirm with your fingerprint or PIN as usual.
+        Press the volume down button 5 times, fast. Send SOS opens, even if your phone is locked.
       </Text>
       <Text style={styles.text}>
-        While it&apos;s on, BanabaConnect shows a small notification so it keeps working after you
-        close the app.
+        Your phone buzzes twice. Nothing is sent until you confirm with your fingerprint or PIN.
       </Text>
 
-      {state === 'stopped' && (
-        <Text style={styles.steps}>
-          It isn&apos;t running, so the volume buttons won&apos;t open Send SOS. This happens after
-          Stop in your phone&apos;s Active apps list, or when the phone closes BanabaConnect to save
-          battery. In Settings, turn BanabaConnect volume-button SOS off, then on again.
+      {state === 'on' && (
+        <Text style={styles.text}>
+          A small BanabaConnect notification stays at the top of your screen. It keeps this working
+          even after you close the app.
         </Text>
+      )}
+
+      {state === 'stopped' && (
+        <>
+          <Text style={styles.steps}>
+            It stopped working. The volume button won&apos;t open Send SOS until you fix it:
+          </Text>
+          <Text style={styles.steps}>1. Tap Turn it back on in Settings below.</Text>
+          <Text style={styles.steps}>
+            2. Tap <Text style={styles.bold}>BanabaConnect volume-button SOS</Text>.
+          </Text>
+          <Text style={styles.steps}>3. Turn the switch off, then on again.</Text>
+          <Text style={styles.note}>
+            This happens when you tap Stop on BanabaConnect under Active apps, or when your phone
+            closes apps to save battery.
+          </Text>
+        </>
       )}
 
       {!enabled && (
         <>
-          <Text style={styles.text}>
-            Android lists it under Accessibility. BanabaConnect only listens for the volume buttons.
-            It doesn&apos;t read your screen or what you type.
+          <Text style={styles.steps}>To turn it on:</Text>
+          <Text style={styles.steps}>1. Tap Turn on in Settings below.</Text>
+          <Text style={styles.steps}>
+            2. Tap <Text style={styles.bold}>Downloaded apps</Text> (on some phones,{' '}
+            <Text style={styles.bold}>Installed apps</Text>).
           </Text>
           <Text style={styles.steps}>
-            In Settings, open Downloaded apps (or Installed apps), then BanabaConnect volume-button
-            SOS, and turn it on.
+            3. Tap <Text style={styles.bold}>BanabaConnect volume-button SOS</Text> and turn the
+            switch on.
+          </Text>
+          <Text style={styles.steps}>
+            4. Android asks if you trust it. Tap <Text style={styles.bold}>Allow</Text>.
+          </Text>
+          <Text style={styles.note}>
+            It only watches the volume buttons. It can&apos;t see your screen or what you type.
           </Text>
         </>
       )}
@@ -96,9 +118,10 @@ function VolumeButtonSetting() {
       {/* Android adds this button when the service is turned on; tapping it can turn the service off. */}
       {state === 'on' && (
         <Text style={styles.note}>
-          If a round BanabaConnect button appears at the side of your screen, remove it so it isn&apos;t
-          tapped by accident: on the same Settings page, turn off BanabaConnect volume-button SOS
-          shortcut. Volume-button SOS stays on.
+          See a round BanabaConnect button at the side of your screen? It can turn this off by
+          accident. To remove it, tap Turn off in Settings, tap{' '}
+          <Text style={styles.bold}>BanabaConnect volume-button SOS</Text>, and turn off only the{' '}
+          <Text style={styles.bold}>shortcut</Text> switch.
         </Text>
       )}
 
@@ -106,9 +129,10 @@ function VolumeButtonSetting() {
       {enabled && batteryExempt === false && (
         <>
           <Text style={styles.note}>
-            If volume-button SOS stops working after you close the app, let BanabaConnect run in
-            the background: in the list, choose All apps, then BanabaConnect, then Don&apos;t
-            optimize (or Unrestricted).
+            Your phone may close BanabaConnect to save battery, which stops this. To prevent it, tap
+            the button below, choose <Text style={styles.bold}>All apps</Text>, tap BanabaConnect,
+            then <Text style={styles.bold}>Don&apos;t optimize</Text> (on some phones,{' '}
+            <Text style={styles.bold}>Unrestricted</Text>).
           </Text>
           <Pressable
             onPress={() => VolumeSos?.openBatterySettings?.()}
@@ -116,7 +140,7 @@ function VolumeButtonSetting() {
             accessibilityRole="button"
             accessibilityHint="Opens battery settings in your phone's Settings"
           >
-            <Text style={styles.buttonText}>Let it run in the background</Text>
+            <Text style={styles.buttonText}>Keep it running</Text>
           </Pressable>
         </>
       )}
@@ -124,7 +148,7 @@ function VolumeButtonSetting() {
       {/* Android 13 and later block this for apps installed from a downloaded file. */}
       {!enabled && Number(Platform.Version) >= 33 && (
         <Text style={styles.note}>
-          If Android says &quot;Restricted setting&quot;, open{' '}
+          Android says &quot;Restricted setting&quot; and won&apos;t let you turn it on? Tap{' '}
           <Text
             style={styles.link}
             onPress={() => void Linking.openSettings()}
@@ -132,7 +156,8 @@ function VolumeButtonSetting() {
           >
             App info
           </Text>
-          , tap the ⋮ menu, choose Allow restricted settings, then try again.
+          , tap ⋮ at the top right, then <Text style={styles.bold}>Allow restricted settings</Text>.
+          Then try again.
         </Text>
       )}
     </View>
@@ -218,6 +243,10 @@ function createStyles(colors: ThemeColors) {
     code: {
       fontWeight: '700',
       color: colors.text,
+    },
+    // Names the resident will see on a Settings screen, so they can find them.
+    bold: {
+      fontWeight: '700',
     },
     note: {
       fontSize: 13,
