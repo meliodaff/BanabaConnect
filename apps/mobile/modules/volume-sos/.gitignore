@@ -1,3 +1,4 @@
 # Gradle output from local Android builds
 android/build/
 android/.cxx/
+android/.gradle/

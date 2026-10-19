@@ -2,11 +2,10 @@ import { requireOptionalNativeModule } from 'expo';
 
 interface VolumeSosNative {
   isEnabled(): boolean;
-  isRunning(): boolean;
-  keepReady(): void;
   openSettings(): void;
-  hasAutostart(): boolean;
-  openBackgroundSettings(): void;
+  /** Missing in builds made before the ongoing notification was added. */
+  isIgnoringBatteryOptimizations?(): boolean;
+  openBatterySettings?(): void;
 }
 
 /**

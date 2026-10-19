@@ -44,25 +44,18 @@ How the feature works is in `docs/sos.md`.
   stop them. The pattern is now volume down 5 times, which can't overlap.
 
 - **Stopped after swiping the app away** (Redmi Note 12). Settings still showed the service as
-  on, but it no longer worked until it was turned off and on again. Xiaomi kills the app when it
-  is swiped away and blocks Android from restarting the service without **Autostart**. The
-  Profile card now shows **Stopped** when this happens and has a **Turn on Autostart** button;
-  Battery saver → No restrictions helps too.
-- **Still stopped after a swipe, even with Autostart.** With Autostart on, reopening the app
-  brought the service back, but the pattern didn't work between the swipe and reopening. The
-  service ran in the app's process, which the swipe kills. It was moved to its own `:volumesos`
-  process with no screens. That worked everywhere while the app was running, including the lock
-  screen, but the swipe still stopped it: Xiaomi stops every process of a swiped app.
-- **Silent "Volume-button SOS is ready" notification.** The next try: while the feature is on, a
-  silent notification keeps the `:volumesos` process marked as in use. Not yet tested on the
-  Redmi. Locking the app in recent apps was ruled out, because residents wouldn't find the
-  setting and it differs between Xiaomi versions.
+  on, but it no longer worked until it was turned off and on again: Xiaomi kills the app's
+  process when it is swiped away. The service now runs in the foreground with a quiet "Volume-button
+  SOS is on" notification, and the Profile card asks to let BanabaConnect run in the background
+  when battery saving is on. Locking the app in recent apps was ruled out, because residents
+  wouldn't find the setting and it differs between Xiaomi versions.
 
 ## Android limitations
 
-- **Phones that stop background apps.** Even with Autostart and no battery restrictions, some
-  phones may still stop the service. The resident only finds out from the Profile card or when
-  the pattern doesn't work, since the app can't restart an accessibility service itself.
+- **Phones that stop background apps.** Even with the notification and no battery restrictions,
+  some phones may still stop the service. Settings still shows it as on, so the resident only
+  finds out when the pattern doesn't work, since the app can't restart an accessibility service
+  itself.
 
 - **Accidental opens.** Turning the volume down fast can sometimes reach 5 presses within
   3 seconds. That only opens the SOS screen: nothing is sent without the fingerprint or PIN.

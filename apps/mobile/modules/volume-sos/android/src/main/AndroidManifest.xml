@@ -1,25 +1,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- A short buzz tells the resident the pattern was caught, even before the screen opens. -->
     <uses-permission android:name="android.permission.VIBRATE" />
-    <!-- The silent "Volume-button SOS is ready" notification (VolumeSosReadyService). -->
+    <!-- Runs in the foreground with an ongoing notification, so phones don't kill it once the app
+         is swiped away. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Lets the app find Xiaomi's Autostart screen (VolumeSosModule.hasAutostart). -->
-    <queries>
-        <package android:name="com.miui.securitycenter" />
-    </queries>
-
     <application>
-        <!-- Off until the resident turns it on in Settings, then Accessibility. Its own small
-             process, with no screens and no JavaScript: swiping the app away from recent apps
-             kills the app's process, and on Xiaomi phones the service died with it. -->
+        <!-- Off until the resident turns it on in Settings, then Accessibility. -->
         <service
             android:name=".VolumeSosService"
-            android:process=":volumesos"
             android:label="@string/volume_sos_label"
             android:exported="true"
+            android:foregroundServiceType="specialUse"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
@@ -27,17 +21,9 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/volume_sos_service" />
-        </service>
-
-        <!-- Same process as the service above, so the notification keeps that process running. -->
-        <service
-            android:name=".VolumeSosReadyService"
-            android:process=":volumesos"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Keeps an emergency SOS shortcut running: the resident's accessibility service listens for 5 presses of volume down and opens the app's emergency SOS screen. Shown only while the resident has turned this on." />
+                android:value="Listens for the volume-button SOS pattern so a resident can open an emergency report hands-free" />
         </service>
     </application>
 </manifest>

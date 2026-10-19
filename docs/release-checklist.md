@@ -50,8 +50,8 @@ while the app is only tested by the team (emulator and AltStore), to keep testin
   and an in-app disclosure before the resident turns it on (the Profile tab card covers this).
   Review can still reject it. If it does, remove the module from the Play build and keep the
   widget and icon shortcut.
-- [ ] **Foreground service declaration for the "Volume-button SOS is ready" notification.** It is
-  a `specialUse` foreground service (`VolumeSosReadyService`). In Play Console → Policy → App
+- [ ] **Foreground service declaration for the "Volume-button SOS is on" notification.**
+  `VolumeSosService` runs as a `specialUse` foreground service. In Play Console → Policy → App
   content, declare the foreground service type with the same reason as the
   `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` text in `apps/mobile/modules/volume-sos/.../AndroidManifest.xml`.
 
