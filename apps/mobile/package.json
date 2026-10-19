@@ -45,7 +45,7 @@
     "start": "expo start",
     "android": "node scripts/start-android.js",
     "android:build": "expo run:android --no-bundler",
-    "ios": "expo start --ios",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",

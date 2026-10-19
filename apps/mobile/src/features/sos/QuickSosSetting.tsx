@@ -1,7 +1,8 @@
-import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { Linking, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon, icons } from '@/components/Icon';
 import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
-import { useVolumeSosEnabled, VolumeSos } from './volumeSos';
+import { useVolumeSosBatteryExempt, useVolumeSosEnabled, VolumeSos } from './volumeSos';
 
 const SOS_LINK = 'banabaconnect://sos';
 
@@ -20,6 +21,14 @@ function VolumeButtonSetting() {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const enabled = useVolumeSosEnabled();
+  const batteryExempt = useVolumeSosBatteryExempt();
+
+  // Android 13 and later hide the ongoing notification without this. The service still runs, but
+  // the resident can't see that it's on.
+  useEffect(() => {
+    if (!enabled || Number(Platform.Version) < 33) return;
+    void PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+  }, [enabled]);
 
   return (
     <View style={styles.card}>
@@ -34,8 +43,12 @@ function VolumeButtonSetting() {
         </View>
       </View>
       <Text style={styles.text}>
-        Press volume up, down, up, down within 2 seconds, even on the lock screen, to open Send SOS.
-        The phone buzzes twice, then you confirm with your fingerprint or PIN as usual.
+        Press volume down 5 times within 3 seconds, even on the lock screen, to open Send SOS. The
+        phone buzzes twice, then you confirm with your fingerprint or PIN as usual.
+      </Text>
+      <Text style={styles.text}>
+        While it&apos;s on, BanabaConnect shows a small notification so it keeps working after you
+        close the app.
       </Text>
 
       {!enabled && (
@@ -73,6 +86,25 @@ function VolumeButtonSetting() {
           tapped by accident: on the same Settings page, turn off BanabaConnect volume-button SOS
           shortcut. Volume-button SOS stays on.
         </Text>
+      )}
+
+      {/* Some phones stop background apps to save battery, even with the notification showing. */}
+      {enabled && batteryExempt === false && (
+        <>
+          <Text style={styles.note}>
+            If volume-button SOS stops working after you close the app, let BanabaConnect run in
+            the background: in the list, choose All apps, then BanabaConnect, then Don&apos;t
+            optimize (or Unrestricted).
+          </Text>
+          <Pressable
+            onPress={() => VolumeSos?.openBatterySettings?.()}
+            style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityHint="Opens battery settings in your phone's Settings"
+          >
+            <Text style={styles.buttonText}>Let it run in the background</Text>
+          </Pressable>
+        </>
       )}
 
       {/* Android 13 and later block this for apps installed from a downloaded file. */}
