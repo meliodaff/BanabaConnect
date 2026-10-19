@@ -5,21 +5,47 @@ import { VolumeSos } from '../../../modules/volume-sos';
 export { VolumeSos };
 
 /**
- * Whether volume-button SOS is on (Android). `null` where it doesn't exist (iPhone, web, older
- * builds). Checked again whenever the app comes back, since it is turned on in the phone's
+ * - `off`: not turned on in Settings.
+ * - `stopped`: turned on, but not running (for example after Stop in the phone's Active apps
+ *   list), and Android doesn't start it again by itself.
+ * - `on`: running.
+ */
+export type VolumeSosState = 'off' | 'stopped' | 'on';
+
+function readState(volumeSos: NonNullable<typeof VolumeSos>): VolumeSosState {
+  if (!volumeSos.isEnabled()) return 'off';
+  // Builds without the check can't tell, so trust Settings.
+  return (volumeSos.isRunning?.() ?? true) ? 'on' : 'stopped';
+}
+
+/**
+ * Whether volume-button SOS is working (Android). `null` where it doesn't exist (iPhone, web,
+ * older builds). Checked again whenever the app comes back, since it is turned on in the phone's
  * Settings.
  */
-export function useVolumeSosEnabled(): boolean | null {
-  const [enabled, setEnabled] = useState(() => VolumeSos?.isEnabled() ?? null);
+export function useVolumeSosState(): VolumeSosState | null {
+  const [state, setState] = useState(() => (VolumeSos ? readState(VolumeSos) : null));
   useEffect(() => {
     const volumeSos = VolumeSos;
     if (!volumeSos) return;
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') setEnabled(volumeSos.isEnabled());
+    let recheck: ReturnType<typeof setTimeout> | undefined;
+    function check() {
+      clearTimeout(recheck);
+      const next = readState(volumeSos!);
+      setState(next);
+      // Just turned on in Settings, Android takes a moment to start it; don't call that stopped.
+      if (next === 'stopped') recheck = setTimeout(() => setState(readState(volumeSos!)), 2000);
+    }
+    check();
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (next === 'active') check();
     });
-    return () => subscription.remove();
+    return () => {
+      clearTimeout(recheck);
+      subscription.remove();
+    };
   }, []);
-  return enabled;
+  return state;
 }
 
 /**

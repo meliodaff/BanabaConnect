@@ -1,5 +1,6 @@
 package ph.banabaconnect.volumesos
 
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Intent
@@ -7,6 +8,7 @@ import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
 import android.text.TextUtils
+import android.view.accessibility.AccessibilityManager
 import expo.modules.kotlin.exception.Exceptions
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -28,6 +30,20 @@ class VolumeSosModule : Module() {
       val ours = ComponentName(context, VolumeSosService::class.java)
       val services = TextUtils.SimpleStringSplitter(':').apply { setString(enabled) }
       services.any { ComponentName.unflattenFromString(it) == ours }
+    }
+
+    /**
+     * Whether the service is actually running. It can be on in Settings but stopped, for example
+     * after Stop in the phone's Active apps list, and Android doesn't start it again by itself.
+     */
+    Function("isRunning") {
+      val manager = context.getSystemService(AccessibilityManager::class.java)
+        ?: return@Function true
+      val ours = ComponentName(context, VolumeSosService::class.java)
+      // Android lists only the services it is connected to here.
+      manager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK).any {
+        ComponentName.unflattenFromString(it.id) == ours
+      }
     }
 
     /** Apps can't turn an accessibility service on themselves; the resident does it here. */

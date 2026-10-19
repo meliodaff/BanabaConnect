@@ -47,15 +47,21 @@ How the feature works is in `docs/sos.md`.
   on, but it no longer worked until it was turned off and on again: Xiaomi kills the app's
   process when it is swiped away. The service now runs in the foreground with a quiet "Volume-button
   SOS is on" notification, and the Profile card asks to let BanabaConnect run in the background
-  when battery saving is on. Locking the app in recent apps was ruled out, because residents
+  when battery saving is on. Confirmed on the Redmi Note 12 (Oct 19): the pattern still works
+  after **Clear all** in recent apps. Locking the app in recent apps was ruled out, because residents
   wouldn't find the setting and it differs between Xiaomi versions.
 
 ## Android limitations
 
 - **Phones that stop background apps.** Even with the notification and no battery restrictions,
-  some phones may still stop the service. Settings still shows it as on, so the resident only
-  finds out when the pattern doesn't work, since the app can't restart an accessibility service
-  itself.
+  some phones may still stop the service. Settings still shows it as on, and the app can't
+  restart an accessibility service itself. The resident finds out from the Profile card, which
+  shows **Stopped**, or when the pattern doesn't work.
+- **Stop in Active apps** (confirmed on the emulator, Android 17). The ongoing notification puts
+  BanabaConnect in Quick Settings → Active apps, which says these apps affect battery life.
+  **Stop** there kills the service and it stays dead, even after reopening the app, until the
+  resident turns it off and on in Settings. The app can't hide itself from that list while the
+  notification is up.
 
 - **Accidental opens.** Turning the volume down fast can sometimes reach 5 presses within
   3 seconds. That only opens the SOS screen: nothing is sent without the fingerprint or PIN.

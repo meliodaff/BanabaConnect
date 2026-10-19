@@ -94,6 +94,12 @@ burst opens it once.
 - **Force stop turns it off.** Android turns an accessibility service off when its app is
   force-stopped (App info → Force stop), and some phone brands' cleaners or battery savers do the
   same. The Profile card then shows **Off**, and the resident turns it on again.
+- **Stop in Active apps leaves it on but stopped.** The ongoing notification lists BanabaConnect
+  in Quick Settings → Active apps. **Stop** there kills the app, but Settings still shows the
+  service as on, and Android doesn't start it again, not even when the app is reopened. The
+  Profile card checks whether the service is actually running (`isRunning`) and shows
+  **Stopped**; the resident turns it off and on again in Settings. Phones that close the app to
+  save battery end up the same way.
 - **iPhone.** iOS doesn't let any app see the volume buttons unless it is open, so the iPhone
   uses Back Tap instead (above).
 

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Linking, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon, icons } from '@/components/Icon';
 import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
-import { useVolumeSosBatteryExempt, useVolumeSosEnabled, VolumeSos } from './volumeSos';
+import { useVolumeSosBatteryExempt, useVolumeSosState, VolumeSos } from './volumeSos';
 
 const SOS_LINK = 'banabaconnect://sos';
 
@@ -20,7 +20,8 @@ export function QuickSosSetting() {
 function VolumeButtonSetting() {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
-  const enabled = useVolumeSosEnabled();
+  const state = useVolumeSosState();
+  const enabled = state === 'on' || state === 'stopped';
   const batteryExempt = useVolumeSosBatteryExempt();
 
   // Android 13 and later hide the ongoing notification without this. The service still runs, but
@@ -36,9 +37,10 @@ function VolumeButtonSetting() {
         <Icon name={icons.volume} size={20} color={colors.textMuted} />
         <Text style={styles.title}>Volume-button SOS</Text>
         <View style={styles.status}>
-          {enabled && <Icon name={icons.check} size={16} color={colors.success} />}
+          {state === 'on' && <Icon name={icons.check} size={16} color={colors.success} />}
+          {state === 'stopped' && <Icon name={icons.alert} size={16} color={colors.warning} />}
           <Text style={[styles.statusText, !enabled && styles.statusOff]}>
-            {enabled ? 'On' : 'Off'}
+            {state === 'on' ? 'On' : state === 'stopped' ? 'Stopped' : 'Off'}
           </Text>
         </View>
       </View>
@@ -50,6 +52,14 @@ function VolumeButtonSetting() {
         While it&apos;s on, BanabaConnect shows a small notification so it keeps working after you
         close the app.
       </Text>
+
+      {state === 'stopped' && (
+        <Text style={styles.steps}>
+          It isn&apos;t running, so the volume buttons won&apos;t open Send SOS. This happens after
+          Stop in your phone&apos;s Active apps list, or when the phone closes BanabaConnect to save
+          battery. In Settings, turn BanabaConnect volume-button SOS off, then on again.
+        </Text>
+      )}
 
       {!enabled && (
         <>
@@ -68,19 +78,23 @@ function VolumeButtonSetting() {
         onPress={() => VolumeSos?.openSettings()}
         style={({ pressed }) => [
           styles.button,
-          !enabled && styles.buttonPrimary,
+          state !== 'on' && styles.buttonPrimary,
           pressed && styles.pressed,
         ]}
         accessibilityRole="button"
         accessibilityHint="Opens Accessibility in your phone's Settings"
       >
-        <Text style={[styles.buttonText, !enabled && styles.buttonTextPrimary]}>
-          {enabled ? 'Turn off in Settings' : 'Turn on in Settings'}
+        <Text style={[styles.buttonText, state !== 'on' && styles.buttonTextPrimary]}>
+          {state === 'on'
+            ? 'Turn off in Settings'
+            : state === 'stopped'
+              ? 'Turn it back on in Settings'
+              : 'Turn on in Settings'}
         </Text>
       </Pressable>
 
       {/* Android adds this button when the service is turned on; tapping it can turn the service off. */}
-      {enabled && (
+      {state === 'on' && (
         <Text style={styles.note}>
           If a round BanabaConnect button appears at the side of your screen, remove it so it isn&apos;t
           tapped by accident: on the same Settings page, turn off BanabaConnect volume-button SOS
