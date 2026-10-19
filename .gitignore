@@ -5,3 +5,7 @@ node_modules/
 
 # Android bug reports (adb bugreport / emulator): large, and their logs can hold test account data.
 bugreport-*.zip
+
+# Java crash reports (Gradle running out of memory): useless for the project.
+hs_err_pid*.log
+replay_pid*.log

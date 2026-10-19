@@ -44,12 +44,24 @@ function VolumeButtonSetting() {
           </Text>
         </View>
       </View>
-      <Text style={styles.text}>
-        Press the volume down button 5 times, fast. Send SOS opens, even if your phone is locked.
-      </Text>
-      <Text style={styles.text}>
-        Your phone buzzes twice. Nothing is sent until you confirm with your fingerprint or PIN.
-      </Text>
+      <View style={styles.pair}>
+        <Text style={styles.text}>
+          Press the volume down button 5 times, fast. Send SOS opens, even if your phone is locked.
+        </Text>
+        <Text style={styles.tagalog}>
+          Pindutin ang volume down nang 5 beses, mabilis. Bubukas ang Send SOS kahit naka-lock ang
+          phone mo.
+        </Text>
+      </View>
+      <View style={styles.pair}>
+        <Text style={styles.text}>
+          Your phone buzzes twice. Nothing is sent until you confirm with your fingerprint or PIN.
+        </Text>
+        <Text style={styles.tagalog}>
+          Magva-vibrate ito nang dalawang beses. Walang maipapadala hangga&apos;t hindi mo
+          kinukumpirma gamit ang fingerprint o PIN.
+        </Text>
+      </View>
 
       {state === 'on' && (
         <Text style={styles.text}>
@@ -60,9 +72,15 @@ function VolumeButtonSetting() {
 
       {state === 'stopped' && (
         <>
-          <Text style={styles.steps}>
-            It stopped working. The volume button won&apos;t open Send SOS until you fix it:
-          </Text>
+          <View style={styles.pair}>
+            <Text style={styles.steps}>
+              It stopped working. The volume button won&apos;t open Send SOS until you fix it:
+            </Text>
+            <Text style={styles.tagalog}>
+              Huminto ito. Hindi bubukas ang Send SOS sa volume button hangga&apos;t hindi mo ito
+              inaayos:
+            </Text>
+          </View>
           <Text style={styles.steps}>1. Tap Turn it back on in Settings below.</Text>
           <Text style={styles.steps}>
             2. Tap <Text style={styles.bold}>BanabaConnect volume-button SOS</Text>.
@@ -77,7 +95,10 @@ function VolumeButtonSetting() {
 
       {!enabled && (
         <>
-          <Text style={styles.steps}>To turn it on:</Text>
+          <View style={styles.pair}>
+            <Text style={styles.steps}>To turn it on:</Text>
+            <Text style={styles.tagalog}>Paano ito i-on:</Text>
+          </View>
           <Text style={styles.steps}>1. Tap Turn on in Settings below.</Text>
           <Text style={styles.steps}>
             2. Tap <Text style={styles.bold}>Downloaded apps</Text> (on some phones,{' '}
@@ -243,6 +264,15 @@ function createStyles(colors: ThemeColors) {
     code: {
       fontWeight: '700',
       color: colors.text,
+    },
+    // An English line with its Tagalog line right under it.
+    pair: {
+      gap: 2,
+    },
+    tagalog: {
+      fontSize: 14,
+      lineHeight: 19,
+      color: colors.textMuted,
     },
     // Names the resident will see on a Settings screen, so they can find them.
     bold: {
