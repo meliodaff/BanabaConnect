@@ -1,6 +1,6 @@
 import type { ReportCategory, ReportStatus, VerificationStatus } from "@banabaconnect/shared";
 import { formatDistance, formatDuration, timeAgo, timeSince, waitedForSignal } from "@/lib/format";
-import { STAFF_STATUS_LABELS, type PriorityBand, type StatusFilter } from "@/lib/labels";
+import { STAFF_STATUS_LABELS, type DateFilter, type PriorityBand, type StatusFilter } from "@/lib/labels";
 import type { SortDirection, SortKey } from "@/lib/reportSort";
 
 /**
@@ -152,19 +152,31 @@ const en = {
       closed: "No reports marked invalid",
       all: "No reports yet",
     } satisfies Record<StatusFilter, string>,
-    emptyToday: "No reports in this list reached the barangay today",
+    emptyFiltered: "No reports match these filters",
     emptyOnly: {
       urgent: "No urgent reports are waiting",
       handling: "No reports are being handled right now",
     },
     emptyHint: "New reports appear here automatically.",
   },
+  listFilters: {
+    label: "Filter reports",
+    type: "Type",
+    anyType: "All types",
+    level: "Priority",
+    anyLevel: "All priorities",
+    date: "Received",
+    anyDate: "Any date",
+    dates: { today: "Today", "7d": "Last 7 days", "30d": "Last 30 days" } satisfies Record<
+      Exclude<DateFilter, null>,
+      string
+    >,
+    clear: "Clear filters",
+  },
   queue: {
     count: (count: number) => (count === 1 ? "1 report" : `${count} reports`),
     countOf: (count: number, total: string) => `${count} of ${total} reports`,
     resetSort: "Reset to highest priority first",
-    todayOnly: "Only reports received today, since midnight",
-    showAllDates: "Show all dates",
     only: {
       urgent: "Only urgent reports nobody has started on: Critical or High, still Received",
       handling: "Only reports being handled: Responders on the way or In progress",
@@ -634,19 +646,28 @@ const fil: Dictionary = {
       closed: "Walang report na minarkahang hindi wasto",
       all: "Wala pang report",
     },
-    emptyToday: "Walang report sa listahang ito na natanggap ngayong araw",
+    emptyFiltered: "Walang report na tugma sa mga filter na ito",
     emptyOnly: {
       urgent: "Walang urgent na report na naghihintay",
       handling: "Walang report na inaasikaso ngayon",
     },
     emptyHint: "Kusang lalabas dito ang mga bagong report.",
   },
+  listFilters: {
+    label: "I-filter ang mga report",
+    type: "Uri",
+    anyType: "Lahat ng uri",
+    level: "Priority",
+    anyLevel: "Lahat ng priority",
+    date: "Natanggap",
+    anyDate: "Kahit kailan",
+    dates: { today: "Ngayong araw", "7d": "Nakaraang 7 araw", "30d": "Nakaraang 30 araw" },
+    clear: "Alisin ang mga filter",
+  },
   queue: {
     count: (count) => `${count} report`,
     countOf: (count, total) => `${count} sa ${total} na report`,
     resetSort: "Ibalik sa pinakamataas na priority muna",
-    todayOnly: "Mga report lang na natanggap ngayong araw, mula hatinggabi",
-    showAllDates: "Ipakita lahat ng petsa",
     only: {
       urgent: "Mga urgent lang na wala pang aksyon: Kritikal o Mataas, Natanggap pa lang",
       handling: "Mga report lang na inaasikaso: Papunta na ang responders o Inaasikaso",
@@ -952,7 +973,7 @@ const fil: Dictionary = {
   },
   login: {
     title: "Mag-sign in",
-    subtitle: "Gamitin ang iyong staff account sa barangay.",
+    subtitle: "Gamitin ang staff account mo sa barangay.",
     email: "Email",
     password: "Password",
     showPassword: "Ipakita ang password",
@@ -960,17 +981,17 @@ const fil: Dictionary = {
     capsLock: "Naka-on ang Caps Lock.",
     signingIn: "Nagsa-sign in…",
     signIn: "Mag-sign in",
-    authorizedOnly: "Para lang sa awtorisadong kawani ng Barangay Banaba.",
-    boundary: "Hangganan ng barangay: PSA 2023",
+    authorizedOnly: "Para lang sa mga staff ng Barangay Banaba.",
+    boundary: "Sakop ng barangay: PSA 2023",
     errors: {
-      missing: "Ilagay ang iyong email at password.",
-      wrong: "Mali ang email o password. Tingnan ang dalawa at subukan ulit.",
-      offline: "Hindi makapag-sign in. Tingnan ang internet at subukan ulit.",
+      missing: "Ilagay ang email at password mo.",
+      wrong: "Mali ang email o password. I-check ang dalawa at subukan ulit.",
+      offline: "Hindi makapag-sign in. I-check ang internet mo at subukan ulit.",
     },
   },
   notStaff: {
-    title: "Hindi kawani ng barangay ang account na ito",
-    body: "Para lang sa kawani ng barangay ang Command Dashboard. Ang mga residente ay gumagamit ng BanabaConnect mobile app.",
+    title: "Hindi pang-staff ng barangay ang account na ito",
+    body: "Para lang sa mga staff ng barangay ang Command Dashboard. Sa BanabaConnect mobile app naman ang mga residente.",
   },
   error: {
     title: "Hindi nag-load ang page na ito",

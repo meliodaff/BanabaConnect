@@ -13,6 +13,7 @@ import {
 import { useDictionary } from "@/components/I18nProvider";
 import { LiveIndicator, useLiveReports } from "@/components/LiveUpdates";
 import { Pagination } from "@/components/Pagination";
+import { ReportFilters } from "@/components/ReportFilters";
 import { filtersQuery, type ListFilters, type StatusFilter } from "@/lib/labels";
 import { pageQuery } from "@/lib/pagination";
 import { QUEUE_COLUMNS, QUEUE_DETAILS } from "@/lib/queueLayout";
@@ -72,7 +73,7 @@ export function QueueTable({
   emptyMessage: string;
   /** The status filter, kept when the sort changes. */
   filter: StatusFilter;
-  /** The date filter and Overview views (e.g. urgent only), kept when the sort or page changes. */
+  /** The dropdown filters and Overview views (e.g. urgent only), kept when the sort or page changes. */
   filters: ListFilters;
   /** How the rows are already sorted (the page sorts them; the headers change it). */
   sort: ReportSort;
@@ -156,13 +157,6 @@ export function QueueTable({
               href={`/reports?status=active${sortQuery(sort)}${filtersQuery({ ...filters, only: null })}`}
             />
           )}
-          {filters.date === "today" && (
-            <FilterNote
-              text={t.queue.todayOnly}
-              clear={t.queue.showAllDates}
-              href={`/reports?status=${filter}${sortQuery(sort)}${filtersQuery({ ...filters, date: null })}`}
-            />
-          )}
           <p className="text-sm text-muted">
             {/* What priority means, in words; each report's page shows its own breakdown. */}
             {t.queue.priorityExplained}
@@ -173,6 +167,8 @@ export function QueueTable({
         </div>
         <LiveIndicator connected={connected} />
       </div>
+
+      <ReportFilters filter={filter} filters={filters} sort={sort} />
 
       <div aria-live="assertive" className="pointer-events-none fixed right-6 top-6 z-50">
         {toast && (

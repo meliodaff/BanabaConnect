@@ -36,6 +36,16 @@ export default function ReportsLoading() {
           <Bone className="h-6 w-44 rounded-full" />
         </div>
 
+        {/* The filter dropdowns (components/ReportFilters.tsx), with their real names. */}
+        <div className="mb-4 flex flex-wrap gap-x-4 gap-y-3">
+          {[t.listFilters.type, t.listFilters.level, t.listFilters.date].map((label) => (
+            <div key={label} className="w-48">
+              <p className="mb-1 text-sm font-semibold">{label}</p>
+              <Bone className="h-[46px] w-full rounded-md" />
+            </div>
+          ))}
+        </div>
+
         <div className="overflow-hidden rounded-lg border border-line bg-surface">
           <div className={`hidden border-b border-line bg-page px-5 py-[13px] xl:grid ${QUEUE_COLUMNS}`}>
             {["w-16", "w-14", "w-16", "w-16", "w-12"].map((width, index) => (

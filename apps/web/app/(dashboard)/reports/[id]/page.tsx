@@ -21,8 +21,7 @@ import { getDictionary } from "@/lib/i18n-server";
 import {
   PRIORITY_BAND_COLORS,
   filtersQuery,
-  parseDateFilter,
-  parseOnlyFilter,
+  parseListFilters,
   parseStatusFilter,
   priorityBand,
   reportNumber,
@@ -37,7 +36,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * Back to where the staff member came from: Overview, the map, or the queue with its filters, sort
- * and page. Links into a report carry them as ?from=active&sort=reported&dir=asc&page=2&only=urgent&date=today.
+ * and page. Links into a report carry them as
+ * ?from=active&sort=reported&dir=asc&page=2&only=urgent&type=fire&level=high&date=today.
  */
 function backLink(
   from: string | string[] | undefined,
@@ -65,7 +65,7 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
     query.from,
     parseSort(query.sort, query.dir),
     parsePage(query.page),
-    { date: parseDateFilter(query.date), only: parseOnlyFilter(query.only) },
+    parseListFilters(query),
     t,
   );
   const report = /^[0-9a-f-]{36}$/i.test(id) ? await getReport(id) : null;

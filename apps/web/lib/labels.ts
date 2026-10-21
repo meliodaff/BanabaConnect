@@ -1,4 +1,10 @@
-import { ACTIVE_REPORT_STATUSES, REPORT_STATUSES, type ReportStatus } from "@banabaconnect/shared";
+import {
+  ACTIVE_REPORT_STATUSES,
+  REPORT_STATUSES,
+  isReportCategory,
+  type ReportCategory,
+  type ReportStatus,
+} from "@banabaconnect/shared";
 
 /** Status names for barangay staff (residents see friendlier wording in the app). */
 export const STAFF_STATUS_LABELS: Record<ReportStatus, string> = {
@@ -22,16 +28,23 @@ export function parseStatusFilter(value: unknown): StatusFilter {
   return typeof value === "string" && value in STATUS_FILTERS ? (value as StatusFilter) : "active";
 }
 
-/** The Reports page's optional date filter: ?date=today keeps reports that reached the barangay since midnight. */
-export type DateFilter = "today" | null;
+/**
+ * The Reports page's optional date filter, by when reports reached the barangay: ?date=today since
+ * midnight, ?date=7d and ?date=30d over the last 7 or 30 days, counting today.
+ */
+export const DATE_FILTERS = ["today", "7d", "30d"] as const;
+export type DateFilter = (typeof DATE_FILTERS)[number] | null;
+
+const DATE_FILTER_DAYS: Record<Exclude<DateFilter, null>, number> = { today: 1, "7d": 7, "30d": 30 };
 
 export function parseDateFilter(value: unknown): DateFilter {
-  return value === "today" ? "today" : null;
+  return (DATE_FILTERS as readonly unknown[]).includes(value) ? (value as DateFilter) : null;
 }
 
-/** The date filter as a query-string suffix, kept when the status, sort or page changes. */
-export function dateQuery(date: DateFilter): string {
-  return date ? `&date=${date}` : "";
+/** When the date filter's reports start, from midnight today (Philippine time, which has no DST). */
+export function dateFilterStart(date: DateFilter, todayIso: string): string | undefined {
+  if (!date) return undefined;
+  return new Date(Date.parse(todayIso) - (DATE_FILTER_DAYS[date] - 1) * 24 * 60 * 60 * 1000).toISOString();
 }
 
 export type OnlyFilter = "urgent" | "handling" | null;
@@ -40,15 +53,44 @@ export function parseOnlyFilter(value: unknown): OnlyFilter {
   return value === "urgent" || value === "handling" ? value : null;
 }
 
-/** The Reports page's filters beyond status: the date and the Overview's narrower views. */
-export interface ListFilters {
-  date: DateFilter;
-  only: OnlyFilter;
+export function parseTypeFilter(value: unknown): ReportCategory | null {
+  return isReportCategory(value) ? value : null;
 }
 
-/** Both filters as a query-string suffix, e.g. "&only=urgent&date=today". */
-export function filtersQuery({ date, only }: ListFilters): string {
-  return `${only ? `&only=${only}` : ""}${dateQuery(date)}`;
+export function parseLevelFilter(value: unknown): PriorityBand | null {
+  return typeof value === "string" && value in PRIORITY_BAND_RANGES ? (value as PriorityBand) : null;
+}
+
+/**
+ * The Reports page's filters beyond status: the Overview's narrower views, and the dropdowns
+ * above the list (type of incident, priority level and date).
+ */
+export interface ListFilters {
+  only: OnlyFilter;
+  type: ReportCategory | null;
+  level: PriorityBand | null;
+  date: DateFilter;
+}
+
+export function parseListFilters(params: Record<string, string | string[] | undefined>): ListFilters {
+  return {
+    only: parseOnlyFilter(params.only),
+    type: parseTypeFilter(params.type),
+    level: parseLevelFilter(params.level),
+    date: parseDateFilter(params.date),
+  };
+}
+
+/** True when a dropdown narrows the list. */
+export function hasDropdownFilter({ type, level, date }: ListFilters): boolean {
+  return Boolean(type || level || date);
+}
+
+/** The filters as a query-string suffix, e.g. "&only=urgent&type=fire&date=today". */
+export function filtersQuery({ only, type, level, date }: ListFilters): string {
+  return `${only ? `&only=${only}` : ""}${type ? `&type=${type}` : ""}${level ? `&level=${level}` : ""}${
+    date ? `&date=${date}` : ""
+  }`;
 }
 
 /** The short number staff can write in a logbook: the start of the report's ID, e.g. 3F2A9C1D. */
@@ -99,11 +141,22 @@ export const ONLY_FILTERS = {
  */
 export function priorityBand(score: number | null): PriorityBand {
   if (score === null) return "low";
-  if (score >= 0.75) return "critical";
-  if (score >= HIGH_PRIORITY_MIN) return "high";
-  if (score >= 0.4) return "medium";
+  if (score >= PRIORITY_BAND_RANGES.critical.min) return "critical";
+  if (score >= PRIORITY_BAND_RANGES.high.min) return "high";
+  if (score >= PRIORITY_BAND_RANGES.medium.min) return "medium";
   return "low";
 }
+
+/**
+ * Each level's scores, for the priority filter: from `min`, up to but not including `below`.
+ * Low also takes reports with no score yet, as priorityBand does.
+ */
+export const PRIORITY_BAND_RANGES = {
+  critical: { min: 0.75, below: undefined },
+  high: { min: HIGH_PRIORITY_MIN, below: 0.75 },
+  medium: { min: 0.4, below: HIGH_PRIORITY_MIN },
+  low: { min: undefined, below: 0.4 },
+} as const satisfies Record<PriorityBand, { min: number | undefined; below: number | undefined }>;
 
 export const PRIORITY_BAND_LABELS: Record<PriorityBand, string> = {
   critical: "Critical",

@@ -5,7 +5,7 @@ import {
   type ReportStatus,
   type VerificationStatus,
 } from "@banabaconnect/shared";
-import { HIGH_PRIORITY_MIN } from "@/lib/labels";
+import { HIGH_PRIORITY_MIN, PRIORITY_BAND_RANGES, type PriorityBand } from "@/lib/labels";
 import { PAGE_SIZE, pageCount } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
 
@@ -120,13 +120,50 @@ function toSummary(row: any): ReportSummary | null {
  * The queue: highest priority first, then newest. With `receivedSince`, only reports that arrived
  * since then; with `minPriority`, only reports at least that urgent (0 to 1).
  */
+/** What the Reports page's dropdowns narrow a list or count to. */
+export interface ReportFilters {
+  /** Reached the barangay at or after this time. */
+  receivedSince?: string;
+  category?: ReportCategory | null;
+  level?: PriorityBand | null;
+}
+
+interface FilterableQuery {
+  gte(column: string, value: unknown): FilterableQuery;
+  lt(column: string, value: unknown): FilterableQuery;
+  eq(column: string, value: unknown): FilterableQuery;
+  or(filters: string): FilterableQuery;
+}
+
+/**
+ * Narrows a reports query (a list or a count) by the dropdown filters. Each filter returns the
+ * same query, so it's handed back with its own type; checking that against Supabase's generated
+ * types made TypeScript give up ("excessively deep"), hence the casts.
+ */
+function applyReportFilters<Query>(query: Query, { receivedSince, category, level }: ReportFilters): Query {
+  let narrowed = query as unknown as FilterableQuery;
+  if (receivedSince) narrowed = narrowed.gte("received_at", receivedSince);
+  if (category) narrowed = narrowed.eq("category", category);
+  if (level) {
+    const { min, below } = PRIORITY_BAND_RANGES[level];
+    if (min !== undefined) narrowed = narrowed.gte("priority_score", min);
+    // Low also takes reports with no score yet, as priorityBand does.
+    if (below !== undefined) {
+      narrowed =
+        min === undefined
+          ? narrowed.or(`priority_score.lt.${below},priority_score.is.null`)
+          : narrowed.lt("priority_score", below);
+    }
+  }
+  return narrowed as unknown as Query;
+}
+
 export async function listReports(
   statuses: readonly ReportStatus[],
-  { receivedSince, minPriority }: { receivedSince?: string; minPriority?: number } = {},
+  { minPriority, ...filters }: ReportFilters & { minPriority?: number } = {},
 ): Promise<ReportSummary[]> {
   const supabase = await createClient();
-  let query = supabase.from("reports").select(SUMMARY_COLUMNS).in("status", [...statuses]);
-  if (receivedSince) query = query.gte("received_at", receivedSince);
+  let query = applyReportFilters(supabase.from("reports").select(SUMMARY_COLUMNS).in("status", [...statuses]), filters);
   if (minPriority !== undefined) query = query.gte("priority_score", minPriority);
   const { data, error } = await query
     .order("priority_score", { ascending: false, nullsFirst: false })
@@ -358,14 +395,11 @@ export interface ReportCounts {
 
 /**
  * For the status cards on the Reports page. Exact counts, unlike the list (QUEUE_LIMIT). With
- * `receivedSince`, only reports that arrived since then, so the cards match a date-filtered list.
+ * `filters`, only the reports the dropdowns keep, so the cards match the filtered list.
  */
-export async function countReportsByStatus(sinceIso: string, receivedSince?: string): Promise<ReportCounts> {
+export async function countReportsByStatus(sinceIso: string, filters: ReportFilters = {}): Promise<ReportCounts> {
   const supabase = await createClient();
-  const count = () => {
-    const query = supabase.from("reports").select("id", { count: "exact", head: true });
-    return receivedSince ? query.gte("received_at", receivedSince) : query;
-  };
+  const count = () => applyReportFilters(supabase.from("reports").select("id", { count: "exact", head: true }), filters);
   const results = await Promise.all([
     count().eq("status", "received"),
     count().eq("status", "dispatched"),

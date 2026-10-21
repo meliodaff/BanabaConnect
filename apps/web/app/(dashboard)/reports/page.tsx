@@ -9,9 +9,10 @@ import { getDictionary } from "@/lib/i18n-server";
 import {
   ONLY_FILTERS,
   STATUS_FILTERS,
-  dateQuery,
-  parseDateFilter,
-  parseOnlyFilter,
+  dateFilterStart,
+  filtersQuery,
+  hasDropdownFilter,
+  parseListFilters,
   parseStatusFilter,
 } from "@/lib/labels";
 import { PAGE_SIZE, pageCount, parsePage } from "@/lib/pagination";
@@ -23,18 +24,22 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ReportsPage({ searchParams }: PageProps<"/reports">) {
   const params = await searchParams;
-  const only = parseOnlyFilter(params.only);
+  const filters = parseListFilters(params);
+  const { only } = filters;
   // The Overview's narrower views are part of Active, so the Active card stays selected.
   const filter = only ? "active" : parseStatusFilter(params.status);
   const sort = parseSort(params.sort, params.dir);
-  const date = parseDateFilter(params.date);
   const statuses = only ? ONLY_FILTERS[only].statuses : STATUS_FILTERS[filter].statuses;
   // Same rule as Overview's "Reports today": reached the barangay since midnight, Philippine time.
   const today = startOfTodayInManila();
-  const receivedSince = date === "today" ? today : undefined;
+  const narrow = {
+    receivedSince: dateFilterStart(filters.date, today),
+    category: filters.type,
+    level: filters.level,
+  };
   const [listed, counts, t] = await Promise.all([
-    listReports(statuses, { receivedSince, minPriority: only ? ONLY_FILTERS[only].minPriority : undefined }),
-    countReportsByStatus(today, receivedSince),
+    listReports(statuses, { ...narrow, minPriority: only ? ONLY_FILTERS[only].minPriority : undefined }),
+    countReportsByStatus(today, narrow),
     getDictionary(),
   ]);
   const reports = sortReports(listed, sort, t.category);
@@ -67,7 +72,8 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
     <>
       <PageHeader title={t.reports.title} description={t.reports.description}>
         <MonthlyReportLink />
-        <ReportStatusCards counts={counts} current={filter} keepQuery={`${sortQuery(sort)}${dateQuery(date)}`} />
+        <ReportStatusCards counts={counts} current={filter} keepQuery={`${sortQuery(sort)}${filtersQuery({ ...filters, only: null })}`}
+        />
       </PageHeader>
       <div className="px-8 py-6">
         <QueueTable
@@ -83,10 +89,14 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
                 : countWithStatus(counts, statuses)
           }
           emptyMessage={
-            only ? t.reports.emptyOnly[only] : date === "today" ? t.reports.emptyToday : t.reports.empty[filter]
+            hasDropdownFilter(filters)
+              ? t.reports.emptyFiltered
+              : only
+                ? t.reports.emptyOnly[only]
+                : t.reports.empty[filter]
           }
           filter={filter}
-          filters={{ date, only }}
+          filters={filters}
           sort={sort}
         />
       </div>

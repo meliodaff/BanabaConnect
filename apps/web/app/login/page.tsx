@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { BanabaOutline } from "@/components/BanabaOutline";
-import { LanguageSwitch } from "@/components/LanguageSwitch";
-import { getDictionary } from "@/lib/i18n-server";
+import { I18nProvider } from "@/components/I18nProvider";
+import { DICTIONARIES } from "@/lib/i18n";
 import { LoginForm } from "./LoginForm";
 
-export async function generateMetadata(): Promise<Metadata> {
-  return { title: (await getDictionary()).login.title };
-}
+/** The sign-in page is always in Filipino, whatever language is saved in this browser. */
+const t = DICTIONARIES.fil;
+
+export const metadata: Metadata = { title: t.login.title };
 
 /** A faint survey-map grid in the brand color, behind the barangay outline. */
 const GRID_LINE = "color-mix(in srgb, var(--color-brand) 10%, transparent)";
@@ -21,10 +22,9 @@ const SURVEY_GRID: React.CSSProperties = {
  * seal, so the page is unmistakably the barangay's (and matches the dashboard map). Right: the
  * form. On narrow screens the map becomes a short band above the form.
  */
-export default async function LoginPage() {
-  const t = await getDictionary();
+export default function LoginPage() {
   return (
-    <main className="flex min-h-screen flex-col bg-surface">
+    <main lang="fil" className="flex min-h-screen flex-col bg-surface">
       <div className="h-1.5 shrink-0 bg-sun" />
 
       <div className="grid flex-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
@@ -67,13 +67,12 @@ export default async function LoginPage() {
             <p className="mt-2 text-[15px] text-muted">{t.login.subtitle}</p>
 
             <div className="mt-8">
-              <LoginForm />
+              <I18nProvider lang="fil">
+                <LoginForm />
+              </I18nProvider>
             </div>
 
             <p className="mt-8 border-t border-line pt-5 text-sm text-muted">{t.login.authorizedOnly}</p>
-            <div className="mt-5 max-w-56">
-              <LanguageSwitch />
-            </div>
           </div>
         </section>
       </div>

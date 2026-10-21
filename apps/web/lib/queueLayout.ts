@@ -6,11 +6,12 @@
  * From 1280 px wide: one compact row per report in five columns (priority, report, reporter,
  * reported, status). Only the report column stretches; the others stay just wide enough for
  * their content, so a big monitor shows more of each description instead of spreading the row
- * out. Narrower: the priority badge on the left, the report beside it, and the reporter, time
+ * out. The status column fits the longest status pill, "Papunta na ang responders" in Filipino
+ * ("Responders on the way" in English); narrower, it ran past the edge of the list. Narrower: the priority badge on the left, the report beside it, and the reporter, time
  * and status on one line under the report (QUEUE_DETAILS).
  */
 export const QUEUE_COLUMNS =
-  "grid-cols-[108px_minmax(0,1fr)] items-start gap-x-4 gap-y-2 xl:grid-cols-[108px_minmax(0,1fr)_224px_144px_112px] xl:gap-x-5";
+  "grid-cols-[108px_minmax(0,1fr)] items-start gap-x-4 gap-y-2 xl:grid-cols-[108px_minmax(0,1fr)_224px_144px_208px] xl:gap-x-5";
 
 /**
  * Wraps the reporter, reported and status cells: one line under the report, own columns from xl.
