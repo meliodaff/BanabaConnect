@@ -2,7 +2,7 @@
   "expo": {
     "name": "BanabaConnect",
     "slug": "banabaconnect",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -89,7 +89,9 @@
               "name": "SosWidget",
               "displayName": "SOS",
               "description": "Send an SOS to Barangay Banaba in one tap.",
-              "ios": { "supportedFamilies": ["systemSmall", "accessoryCircular"] }
+              "ios": {
+                "supportedFamilies": ["systemSmall", "accessoryCircular"]
+              }
             }
           ]
         }
