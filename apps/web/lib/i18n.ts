@@ -102,6 +102,77 @@ const en = {
     account: "Account",
     signOutHint: "Sign out of the dashboard on this browser.",
   },
+  tutorial: {
+    label: "Interactive tutorial",
+    hint: "A short guided tour of the dashboard, on the real pages. It doesn't change any report or resident.",
+    start: "Start tutorial",
+    begin: "Start",
+    notNow: "Not now",
+    back: "Back",
+    next: "Next",
+    finish: "Finish",
+    end: "End tutorial",
+    counter: (step: number, total: number) => `Step ${step} of ${total}`,
+    clickHint: "Click the highlighted part, or press Next.",
+    steps: {
+      welcome: {
+        title: "Learn the dashboard in about 2 minutes",
+        body: "The tutorial goes through the real pages and points at one thing at a time. It doesn't save or change anything. Press Esc to stop at any time.",
+      },
+      sidebar: {
+        title: "The places you work",
+        body: "Overview shows what needs attention now. Reports is the full list. Map shows where reports are. Residents is where you check Barangay IDs.",
+      },
+      overviewTiles: {
+        title: "Work waiting, at a glance",
+        body: "Each number counts reports or IDs that still need someone. Click a number to open that list.",
+      },
+      overviewUrgent: {
+        title: "Most urgent first",
+        body: "Reports not yet handled, with the highest priority on top. Start here when many reports come in at once.",
+      },
+      openReports: {
+        title: "Open the reports list",
+        body: "Click Reports in the sidebar.",
+      },
+      statusCards: {
+        title: "Choose which reports to see",
+        body: "Active shows reports still being handled. Each card shows how many reports it has. Click a card to show only those.",
+      },
+      filters: {
+        title: "Narrow the list",
+        body: "Show only one type of report, one priority level, or one date. The list stays sorted by priority unless you change it.",
+      },
+      openReport: {
+        title: "Open a report",
+        body: "Click the first report in the list to see everything about it.",
+      },
+      priority: {
+        title: "Priority, status and type",
+        body: "The score out of 100 decides the order. Further down, the report explains how the score was counted: how serious it is, nearby reports, and whether the reporter is a verified resident.",
+      },
+      updateStatus: {
+        title: "Update the status as you act",
+        body: "Choose Responders on the way only after they have been sent, and Resolved once it's handled. The resident sees each change in the app. Nothing is saved during the tutorial.",
+      },
+      map: {
+        title: "Where reports are",
+        body: "Pins are colored by priority. Point at a pin to see the report, and click it to open. The map updates by itself when new reports come in.",
+      },
+      residents: {
+        title: "Check Barangay IDs",
+        body: "Residents send a photo of their Barangay ID. Compare it with the name and address, then approve or reject it. The number in the sidebar shows how many are waiting.",
+      },
+      sound: {
+        title: "Hear new reports",
+        body: "Turn this on so the dashboard beeps for new reports and plays a siren for an SOS, even when you aren't looking at the screen.",
+      },
+      finish: {
+        title: "You're ready",
+        body: "You can run the tutorial again anytime from here. For more detail, open Help.",
+      },
+    },
+  },
   sound: {
     label: "Sound for new reports",
     on: "On",
@@ -592,6 +663,77 @@ const fil: Dictionary = {
     openHelp: "Buksan ang tulong",
     account: "Account",
     signOutHint: "Mag-sign out sa dashboard sa browser na ito.",
+  },
+  tutorial: {
+    label: "Interactive na tutorial",
+    hint: "Maikling gabay sa dashboard, sa mismong mga page. Walang report o residenteng mababago.",
+    start: "Simulan ang tutorial",
+    begin: "Simulan",
+    notNow: "Mamaya na lang",
+    back: "Bumalik",
+    next: "Susunod",
+    finish: "Tapos na",
+    end: "Ihinto ang tutorial",
+    counter: (step, total) => `Hakbang ${step} sa ${total}`,
+    clickHint: "I-click ang naka-highlight, o pindutin ang Susunod.",
+    steps: {
+      welcome: {
+        title: "Matutunan ang dashboard sa mga 2 minuto",
+        body: "Dadaanan ng tutorial ang mismong mga page at ituturo ang isa-isang bahagi. Walang mase-save o mababago. Pindutin ang Esc para huminto kahit kailan.",
+      },
+      sidebar: {
+        title: "Ang mga lugar na pinagtatrabahuhan mo",
+        body: "Sa Buod makikita ang kailangang asikasuhin ngayon. Nasa Mga report ang buong listahan. Sa Mapa makikita kung saan ang mga report. Sa Mga residente sinusuri ang mga Barangay ID.",
+      },
+      overviewTiles: {
+        title: "Mga naghihintay na trabaho",
+        body: "Bawat numero ay bilang ng report o ID na may kailangan pang gawin. I-click ang numero para buksan ang listahang iyon.",
+      },
+      overviewUrgent: {
+        title: "Pinakaurgent muna",
+        body: "Mga report na hindi pa naaasikaso, nasa itaas ang pinakamataas na priority. Dito magsimula kapag sabay-sabay ang dating ng report.",
+      },
+      openReports: {
+        title: "Buksan ang listahan ng report",
+        body: "I-click ang Mga report sa sidebar.",
+      },
+      statusCards: {
+        title: "Piliin kung aling report ang makikita",
+        body: "Sa Active makikita ang mga report na inaasikaso pa. Nakasulat sa bawat card kung ilan ang report nito. I-click ang card para iyon lang ang ipakita.",
+      },
+      filters: {
+        title: "Paliitin ang listahan",
+        body: "Ipakita lang ang isang uri ng report, isang antas ng priority, o isang petsa. Naka-ayos pa rin ayon sa priority maliban kung babaguhin mo.",
+      },
+      openReport: {
+        title: "Magbukas ng report",
+        body: "I-click ang unang report sa listahan para makita ang lahat tungkol dito.",
+      },
+      priority: {
+        title: "Priority, status at uri",
+        body: "Ang score sa 100 ang nagtatakda ng pagkakasunod. Sa ibaba, ipinapaliwanag kung paano binilang ang score: gaano kalala, may mga report sa malapit, at kung verified na residente ang nag-report.",
+      },
+      updateStatus: {
+        title: "I-update ang status habang kumikilos",
+        body: "Piliin ang Responders on the way kapag naipadala na sila, at Resolved kapag naasikaso na. Makikita ng residente ang bawat pagbabago sa app. Walang mase-save habang nasa tutorial.",
+      },
+      map: {
+        title: "Kung saan ang mga report",
+        body: "Ang kulay ng pin ay ayon sa priority. Itapat ang mouse sa pin para makita ang report, at i-click para buksan. Kusang nag-a-update ang mapa kapag may bagong report.",
+      },
+      residents: {
+        title: "Suriin ang mga Barangay ID",
+        body: "Nagpapadala ang mga residente ng litrato ng Barangay ID nila. Ikumpara sa pangalan at address, tapos i-approve o i-reject. Ang numero sa sidebar ay kung ilan ang naghihintay.",
+      },
+      sound: {
+        title: "Marinig ang bagong report",
+        body: "I-on ito para mag-beep ang dashboard sa bagong report at mag-siren kapag SOS, kahit hindi ka nakatingin sa screen.",
+      },
+      finish: {
+        title: "Handa ka na",
+        body: "Puwede mong ulitin ang tutorial dito kahit kailan. Para sa mas detalyado, buksan ang Tulong.",
+      },
+    },
   },
   sound: {
     label: "Tunog para sa bagong report",

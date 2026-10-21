@@ -45,7 +45,7 @@ export function ReportFilters({
     startTransition(() => router.push(hrefWith(changed), { scroll: false }));
 
   return (
-    <fieldset aria-busy={pending || undefined} className="mb-4 flex flex-wrap items-end gap-x-4 gap-y-3">
+    <fieldset data-tour="report-filters" aria-busy={pending || undefined} className="mb-4 flex flex-wrap items-end gap-x-4 gap-y-3">
       <legend className="sr-only">{t.listFilters.label}</legend>
 
       <FilterSelect

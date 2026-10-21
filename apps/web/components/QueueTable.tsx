@@ -228,10 +228,11 @@ export function QueueTable({
             ))}
           </nav>
           <ul className="divide-y divide-line">
-            {rows.map((row) => (
+            {rows.map((row, index) => (
               <li key={row.id}>
                 <Link
                   href={`/reports/${row.id}?from=${backTo}`}
+                  data-tour={index === 0 ? "queue-first-row" : undefined}
                   className={`grid px-5 py-3.5 transition hover:bg-brand-soft/50 ${COLUMNS} ${
                     fresh.has(row.id) ? "bg-sun-soft" : ""
                   }`}

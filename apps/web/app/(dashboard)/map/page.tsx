@@ -90,7 +90,9 @@ export default async function MapPage({ searchParams }: PageProps<"/map">) {
             {t.map.sameSpot}
           </span>
         </div>
-        <LiveMap points={points} />
+        <div data-tour="map-canvas">
+          <LiveMap points={points} />
+        </div>
       </div>
     </>
   );

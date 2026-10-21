@@ -80,7 +80,7 @@ export default async function OverviewPage() {
       </PageHeader>
 
       <div className="space-y-6 px-8 py-6">
-        <section aria-label={t.overview.workWaiting} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section data-tour="overview-tiles" aria-label={t.overview.workWaiting} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatTile
             label={t.overview.urgent}
             value={urgentWaiting.length}
@@ -116,7 +116,7 @@ export default async function OverviewPage() {
         </section>
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-          <section className="rounded-lg border border-line bg-surface p-5" aria-labelledby="most-urgent">
+          <section data-tour="overview-urgent" className="rounded-lg border border-line bg-surface p-5" aria-labelledby="most-urgent">
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <h2 id="most-urgent" className="text-base font-bold">
                 {t.overview.mostUrgent}

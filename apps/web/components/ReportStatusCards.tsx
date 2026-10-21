@@ -27,7 +27,7 @@ export async function ReportStatusCards({
   };
 
   return (
-    <nav aria-label={t.reports.statusLabel} className="w-full">
+    <nav data-tour="report-status-cards" aria-label={t.reports.statusLabel} className="w-full">
       <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {(Object.keys(STATUS_FILTERS) as StatusFilter[]).map((key) => {
           const selected = key === current;

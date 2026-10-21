@@ -81,7 +81,7 @@ export function Sidebar({
         </div>
       </Link>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label={t.nav.label}>
+      <nav data-tour="sidebar-nav" className="flex-1 overflow-y-auto px-3 py-4" aria-label={t.nav.label}>
         {SECTIONS.map((section) => (
           <div key={section.heading} className="mb-5 last:mb-0">
             <p className="mb-1.5 px-3 text-xs font-bold uppercase tracking-wider text-muted">{t.nav[section.heading]}</p>
@@ -94,6 +94,7 @@ export function Sidebar({
                     <Link
                       href={link.href}
                       aria-current={active ? "page" : undefined}
+                      data-tour={`nav-${link.label}`}
                       className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-[15px] transition ${
                         active
                           ? "bg-brand-soft font-bold text-brand"

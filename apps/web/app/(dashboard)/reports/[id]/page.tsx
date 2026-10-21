@@ -86,7 +86,7 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
           <PrintButton documentTitle={`Incident report ${reportNumber(report.id)}`} />
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-4">
+        <div data-tour="report-priority" className="mt-3 flex flex-wrap items-center gap-4">
           <PriorityBadge score={report.priority} size="lg" />
           <div>
             <h1 className="text-2xl font-bold">{category}</h1>
@@ -160,7 +160,7 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/r
           </div>
 
           <div className="space-y-6">
-            <Card title={t.report.updateStatusTitle}>
+            <Card title={t.report.updateStatusTitle} tour="report-status-form">
               <StatusUpdateForm reportId={report.id} current={report.status} />
             </Card>
 
@@ -371,9 +371,10 @@ function LinkedReports({ report, from, t }: { report: ReportDetail; from: string
   );
 }
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+/** `tour` names the card for the dashboard tutorial. */
+function Card({ title, tour, children }: { title: string; tour?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-line bg-surface p-5">
+    <section data-tour={tour} className="rounded-lg border border-line bg-surface p-5">
       <h2 className="mb-4 text-base font-bold">{title}</h2>
       {children}
     </section>

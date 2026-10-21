@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { NewReportSoundProvider } from "@/components/NewReportSound";
 import { Sidebar } from "@/components/Sidebar";
+import { TutorialProvider } from "@/components/Tutorial";
 import { countPendingVerifications } from "@/lib/data";
 import { getDictionary } from "@/lib/i18n-server";
 import { createClient } from "@/lib/supabase/server";
@@ -44,14 +45,16 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
 
   return (
     <NewReportSoundProvider>
-      <div className="flex min-h-screen print:min-h-0">
-        <Sidebar
-          staffName={profile.full_name?.trim() || t.common.barangayStaff}
-          pendingVerifications={pending}
-          signOutAction={signOut}
-        />
-        <main className="min-w-0 flex-1">{children}</main>
-      </div>
+      <TutorialProvider>
+        <div className="flex min-h-screen print:min-h-0">
+          <Sidebar
+            staffName={profile.full_name?.trim() || t.common.barangayStaff}
+            pendingVerifications={pending}
+            signOutAction={signOut}
+          />
+          <main className="min-w-0 flex-1">{children}</main>
+        </div>
+      </TutorialProvider>
     </NewReportSoundProvider>
   );
 }

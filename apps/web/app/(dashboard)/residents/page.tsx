@@ -56,7 +56,7 @@ export default async function ResidentsPage({ searchParams }: PageProps<"/reside
       </PageHeader>
 
       {/* The page links land here, at the top of the list. */}
-      <div id="residents-list" className="scroll-mt-4 px-8 py-6">
+      <div id="residents-list" data-tour="residents-list" className="scroll-mt-4 px-8 py-6">
         {reviewed && (
           <p
             role="status"
@@ -72,8 +72,8 @@ export default async function ResidentsPage({ searchParams }: PageProps<"/reside
           </div>
         ) : (
           <ul className="grid gap-5 2xl:grid-cols-2">
-            {residents.map((resident) => (
-              <ResidentCard key={resident.id} resident={resident} t={t} />
+            {residents.map((resident, index) => (
+              <ResidentCard key={resident.id} resident={resident} t={t} first={index === 0} />
             ))}
           </ul>
         )}
@@ -90,9 +90,13 @@ export default async function ResidentsPage({ searchParams }: PageProps<"/reside
   );
 }
 
-function ResidentCard({ resident, t }: { resident: ResidentForReview; t: Dictionary }) {
+/** `first` marks the card the dashboard tutorial points at. */
+function ResidentCard({ resident, t, first }: { resident: ResidentForReview; t: Dictionary; first: boolean }) {
   return (
-    <li className="grid gap-5 rounded-lg border border-line bg-surface p-5 md:grid-cols-[260px_minmax(0,1fr)]">
+    <li
+      data-tour={first ? "resident-first" : undefined}
+      className="grid gap-5 rounded-lg border border-line bg-surface p-5 md:grid-cols-[260px_minmax(0,1fr)]"
+    >
       <div>
         {resident.idPhotoUrl ? (
           <a href={resident.idPhotoUrl} target="_blank" rel="noreferrer" title={t.residents.openPhoto}>
