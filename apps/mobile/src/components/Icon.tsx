@@ -78,4 +78,7 @@ export const icons = {
   staffNote: { ios: 'text.bubble.fill', android: 'chat' },
   barangay: { ios: 'building.columns.fill', android: 'account_balance' },
   person: { ios: 'person.fill', android: 'person' },
+  help: { ios: 'questionmark.circle.fill', android: 'help' },
+  back: { ios: 'chevron.left', android: 'chevron_left' },
+  done: { ios: 'checkmark', android: 'check' },
 } as const satisfies Record<string, IconName>;

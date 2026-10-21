@@ -23,6 +23,7 @@ import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
 import { refreshStatuses } from '@/features/queue/statusSync';
 import { requestSync } from '@/features/queue/syncEngine';
 import { tryToSendNow } from '@/features/queue/tryToSendNow';
+import { TourTarget } from '@/features/tutorial/TourTarget';
 import type { QueuedReport } from '@/features/queue/types';
 import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
@@ -86,13 +87,21 @@ export default function MyReportsScreen() {
       }
       ListHeaderComponent={waiting > 0 ? <WaitingSummary count={waiting} /> : null}
       ListEmptyComponent={<EmptyState />}
-      renderItem={({ item }) => (
-        <ReportCard
-          report={item}
-          sending={sendingIds.has(item.submission.id)}
-          photoDownloading={photoDownloadIds.has(item.submission.id)}
-        />
-      )}
+      renderItem={({ item, index, section }) => {
+        const card = (
+          <ReportCard
+            report={item}
+            sending={sendingIds.has(item.submission.id)}
+            photoDownloading={photoDownloadIds.has(item.submission.id)}
+          />
+        );
+        // The tutorial points at the newest report.
+        return section === sections[0] && index === 0 ? (
+          <TourTarget id="reports-first">{card}</TourTarget>
+        ) : (
+          card
+        );
+      }}
     />
   );
 }
@@ -275,13 +284,15 @@ function EmptyState() {
   const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.empty}>
-      <View style={styles.emptyIcon}>
-        <Icon name={icons.reports} size={44} color={colors.primary} />
-      </View>
-      <Text style={styles.emptyTitle}>No reports yet</Text>
-      <Text style={styles.emptyMessage}>
-        Reports you send will appear here, even ones still waiting for signal.
-      </Text>
+      <TourTarget id="reports-empty" style={styles.emptyIntro}>
+        <View style={styles.emptyIcon}>
+          <Icon name={icons.reports} size={44} color={colors.primary} />
+        </View>
+        <Text style={styles.emptyTitle}>No reports yet</Text>
+        <Text style={styles.emptyMessage}>
+          Reports you send will appear here, even ones still waiting for signal.
+        </Text>
+      </TourTarget>
       <Pressable
         onPress={() => router.push('/report')}
         style={({ pressed }) => [styles.emptyButton, pressed && styles.pressed]}
@@ -458,6 +469,9 @@ function createStyles(colors: ThemeColors) {
       alignItems: 'center',
       justifyContent: 'center',
       padding: 16,
+    },
+    emptyIntro: {
+      alignItems: 'center',
     },
     emptyIcon: {
       width: 96,

@@ -2,6 +2,7 @@ import { router, Tabs } from 'expo-router';
 import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import { Icon, icons, type IconName } from '@/components/Icon';
 import { useSosShortcut } from '@/features/sos/useSosShortcut';
+import { TourTarget } from '@/features/tutorial/TourTarget';
 import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
 function tabIcon(name: IconName) {
@@ -23,9 +24,12 @@ function ReportTabButton() {
     >
       {({ pressed }) => (
         <>
-          <View style={[styles.reportCircle, pressed && styles.pressed]}>
-            <Icon name={icons.emergency} size={30} color={colors.onEmergency} />
-          </View>
+          {/* The tutorial points at the circle, which sits above the tab bar. */}
+          <TourTarget id="tab-report" style={styles.reportCircleSpot}>
+            <View style={[styles.reportCircle, pressed && styles.pressed]}>
+              <Icon name={icons.emergency} size={30} color={colors.onEmergency} />
+            </View>
+          </TourTarget>
           <Text style={styles.reportLabel}>Report</Text>
         </>
       )}
@@ -78,6 +82,10 @@ function createStyles(colors: ThemeColors) {
       flex: 1,
       alignItems: 'center',
     },
+    reportCircleSpot: {
+      marginTop: -26,
+      borderRadius: radius.pill,
+    },
     reportCircle: {
       width: 60,
       height: 60,
@@ -85,7 +93,6 @@ function createStyles(colors: ThemeColors) {
       backgroundColor: colors.emergency,
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: -26,
       borderWidth: 4,
       borderColor: colors.surface,
       shadowColor: colors.emergency,

@@ -28,6 +28,8 @@ import { reportsStore } from '@/features/queue/reportsStore';
 import { requestSync } from '@/features/queue/syncEngine';
 import type { QueuedReport } from '@/features/queue/types';
 import { QuickSosSetting } from '@/features/sos/QuickSosSetting';
+import { startTutorial } from '@/features/tutorial/tutorialStore';
+import { TourTarget, useTourScroll } from '@/features/tutorial/TourTarget';
 import { showToast } from '@/features/toast/toastStore';
 import {
   setThemePreference,
@@ -43,43 +45,46 @@ export default function ProfileScreen() {
   const profile = auth.status === 'signedIn' ? auth.profile : null;
   const status = profile?.verification_status ?? 'unverified';
   const badge = badgeTone(status, colors);
+  const tourScroll = useTourScroll('/profile');
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.profileCard}>
-        <ProfileAvatar
-          uri={avatarUrl(auth)}
-          size={88}
-          iconSize={56}
-          backgroundColor={colors.selectedSoft}
-          loading={auth.status === 'loading'}
-        />
-        {auth.status === 'loading' ? (
-          <SkeletonGroup style={styles.skeleton}>
-            <SkeletonBlock width={160} height={22} />
-            <SkeletonBlock width={120} height={14} style={styles.skeletonSubline} />
-            <SkeletonBlock width={110} height={26} radius={radius.pill} style={styles.skeletonBadge} />
-          </SkeletonGroup>
-        ) : auth.status === 'guest' ? (
-          <>
-            <Text style={styles.name}>Guest</Text>
-            <Text style={styles.subline}>Reporting without an account</Text>
-          </>
-        ) : (
-          <>
-            <Text style={styles.name}>
-              {profile?.full_name || auth.session.user.email || 'Resident'}
-            </Text>
-            {profile?.area && <Text style={styles.subline}>{profile.area}</Text>}
-            <View style={styles.badge}>
-              <Icon name={badge.icon} size={14} color={badge.iconColor} />
-              <Text style={[styles.badgeText, { color: badge.textColor }]}>
-                {VERIFICATION_LABELS[status]}
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content} {...tourScroll}>
+      <TourTarget id="profile-account">
+        <View style={styles.profileCard}>
+          <ProfileAvatar
+            uri={avatarUrl(auth)}
+            size={88}
+            iconSize={56}
+            backgroundColor={colors.selectedSoft}
+            loading={auth.status === 'loading'}
+          />
+          {auth.status === 'loading' ? (
+            <SkeletonGroup style={styles.skeleton}>
+              <SkeletonBlock width={160} height={22} />
+              <SkeletonBlock width={120} height={14} style={styles.skeletonSubline} />
+              <SkeletonBlock width={110} height={26} radius={radius.pill} style={styles.skeletonBadge} />
+            </SkeletonGroup>
+          ) : auth.status === 'guest' ? (
+            <>
+              <Text style={styles.name}>Guest</Text>
+              <Text style={styles.subline}>Reporting without an account</Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.name}>
+                {profile?.full_name || auth.session.user.email || 'Resident'}
               </Text>
-            </View>
-          </>
-        )}
-      </View>
+              {profile?.area && <Text style={styles.subline}>{profile.area}</Text>}
+              <View style={styles.badge}>
+                <Icon name={badge.icon} size={14} color={badge.iconColor} />
+                <Text style={[styles.badgeText, { color: badge.textColor }]}>
+                  {VERIFICATION_LABELS[status]}
+                </Text>
+              </View>
+            </>
+          )}
+        </View>
+      </TourTarget>
 
       {auth.status === 'guest' && (
         <ActionCard
@@ -138,7 +143,14 @@ export default function ProfileScreen() {
         </View>
       )}
 
-      <QuickSosSetting />
+      {/* The spacing is on the wrappers, so the tutorial's spotlight hugs each card. */}
+      <TourTarget id="profile-quick-sos" style={styles.section}>
+        <QuickSosSetting />
+      </TourTarget>
+
+      <TourTarget id="profile-tutorial" style={styles.section}>
+        <TutorialSetting />
+      </TourTarget>
 
       <AppearanceSetting />
 
@@ -306,6 +318,33 @@ function SignOutButton() {
   );
 }
 
+/** Starts the interactive tutorial over the real screens (features/tutorial). */
+function TutorialSetting() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+  return (
+    <View style={[styles.settingCard, styles.flushTop]}>
+      <View style={styles.actionHeader}>
+        <Icon name={icons.help} size={24} color={colors.primary} />
+        <View style={styles.flex}>
+          <Text style={styles.infoTitle}>How to use the app</Text>
+          <Text style={styles.tagalog}>Paano gamitin ang app</Text>
+          <Text style={styles.infoText}>
+            A short tour of the real buttons, one at a time. Nothing is sent and no one is called.
+          </Text>
+        </View>
+      </View>
+      <Pressable
+        onPress={startTutorial}
+        style={({ pressed }) => [styles.actionButton, styles.tutorialButton, pressed && styles.pressed]}
+        accessibilityRole="button"
+      >
+        <Text style={styles.actionText}>Start tutorial</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 const APPEARANCE_OPTIONS: { value: ThemePreference; label: string; icon: IconName }[] = [
   { value: 'system', label: 'Match phone', icon: icons.phoneSetting },
   { value: 'light', label: 'Light', icon: icons.lightMode },
@@ -437,6 +476,21 @@ function createStyles(colors: ThemeColors) {
       fontSize: 16,
       fontWeight: '700',
       color: colors.primary,
+    },
+    section: {
+      marginTop: 16,
+    },
+    flushTop: {
+      marginTop: 0,
+    },
+    tutorialButton: {
+      flex: 0,
+      marginTop: 14,
+    },
+    tagalog: {
+      fontSize: 14,
+      lineHeight: 19,
+      color: colors.textMuted,
     },
     actionTextPrimary: {
       color: colors.onPrimary,

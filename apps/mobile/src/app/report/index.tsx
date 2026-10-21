@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { CATEGORY_LABELS, PICKER_CATEGORIES, type ReportCategory } from '@banabaconnect/shared';
 import { ReportCategoryIcon } from '@/components/ReportCategoryIcon';
 import { CATEGORY_APPEARANCE } from '@/features/report/categoryAppearance';
+import { TourTarget } from '@/features/tutorial/TourTarget';
 import { radius, useThemedStyles, type ThemeColors } from '@/theme';
 
 export default function ChooseCategoryScreen() {
@@ -19,7 +20,7 @@ export default function ChooseCategoryScreen() {
         Ano ang nangyayari? Tap the closest match, or choose Other if you&apos;re not sure.
       </Text>
 
-      <View style={styles.grid}>
+      <TourTarget id="report-categories" style={styles.grid}>
         {PICKER_CATEGORIES.map((category) => {
           const look = CATEGORY_APPEARANCE[category];
           return (
@@ -36,7 +37,7 @@ export default function ChooseCategoryScreen() {
             </Pressable>
           );
         })}
-      </View>
+      </TourTarget>
     </ScrollView>
   );
 }

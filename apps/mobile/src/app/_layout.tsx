@@ -7,6 +7,7 @@ import { ToastHost } from '@/components/ToastHost';
 import { startAuth } from '@/features/auth/authStore';
 import { useOfflineToasts } from '@/features/network/useOfflineToasts';
 import { useSyncTriggers } from '@/features/queue/useSyncTriggers';
+import { TutorialOverlay } from '@/features/tutorial/TutorialOverlay';
 import { hasColoredHeader, useTheme } from '@/theme';
 
 // Hold the native logo until the matching startup screen has been laid out.
@@ -65,6 +66,8 @@ export default function RootLayout() {
           <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
           <Stack.Screen name="verify-id" options={{ title: 'Verify your ID' }} />
         </Stack>
+        {/* Above every screen, under the toasts. Started from Profile. */}
+        <TutorialOverlay />
         <ToastHost />
         {/* Screens without a header set their own (see PlainStatusBar). */}
         <StatusBar style={scheme === 'dark' || hasColoredHeader(colors) ? 'light' : 'dark'} />

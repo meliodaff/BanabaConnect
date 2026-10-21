@@ -53,6 +53,8 @@ const neutralLight = {
   categoryIcon: '#374151',
   categoryTint: '#ECEDEF',
   shadow: '#18181B',
+  /** Dims the app behind the tutorial's spotlight. */
+  scrim: 'rgba(15, 18, 24, 0.62)',
 };
 
 export type ThemeColors = typeof neutralLight;
@@ -93,6 +95,7 @@ const neutralDark: ThemeColors = {
   categoryIcon: '#D4D4D8',
   categoryTint: '#2E2E33',
   shadow: '#000000',
+  scrim: 'rgba(0, 0, 0, 0.72)',
 };
 
 // The banaba flower look: bright pink-magenta flowers, sunny yellow stamens, green leaves.
@@ -140,6 +143,7 @@ const banabaPinkLight: ThemeColors = {
   categoryIcon: '#C2185B',
   categoryTint: '#FDE3EE',
   shadow: '#5A1838',
+  scrim: 'rgba(40, 10, 24, 0.62)',
 };
 
 const banabaPinkDark: ThemeColors = {
@@ -178,6 +182,7 @@ const banabaPinkDark: ThemeColors = {
   categoryIcon: '#FF7AB0',
   categoryTint: '#4A1D33',
   shadow: '#000000',
+  scrim: 'rgba(0, 0, 0, 0.72)',
 };
 
 // Denim: a faded denim blue with a filled blue header, soft gold accents and blue-gray surfaces.
@@ -223,6 +228,7 @@ const denimLight: ThemeColors = {
   categoryIcon: '#3A5F8F',
   categoryTint: '#DFE6EE',
   shadow: '#1E232B',
+  scrim: 'rgba(18, 22, 28, 0.62)',
 };
 
 const denimDark: ThemeColors = {
@@ -263,6 +269,7 @@ const denimDark: ThemeColors = {
   categoryIcon: '#9BB6D8',
   categoryTint: '#253247',
   shadow: '#000000',
+  scrim: 'rgba(0, 0, 0, 0.72)',
 };
 
 const PALETTES = {

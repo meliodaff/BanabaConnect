@@ -224,7 +224,6 @@ function createStyles(colors: ThemeColors) {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
       padding: 16,
-      marginTop: 16,
       gap: 10,
     },
     header: {

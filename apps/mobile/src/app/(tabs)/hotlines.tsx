@@ -2,6 +2,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { Icon, icons } from '@/components/Icon';
 import { callNumber } from '@/features/hotlines/call';
 import { HOTLINES } from '@/features/hotlines/hotlines';
+import { TourTarget } from '@/features/tutorial/TourTarget';
 import { radius, useTheme, useThemedStyles, type ThemeColors } from '@/theme';
 
 export default function HotlinesScreen() {
@@ -14,7 +15,7 @@ export default function HotlinesScreen() {
         mobile data.
       </Text>
 
-      <View style={styles.card}>
+      <TourTarget id="hotlines-list" style={styles.card}>
         {HOTLINES.map((hotline, index) => {
           const { number } = hotline;
           return (
@@ -73,7 +74,7 @@ export default function HotlinesScreen() {
             </Pressable>
           );
         })}
-      </View>
+      </TourTarget>
     </ScrollView>
   );
 }

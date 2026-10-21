@@ -10,6 +10,7 @@ import { SkeletonBlock, SkeletonGroup } from '@/components/Skeleton';
 import { avatarUrl, firstName, useAuth } from '@/features/auth/authStore';
 import { countWaiting, useQueuedReports } from '@/features/queue/reportsStore';
 import { showToast } from '@/features/toast/toastStore';
+import { TourTarget, useTourScroll } from '@/features/tutorial/TourTarget';
 import {
   radius,
   cardShadow,
@@ -59,6 +60,7 @@ export default function HomeScreen() {
   const waiting = countWaiting(reports);
   const auth = useAuth();
   const name = auth.status === 'signedIn' ? firstName(auth.profile) : null;
+  const tourScroll = useTourScroll('/');
 
   return (
     // The header color fills the status bar area too; the page scrolls under the fixed top bar.
@@ -104,6 +106,7 @@ export default function HomeScreen() {
         style={styles.screen}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        {...tourScroll}
       >
         <View style={styles.greetingRow}>
           <ProfileAvatar
@@ -182,53 +185,57 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <Pressable
-          onPress={() => router.push('/report')}
-          style={({ pressed }) => [styles.banner, pressed && styles.pressed]}
-          accessibilityRole="button"
-          accessibilityLabel="Report an emergency now"
-        >
-          <View style={styles.flex}>
-            <Text style={styles.bannerEyebrow}>May emergency?</Text>
-            <Text style={styles.bannerTitle}>Report it to the barangay in a few taps</Text>
-            <Text style={styles.bannerNote}>Works even with no signal</Text>
-            <View style={styles.bannerActions}>
-              <View style={styles.bannerButton}>
-                <Text style={styles.bannerButtonText}>Report now</Text>
+        <TourTarget id="home-report">
+          <Pressable
+            onPress={() => router.push('/report')}
+            style={({ pressed }) => [styles.banner, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel="Report an emergency now"
+          >
+            <View style={styles.flex}>
+              <Text style={styles.bannerEyebrow}>May emergency?</Text>
+              <Text style={styles.bannerTitle}>Report it to the barangay in a few taps</Text>
+              <Text style={styles.bannerNote}>Works even with no signal</Text>
+              <View style={styles.bannerActions}>
+                <View style={styles.bannerButton}>
+                  <Text style={styles.bannerButtonText}>Report now</Text>
+                </View>
+                <Pressable
+                  onPress={() => callNumber(NATIONAL_EMERGENCY_NUMBER)}
+                  style={({ pressed }) => [styles.callButton, pressed && styles.pressed]}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Call ${NATIONAL_EMERGENCY_NUMBER}`}
+                >
+                  <Icon name={icons.phone} size={16} color={colors.emergencyText} />
+                  <Text style={styles.callButtonText}>Call {NATIONAL_EMERGENCY_NUMBER}</Text>
+                </Pressable>
               </View>
-              <Pressable
-                onPress={() => callNumber(NATIONAL_EMERGENCY_NUMBER)}
-                style={({ pressed }) => [styles.callButton, pressed && styles.pressed]}
-                hitSlop={6}
-                accessibilityRole="button"
-                accessibilityLabel={`Call ${NATIONAL_EMERGENCY_NUMBER}`}
-              >
-                <Icon name={icons.phone} size={16} color={colors.emergencyText} />
-                <Text style={styles.callButtonText}>Call {NATIONAL_EMERGENCY_NUMBER}</Text>
-              </Pressable>
             </View>
-          </View>
-          <View style={styles.bannerArt}>
-            <View style={styles.bannerArtInner}>
-              <Icon name={icons.emergency} size={34} color={colors.onEmergency} />
+            <View style={styles.bannerArt}>
+              <View style={styles.bannerArtInner}>
+                <Icon name={icons.emergency} size={34} color={colors.onEmergency} />
+              </View>
             </View>
-          </View>
-        </Pressable>
+          </Pressable>
+        </TourTarget>
 
         {/* Same screen as the home-screen widget and the app icon shortcut. */}
-        <Pressable
-          onPress={() => router.push('/sos')}
-          style={({ pressed }) => [styles.sosButton, pressed && styles.pressed]}
-          accessibilityRole="button"
-          accessibilityLabel="Send SOS and call 911. For when you can't say what is happening."
-        >
-          <Icon name={icons.sos} size={30} color={colors.onEmergency} />
-          <View style={styles.flex}>
-            <Text style={styles.sosTitle}>Send SOS</Text>
-            <Text style={styles.sosDetail}>Hindi masabi kung ano? Ipapadala ang location mo at tatawag sa 911.</Text>
-          </View>
-          <Icon name={icons.chevron} size={22} color={colors.onEmergency} />
-        </Pressable>
+        <TourTarget id="home-sos">
+          <Pressable
+            onPress={() => router.push('/sos')}
+            style={({ pressed }) => [styles.sosButton, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel="Send SOS and call 911. For when you can't say what is happening."
+          >
+            <Icon name={icons.sos} size={30} color={colors.onEmergency} />
+            <View style={styles.flex}>
+              <Text style={styles.sosTitle}>Send SOS</Text>
+              <Text style={styles.sosDetail}>Hindi masabi kung ano? Ipapadala ang location mo at tatawag sa 911.</Text>
+            </View>
+            <Icon name={icons.chevron} size={22} color={colors.onEmergency} />
+          </Pressable>
+        </TourTarget>
 
         <Text style={styles.sectionTitle}>How reporting works</Text>
         <ScrollView
