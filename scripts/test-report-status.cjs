@@ -251,18 +251,32 @@ test('SOS has its own screen: it is a category, but not one residents pick in th
   assert.equal(shared.PICKER_CATEGORIES.length, shared.REPORT_CATEGORIES.length - 1);
 });
 
-test('the database keeps every SOS Critical and accepts apps that do not send the phone-lock answer', () => {
+/** A database function as the database runs it: its latest definition in the migrations. */
+function latestFunctionBody(name) {
   const dir = path.join(root, 'supabase/migrations');
   const files = fs.readdirSync(dir).sort().map((file) => fs.readFileSync(path.join(dir, file), 'utf8'));
-  // The latest definition of each function is the one the database runs.
-  const latest = (name) => [...files].reverse().find((sql) => new RegExp(`create (or replace )?function public\\.${name}\\(`).test(sql));
-  const body = (name) => {
-    const sql = latest(name);
-    const start = sql.search(new RegExp(`create (or replace )?function public\\.${name}\\(`));
-    return sql.slice(start, sql.indexOf('$$;', start));
-  };
+  const definition = new RegExp(`create (or replace )?function public\\.${name}\\(`);
+  const sql = files.reverse().find((text) => definition.test(text));
+  const start = sql.search(definition);
+  return sql.slice(start, sql.indexOf('$$;', start));
+}
+
+test('the database keeps every SOS Critical and accepts apps that do not send the phone-lock answer', () => {
   for (const name of ['rescore_cluster_volume', 'review_verification']) {
-    assert.match(body(name), /priority_score = case when r\.category = 'sos' then 1\.000 else/, name);
+    assert.match(latestFunctionBody(name), /priority_score = case when r\.category = 'sos' then 1\.000 else/, name);
   }
-  assert.match(body('submit_report'), /p_phone_lock_confirmed boolean default null/);
+  assert.match(latestFunctionBody('submit_report'), /p_phone_lock_confirmed boolean default null/);
+});
+
+test('a late report only joins an incident from its own 2 hours, and a repeated send gets the saved report', () => {
+  const submit = latestFunctionBody('submit_report');
+  // Both ways: a report sent days late must not join (and raise the volume of) a newer incident.
+  assert.match(submit, /c\.last_reported_at >= v_created_at - cluster_window/);
+  assert.match(submit, /c\.first_reported_at <= v_created_at \+ cluster_window/);
+  assert.match(submit, /first_reported_at = least\(c\.first_reported_at, v_created_at\)/);
+  // A copy sent at the same moment is found again after waiting for the lock, instead of failing
+  // on the duplicate id (which made the app show "retrying" for a report that had arrived).
+  const lock = submit.indexOf('pg_advisory_xact_lock');
+  assert.ok(lock > 0);
+  assert.ok(submit.indexOf('from public.reports where id = p_id', lock) > lock, 'no "already received?" check after the lock');
 });

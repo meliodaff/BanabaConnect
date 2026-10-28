@@ -66,6 +66,18 @@ the new `phone_lock_confirmed` column):
 
 An SOS is always Critical. See `docs/sos.md` for how residents send one and what staff see.
 
+### Late and repeated reports
+
+Run `supabase/migrations/20261028000000_late_and_repeated_reports.sql` in the SQL Editor. It
+only replaces the `submit_report` function, so it can run at any time and needs no app update:
+
+- A report that waited on a phone without signal joins an incident only if it happened within
+  2 hours of that incident's reports. Before, a report sent days late could join a newer incident
+  on the same street and make it look like more people reported it.
+- When a phone sends the same report twice at the same moment, both copies get the saved report
+  back. Before, the second copy failed and the app showed "retrying" for 30 seconds even though
+  the report had arrived.
+
 ## 2. The admin account
 
 There is one staff account for now.
