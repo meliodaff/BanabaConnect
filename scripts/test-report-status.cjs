@@ -268,6 +268,38 @@ test('the database keeps every SOS Critical and accepts apps that do not send th
   assert.match(latestFunctionBody('submit_report'), /p_phone_lock_confirmed boolean default null/);
 });
 
+/** A privacy rule's condition as the database runs it: its latest create or alter in the migrations. */
+function latestPolicy(table, name) {
+  const dir = path.join(root, 'supabase/migrations');
+  const statement = new RegExp(`(create|alter) policy "${name}" on public\\.${table}[^;]*;`, 'g');
+  const all = fs.readdirSync(dir).sort()
+    .flatMap((file) => fs.readFileSync(path.join(dir, file), 'utf8').match(statement) ?? []);
+  assert.ok(all.length > 0, `no policy "${name}" on ${table}`);
+  return all.at(-1).replace(/\s+/g, ' ');
+}
+
+test('privacy rules still keep residents to their own data, and check who is signed in once per query', () => {
+  const rules = {
+    reports: latestPolicy('reports', 'Residents read their own reports'),
+    profiles: latestPolicy('profiles', 'Users read their own profile'),
+    clusters: latestPolicy('incident_clusters', 'Admins read clusters'),
+    history: latestPolicy('report_status_history', 'Read history of visible reports'),
+    notifications: latestPolicy('notifications', 'Users read their own notifications'),
+  };
+  // Same access as before: your own rows, or everything for staff; incident groups are staff-only.
+  assert.match(rules.reports, /using \(reporter_id = \(select auth\.uid\(\)\) or \(select public\.is_admin\(\)\)\)/);
+  assert.match(rules.profiles, /using \(id = \(select auth\.uid\(\)\) or \(select public\.is_admin\(\)\)\)/);
+  assert.match(rules.clusters, /using \(\(select public\.is_admin\(\)\)\)/);
+  assert.doesNotMatch(rules.clusters, /auth\.uid/);
+  assert.match(rules.history, /\(select public\.is_admin\(\)\) or exists \( select 1 from public\.reports r where r\.id = report_id and r\.reporter_id = \(select auth\.uid\(\)\) \)/);
+  assert.match(rules.notifications, /using \(recipient_id = \(select auth\.uid\(\)\)\)/);
+  // Asked once per query: called per row, these made the dashboard fail with many reports stored.
+  for (const [rule, sql] of Object.entries(rules)) {
+    const unwrapped = sql.replace(/\(select auth\.uid\(\)\)|\(select public\.is_admin\(\)\)/g, '');
+    assert.doesNotMatch(unwrapped, /auth\.uid\(\)|is_admin\(\)/, `${rule} checks per row again`);
+  }
+});
+
 test('a late report only joins an incident from its own 2 hours, and a repeated send gets the saved report', () => {
   const submit = latestFunctionBody('submit_report');
   // Both ways: a report sent days late must not join (and raise the volume of) a newer incident.

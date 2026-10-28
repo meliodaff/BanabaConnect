@@ -78,6 +78,14 @@ only replaces the `submit_report` function, so it can run at any time and needs 
   back. Before, the second copy failed and the app showed "retrying" for 30 seconds even though
   the report had arrived.
 
+### Faster dashboard with many reports
+
+Run `supabase/migrations/20261028000001_faster_privacy_checks.sql` in the SQL Editor. It changes
+how five privacy rules run, not what they allow: each rule now checks who is signed in once per
+query instead of once per stored report. Without it the dashboard slows down as reports pile up;
+with about 100,000 reports the Reports page took 6 seconds and failed to load when 3 or more staff
+used it at once. No app or dashboard update is needed.
+
 ## 2. The admin account
 
 There is one staff account for now.
